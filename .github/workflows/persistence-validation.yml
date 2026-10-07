@@ -122,5 +122,7 @@ jobs:
         run: python ops/run_worker_source_gates.py
       - name: Full worker bootstrap and restricted runtime integration
         run: DALA_ACCEPTANCE_DISPOSABLE=1 python ops/run_worker_runtime_tests.py
+      - name: Protected report author, restricted-login and actual-main PostgreSQL gates
+        run: python ops/run_report_runtime_tests.py
       - name: Aggregate with real PostgreSQL configured
         run: make check

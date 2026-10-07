@@ -95,14 +95,19 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
             return False
 
     app.include_router(health_router(runtime_ready))
-    app.include_router(session_router(SessionService(connector, allowed_origin=settings.allowed_origin,
-                       demo_enabled=True, real_clock=clock)))
+    session_service = SessionService(connector, allowed_origin=settings.allowed_origin,
+                                    demo_enabled=True, real_clock=clock)
+    app.include_router(session_router(session_service))
     app.include_router(command_router(CommandService(connector, allowed_origin=settings.allowed_origin,
                        delivery_channel=settings.delivery_channel, domain_clock=clock, real_clock=clock,
                        references_factory=references_factory)))
     app.include_router(create_discovery_router(DiscoveryService(connector, domain_clock=clock,
                        real_clock=clock, dictionary_policy=WorkloadPolicy(POLICY_NAME))))
     app.include_router(create_order_events_router(OrderEventService(connector, real_clock=clock)))
+    from app.analytics.c3_repository import RuntimeReportService
+    from app.reports.c4_routes import create_c_runtime_router
+    app.include_router(create_c_runtime_router(RuntimeReportService(
+        session_service, domain_clock=clock, synthetic=True)))
     if photo_service is not None:
         from app.photos.http import create_photo_router
         app.include_router(create_photo_router(photo_service))
