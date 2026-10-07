@@ -36,3 +36,5 @@ jobs:
         run: PYTHONPATH=backend:ops/provision python -m unittest discover -s ops/provision/tests -p test_history_demo_inputs.py -v
       - name: Ten real historical/live/report PostgreSQL cases, zero skips
         run: python ops/run_history_demo_tests.py --with-reports
+      - name: Three-login fixture-mode binding and completion barrier
+        run: python ops/run_history_bootstrap_tests.py

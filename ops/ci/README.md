@@ -12,11 +12,18 @@ and report export remain separate gates. No deployment is performed.
 ## C-110 accepted source and build provenance
 
 `scenarios.json` accepts exact C source
-`23a135348a0e8ad9a140a36ca60e8440704b7893` and frontend
-`ca320bf692c01d89dd79496fe18d1bc2742052df`. C includes the bounded resume/Back
+`67496c1c38051b9c45d960caa3242ff0a37edaa4` and optional frontend
+`3ef269bba80dbd6eafaff0d5e557da21f2d96244`. C includes the bounded resume/Back
 render waits and version-2 frontend/source-bound receipt. Missing or altered
 source still blocks before private execution. Do not lower counts or silently
 skip a missing input.
+
+The earlier exact `ca320bf` / C`23a135` manual-core PASS on main
+`ab632c0cf411b7670c1a03fe7aa97419950019a2` remains historical evidence in
+[run37697793713](https://github.com/a4ns/DalaAI/actions/runs/37697793713).
+It does not cover this optional frontend. A fresh target/source-bound secrecy
+preflight and actual core run are required. The added push/disclosure UI does not
+turn this manual-core gate into provider or notification-delivery evidence.
 
 The active integration uses C's unchanged config
 `tests/e2e/c110_playwright.config.cjs`, project `c110-android-chromium`, and C's own

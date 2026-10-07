@@ -40,7 +40,7 @@ def new_pin(exclude):
         if len(set(value))>=3 and value!='71426839' and value!=exclude:return value
 
 
-def prepare(directory,domain,bind,http_port,https_port,workers=False):
+def prepare(directory,domain,bind,http_port,https_port,workers=False,fixture_mode=None):
     if not re.fullmatch(r'[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?',domain) or '..' in domain:
         raise ValueError('Use one lowercase DNS hostname, without a scheme/path/port')
     if bind not in {'127.0.0.1','0.0.0.0'} or not all(1<=p<=65535 for p in (http_port,https_port)):
@@ -50,6 +50,13 @@ def prepare(directory,domain,bind,http_port,https_port,workers=False):
         if not stat.S_ISDIR(info.st_mode) or info.st_uid!=os.geteuid() or info.st_mode & 0o077:
             raise ValueError('Existing private directory must be UID-owned with mode0700')
     else:directory.mkdir(mode=0o700)
+    if workers:
+        mode_path=directory/'fixture_mode'
+        previous=read_owned(mode_path) if mode_path.exists() else None
+        selected=fixture_mode if fixture_mode is not None else (previous or 'minimal')
+        if selected not in {'minimal','history'}:
+            raise ValueError('Unsupported fixture mode')
+        save_once(mode_path,selected)
     values={}
     for name in ('postgres_owner_password','postgres_runtime_password','master_pin','executor_pin'):
         path=directory/name
@@ -84,9 +91,11 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--directory',type=Path,required=True);p.add_argument('--domain',required=True)
     p.add_argument('--workers',action='store_true',help='Prepare the reviewed full worker profile and named-demo model policy')
+    p.add_argument('--fixture-mode',choices=('minimal','history'),default=None,
+                   help='Fresh-only fixture choice; repeats preserve the stored choice')
     p.add_argument('--bind',default='127.0.0.1');p.add_argument('--http-port',type=int,default=8080);p.add_argument('--https-port',type=int,default=8443)
     a=p.parse_args()
-    try:prepare(a.directory,a.domain,a.bind,a.http_port,a.https_port,a.workers)
+    try:prepare(a.directory,a.domain,a.bind,a.http_port,a.https_port,a.workers,a.fixture_mode)
     except (ValueError,OSError):raise SystemExit('Private demo configuration not prepared; inspect ownership/configuration. No values disclosed.') from None
 
 

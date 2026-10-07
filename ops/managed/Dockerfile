@@ -11,6 +11,9 @@ FROM caddy:2.11.7-alpine AS edge
 FROM python:3.12.15-slim-bookworm
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /service
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y fonts-dejavu-core=2.37-6 \
+    && rm -rf /var/lib/apt/lists/*
 COPY backend/requirements.lock ./requirements.lock
 RUN python -m pip install --no-cache-dir -r requirements.lock \
     && python -m pip check \
@@ -23,6 +26,7 @@ COPY --from=frontend /build/dist /srv
 COPY backend/app ./app
 COPY backend/db ./db
 COPY ops/provision ./ops/provision
+COPY scripts/synthetic ./scripts/synthetic
 COPY ops/managed/Caddyfile ops/managed/supervise.py ./ops/managed/
 RUN mkdir -p /var/lib/naryadai /tmp/caddy-data /tmp/caddy-config \
     && chown 10002:10002 /tmp/caddy-data /tmp/caddy-config \

@@ -17,7 +17,8 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--base-url',required=True);p.add_argument('--ca-file',type=Path,required=True)
     p.add_argument('--secrets',type=Path,required=True);p.add_argument('--report',type=Path,required=True)
-    p.add_argument('--source-sha',required=True);p.add_argument('--expect-rules-worker',action='store_true');a=p.parse_args()
+    p.add_argument('--source-sha',required=True);p.add_argument('--expect-rules-worker',action='store_true')
+    p.add_argument('--fixture-mode',choices=('minimal','history'),default='minimal');a=p.parse_args()
     parsed=urlsplit(a.base_url)
     if parsed.scheme!='https' or parsed.hostname!='localhost' or parsed.path:
         raise SystemExit('This disposable smoke requires an explicit localhost HTTPS origin')
@@ -51,7 +52,24 @@ def main():
             actor_tokens[actor]=session['csrf_token']
             assert json_call(actor,'/api/v1/me')['principal']['role']==actor
         report['steps'].append('two real Argon2 cookie sessions and CSRF')
-        d=json_call('master','/api/v1/dicts');section=d['sections'][0]['id'];equipment=d['equipment'][0]['id'];executor=d['executors'][0]['id']
+        d=json_call('master','/api/v1/dicts');actor=d['executors'][0]
+        section=actor['section_ids'][0];executor=actor['id']
+        equipment=next(row['id'] for row in d['equipment'] if row['section_id']==section)
+        if a.fixture_mode=='history':
+            from urllib.parse import urlencode
+            query=urlencode({'start':'2026-07-01T00:00:00Z','end':'2026-10-01T00:00:00Z'})
+            history=json_call('master','/api/v1/reports/shift?'+query)
+            metrics={row['name']:row['value'] for row in history['metrics']}
+            assert int(metrics['issued_orders'])==540
+            assert int(metrics['submission_attempts'])==568
+            evidence=history['provenance']['historical_evidence']
+            assert evidence['historical_order_count']==540
+            assert evidence['missing_after_photo_row_count']==444
+            assert evidence['physical_evidence_verified'] is False
+            assert len(json_call('master','/api/v1/me')['principal']['section_ids'])==4
+            assert call('executor','/api/v1/reports/shift?'+query)[0]==403
+            report['history']='PASS_540_CANONICAL_ORDERS_VISIBLE_WITH_MISSING_EVIDENCE_DISCLOSURE'
+            report['steps'].append('same runtime exposes canonical history to scoped master and denies executor reports')
         created=json_call('master','/api/v1/orders',{'operation_id':str(uuid4()),'expected_version':0,'action':'create','payload':{
             'type':'unplanned','description':'Синтетическая проверка Compose: замена детали','section_id':section,
             'equipment_id':equipment,'assignment':{'executor_id':executor,'brigade_id':None},
@@ -95,6 +113,25 @@ def main():
         assert call('master','/api/v1/photos/'+photo)[0]==200
         assert json_call('master',route,review)==closed
         report['steps'].append('physical-evidence master close, protected read and idempotent replay')
+        from urllib.parse import urlencode
+        from zipfile import ZipFile
+        query=urlencode({'start':(datetime.now(timezone.utc)-timedelta(days=1)).isoformat(),
+                         'end':datetime.now(timezone.utc).isoformat()})
+        for stem in ('shift','orders/'+order):
+            for extension in ('pdf','xlsx'):
+                path='/api/v1/reports/'+stem+'.'+extension+'?'+query
+                status,body,headers=call('master',path)
+                assert status==200,'BINARY_EXPORT_FAILED'
+                assert 'attachment;' in headers.get('Content-Disposition','')
+                assert 'no-store' in headers.get('Cache-Control','')
+                if extension=='pdf':
+                    assert body.startswith(b'%PDF-') and b'DejaVuSans' in body
+                else:
+                    with ZipFile(BytesIO(body)) as workbook:
+                        assert 'xl/workbook.xml' in workbook.namelist()
+                assert call('executor',path)[0]==403
+        report['exports']='PASS_ACTUAL_CONTAINER_PDF_XLSX_MASTER_ONLY'
+        report['steps'].append('actual API image renders four protected PDF/XLSX exports with embedded Cyrillic font')
         report['status']='PASS_COMPOSE_PHOTO_CYCLE'
     except Exception as error:
         report['error_type']=type(error).__name__

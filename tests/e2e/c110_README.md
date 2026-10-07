@@ -1,15 +1,20 @@
 # C-110: real composed browser/API/PostgreSQL core journey
 
-Status at initial handoff: **browser/API/DB NOT_RUN** in C0's environment.
+Current optional-UI target: **browser/API/DB rerun NOT_RUN** in C0's environment.
 Source/parser tests are separate evidence. This is an executable Playwright
 journey, not a completed runtime result. No successful business response is
-mocked. For the first real C110 gate, the composed frontend is pinned **only** to
-`ca320bf692c01d89dd79496fe18d1bc2742052df`, per
-[A0-0038](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6047398421).
+mocked. For the next C110 gate, the optional push/disclosure frontend is pinned
+**only** to `3ef269bba80dbd6eafaff0d5e557da21f2d96244`, per
+[A0-0050](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6048402934).
 
 A5 builds/binds that exact candidate and records its exact backend source SHA.
-The old `2beb2244` baseline, later push assembly, shortened SHAs and unknown
-candidates are rejected. Earlier baseline evidence is not relabeled.
+The previous `ca320bf` / `2beb2244` baselines, intermediate `45a65ae`, shortened
+SHAs and unknown candidates are rejected. Earlier baseline evidence is not relabeled.
+
+Historical ca320bf manual-core PASS was reported by A0 on exact main
+`ab632c0cf411b7670c1a03fe7aa97419950019a2` in
+[this CI job](https://github.com/a4ns/DalaAI/actions/runs/37697793713/job/113053699040).
+That result does not cover the new 3ef269b target; A5 must run fresh preflight and core.
 
 ## Stable A5 integration seam
 
@@ -38,7 +43,7 @@ Required inputs:
 | `DALA_E2E_FIXTURE_FILE` | Public fixture object from A0-0036, without dry-run wrapper |
 | `DALA_E2E_MASTER_PIN_FILE` | Operator-private file for the synthetic master |
 | `DALA_E2E_EXECUTOR_PIN_FILE` | Operator-private file for the synthetic executor |
-| `DALA_E2E_FRONTEND_SHA` | Exactly `ca320bf692c01d89dd79496fe18d1bc2742052df`, required for preflight, core and evidence gate |
+| `DALA_E2E_FRONTEND_SHA` | Exactly `3ef269bba80dbd6eafaff0d5e557da21f2d96244`, required for preflight, core and evidence gate |
 | `DALA_E2E_BACKEND_SHA` | Exact 40-hex source SHA used to build the running backend |
 | `DALA_C110_RUN_ID` | Unique non-secret lowercase identifier, 8–64 chars, digits/hyphens allowed |
 | `DALA_C110_PREFLIGHT_RECEIPT` | New absolute public receipt path written by the mandatory executable preflight below |
@@ -202,3 +207,19 @@ clicks it, then waits for the work-result field (10 seconds). The source regress
 rejects the former instantaneous visibility probe and a missing result wait.
 This is a source-proven timing hazard, **not an observed browser failure or a
 browser-verified fix**. Actual rerun and fresh secrecy preflight remain A5 gates.
+
+## Optional-UI selector compatibility (source-only)
+
+Compared exact `ca320bf692c01d89dd79496fe18d1bc2742052df` with
+`3ef269bba80dbd6eafaff0d5e557da21f2d96244` before repinning. Login, creation,
+executor action/result/photo controls, review controls and history selectors are
+unchanged. The retained pause-mode Back predicate and bounded wait/click/wait
+correction remain applicable. The added result-analysis disclosure is read-only;
+its unknown assessment copy does not claim a model or rules verdict.
+
+`PushPreferences` mount constructs/subscribes to an inert controller. Config
+lookup, service-worker registration and permission/subscription actions require
+explicit push buttons, which this core test never clicks. Service workers stay
+blocked; native push/provider delivery remains NOT_RUN. This source compatibility
+review is not a runtime pass for the newer product. Upcoming analytics UI is not
+part of this exact candidate or C110 binding.

@@ -15,6 +15,11 @@ Chosen profile: one **paid 2 GB** web instance containing separate Caddy/API/wor
 - Verify exact SHA, A5 migration map and accepted first-run launcher; old001–004-only initialization is insufficient
 - Run `python ops/provision/enable_worker_capabilities.py --backend backend --schema dalaai_demo --expected-database naryadai --bootstrap --apply` with the documented owner/API/worker DSNs and explicit setup flags in the private administrative environment; retain all data on any uncertain result
 - Validate distinct restricted API/worker LOGINs and matching capability grants; no runtime owner credentials or PINs
+- Before first initialization, explicitly choose `DALA_DEMO_FIXTURE_MODE=history`
+  for540 canonical orders plus the two live accounts, or leave the default
+  `minimal`. Keep that same choice on repeat. The existing schema is never adopted
+  or widened when the mode differs. Historical actors remain disabled and their
+  placeholder photos are disclosed as unavailable physical evidence
 
 ## 4–7 min: secrets and durable storage
 

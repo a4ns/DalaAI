@@ -6,6 +6,9 @@
 !backend/app/**
 !backend/db/
 !backend/db/**
+!scripts/
+!scripts/synthetic/
+!scripts/synthetic/**
 !frontend/
 !frontend/**
 !ops/

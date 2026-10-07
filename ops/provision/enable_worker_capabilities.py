@@ -46,10 +46,24 @@ def api_grants():
     return {'select': reads, 'insert': inserts, 'update': updates}
 
 
-def capability_fingerprint(plan, *, owner_role, api_role, worker_role):
+def selected_fixture(environment):
+    mode = environment.get('DALA_DEMO_FIXTURE_MODE', 'minimal')
+    if mode not in {'minimal', 'history'}:
+        raise ValueError('WORKER_FIXTURE_MODE_INVALID')
+    if mode == 'history':
+        from history_demo import apply_fixture as history_fixture, public_manifest
+        return mode, history_fixture, public_manifest()
+    return mode, apply_fixture, None
+
+
+def capability_fingerprint(plan, *, owner_role, api_role, worker_role, fixture_manifest=None):
     from app.worker_runtime import worker_grants
     payload = {'migrations': plan, 'roles': [owner_role, api_role, worker_role],
                'api': api_grants(), 'worker': worker_grants(web_push=True)}
+    # Preserve every accepted minimal fingerprint byte-for-byte. The opt-in
+    # historical profile adds its immutable source/identity/scope manifest.
+    if fixture_manifest is not None:
+        payload['fixture'] = fixture_manifest
     return sha256(json.dumps(payload, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 
@@ -148,6 +162,7 @@ def validate_api_profile(connect, *, schema):
 
 def apply_capabilities(args, environment):
     """Intended for an authorized operator only; never called by source tests."""
+    fixture_mode, seed_fixture, fixture_manifest = selected_fixture(environment)
     if environment.get('DALA_DEMO_WORKER_CAPABILITY_ALLOWED') != '1' or not args.bootstrap:
         raise ValueError('WORKER_EXPLICIT_BOOTSTRAP_APPROVAL_REQUIRED')
     pins = preflight_apply(args, environment)
@@ -170,7 +185,8 @@ def apply_capabilities(args, environment):
     who = [identity(connect) for connect in (owner, api, worker)]
     _ensure_identities(*who, expected_database=args.expected_database)
     fingerprint = capability_fingerprint(plan, owner_role=who[0]['role_name'],
-                                         api_role=who[1]['role_name'], worker_role=who[2]['role_name'])
+                                         api_role=who[1]['role_name'], worker_role=who[2]['role_name'],
+                                         fixture_manifest=fixture_manifest)
     with connector(names[0], False)() as control:
         # Session lock spans the migration files' own commits; closes on all exits.
         locked = control.execute("SELECT pg_try_advisory_lock(hashtextextended(%s,0)) AS ok",
@@ -192,10 +208,10 @@ def apply_capabilities(args, environment):
             repeat_action(present['marker'], completion, fingerprint)
             validate_api_profile(api, schema=args.schema)
             validate_worker(worker, ai_enabled=True, notify_enabled=True, web_push=True)
-            seed = apply_fixture(owner, args.expected_database, pins)
+            seed = seed_fixture(owner, args.expected_database, pins)
             return {'status': 'WORKER_CAPABILITIES_ALREADY_VERIFIED', 'migrations_replayed': False,
                     'grants_replayed': False, 'seed': seed, 'roles_created': 0, 'deployment_started': False,
-                    'required_worker_settings': dict(FULL_WORKER_ENVIRONMENT)}
+                    'required_worker_settings': dict(FULL_WORKER_ENVIRONMENT), 'fixture_mode': fixture_mode}
         try:
             with control.transaction():
                 control.execute(sql.SQL('CREATE SCHEMA {}').format(sql.Identifier(args.schema)))
@@ -218,14 +234,20 @@ def apply_capabilities(args, environment):
             validate_worker(worker, ai_enabled=True, notify_enabled=True, web_push=True)
             with owner() as db, db.transaction():
                 db.execute(sql.SQL('COMMENT ON TABLE {} IS {}').format(sql.Identifier(args.schema, 'delivery_dispatches'),
-                    sql.Literal(marker('complete', fingerprint))))
+                    sql.Literal(marker('complete' if fixture_mode == 'minimal' else 'initializing', fingerprint))))
                 db.execute(sql.SQL('COMMENT ON SCHEMA {} IS {}').format(sql.Identifier(args.schema),
                     sql.Literal(bootstrap_marker('ready'))))
-            seed = apply_fixture(owner, args.expected_database, pins)
+            seed = seed_fixture(owner, args.expected_database, pins)
+            if fixture_mode == 'history':
+                # C107 commits its own history transaction. Never advertise the
+                # full profile complete before the live-account receipt exists.
+                with owner() as db, db.transaction():
+                    db.execute(sql.SQL('COMMENT ON TABLE {} IS {}').format(
+                        sql.Identifier(args.schema, 'delivery_dispatches'), sql.Literal(marker('complete', fingerprint))))
             return {'status': 'WORKER_CAPABILITIES_READY', 'migration_count': len(plan),
                     'profile_sha256': fingerprint, 'migrations_replayed': False, 'grants_replayed': False,
                     'seed': seed, 'roles_created': 0, 'deployment_started': False,
-                    'required_worker_settings': dict(FULL_WORKER_ENVIRONMENT)}
+                    'required_worker_settings': dict(FULL_WORKER_ENVIRONMENT), 'fixture_mode': fixture_mode}
         except Exception:
             # No cleanup, grants repair or replay: preserve the in-progress marker
             # (or ready marker when only the transactional fixture step failed).
@@ -242,12 +264,14 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         sys.path.insert(0, str(args.backend.resolve()))
+        fixture_mode, _, fixture_manifest = selected_fixture(os.environ)
         plan = worker_migration_plan(args.backend)
         if not args.apply:
             result = {'status': 'PLAN_ONLY_NO_DATABASE_ACCESS', 'schema': args.schema,
                       'migrations': plan, 'api_profile': api_grants(), 'worker_profile': 'separate exact column profile',
                       'existing_identities_required': ['owner', 'api', 'worker'], 'roles_created': 0,
                       'required_worker_settings': dict(FULL_WORKER_ENVIRONMENT),
+                      'fixture_mode': fixture_mode, 'fixture_manifest': fixture_manifest,
                       'repeat': 'verify_only_no_migrations_no_regrants_no_scope_reset'}
         else:
             result = apply_capabilities(args, os.environ)

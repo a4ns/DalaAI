@@ -53,6 +53,60 @@ class MountedReports(RestrictedReports):
                 self.assertEqual(response.status_code,200,'Mounted report route failed')
                 self.assertIn('no-store',response.headers['cache-control'])
 
+
+    def test_actual_main_binary_exports_and_access_errors(self):
+        from app.main import create_app
+        from app.runtime import RuntimeSettings
+        from fastapi.testclient import TestClient
+        from io import BytesIO
+        from openpyxl import load_workbook
+        from hashlib import sha256
+        from uuid import uuid4
+        from datetime import timedelta
+        origin='https://reports.test'
+        settings=RuntimeSettings(mode='demo',database_url=ApplicationRoleTests.runtime_dsn,
+            allowed_origin=origin,database_schema=self.schema)
+        executor_handle=uuid4().hex
+        with self.connect() as owner:
+            owner.execute("""INSERT INTO auth_sessions(id,employee_id,token_hash,csrf_token,created_at,expires_at)
+                VALUES (%s,%s,%s,%s,%s,%s)""", (str(uuid4()),self.executor,
+                sha256(executor_handle.encode()).hexdigest(),uuid4().hex,
+                self.real.now()-timedelta(minutes=1),self.real.now()+timedelta(hours=1)))
+            before={table:owner.execute('SELECT count(*) AS n FROM '+table).fetchone()['n']
+                    for table in ('orders','submissions','reviews','order_events','auth_sessions','delivery_jobs')}
+        with patch('app.core.auth_boundary.SystemRealClock',return_value=self.real):
+            app=create_app(settings=settings,connect=self.runtime_connect)
+        with TestClient(app,base_url=origin,client=('127.0.0.1',45000)) as client:
+            self.assertEqual(client.get('/readyz').status_code,200)
+            for suffix in ('pdf','xlsx'):
+                for stem in ('shift','orders/'+self.order):
+                    path='/api/v1/reports/'+stem+'.'+suffix
+                    self.assertEqual(client.get(path,params=self.query).status_code,401)
+                    self.assertEqual(client.get(path,params=self.query,
+                        headers={'cookie':SESSION_COOKIE_NAME+'='+executor_handle}).status_code,403)
+                    response=client.get(path,params=self.query,
+                        headers={'cookie':SESSION_COOKIE_NAME+'='+self.handle})
+                    self.assertEqual(response.status_code,200,'Mounted binary report failed')
+                    self.assertIn('no-store',response.headers['cache-control'])
+                    self.assertIn('attachment;',response.headers['content-disposition'])
+                    if suffix=='pdf':
+                        self.assertTrue(response.content.startswith(b'%PDF-'))
+                        self.assertIn(b'DejaVuSans',response.content)
+                    else:
+                        book=load_workbook(BytesIO(response.content),read_only=True,data_only=False)
+                        self.assertTrue(book.sheetnames)
+                        self.assertTrue(any(cell.value=='Synthetic' for sheet in book for row in sheet for cell in row)
+                                        if stem.startswith('orders/') else True)
+                        self.assertFalse(any(cell.data_type=='f' for sheet in book for row in sheet for cell in row))
+                        book.close()
+                    invalid=client.get(path,params={**self.query,'format':'html'},
+                        headers={'cookie':SESSION_COOKIE_NAME+'='+self.handle})
+                    self.assertEqual(invalid.status_code,422)
+                    self.assertNotIn('content-disposition',invalid.headers)
+        with self.connect() as owner:
+            after={table:owner.execute('SELECT count(*) AS n FROM '+table).fetchone()['n'] for table in before}
+        self.assertEqual(before,after)
+
 def run(suite,expected,label):
     assert suite.countTestCases()==expected,label+' count changed'
     result=unittest.TextTestRunner(verbosity=2).run(suite)
@@ -65,6 +119,7 @@ ApplicationRoleTests.setUpClass()
 try:
     run(unittest.defaultTestLoader.loadTestsFromTestCase(RestrictedReports),8,'C111 restricted API LOGIN')
     run(unittest.TestSuite([MountedReports('test_actual_main_mounts_all_three_protected_routes')]),1,'Actual app.main reports')
+    run(unittest.TestSuite([MountedReports('test_actual_main_binary_exports_and_access_errors')]),1,'Actual app.main PDF and XLSX exports')
 finally:
     ApplicationRoleTests.doClassCleanups()
     if ApplicationRoleTests.tearDown_exceptions:

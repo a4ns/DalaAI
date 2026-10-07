@@ -1,0 +1,9 @@
+{
+  "checked_at": "2026-10-07",
+  "runtime": {"reportlab": "4.4.9", "openpyxl": "3.1.5", "et-xmlfile": "2.0.0"},
+  "existing_dependencies": {"Pillow": "12.3.0", "charset-normalizer": "3.5.2"},
+  "official_sources": ["https://pypi.org/pypi/reportlab/4.4.9/json", "https://pypi.org/pypi/openpyxl/3.1.5/json", "https://pypi.org/pypi/et-xmlfile/2.0.0/json", "https://packages.debian.org/bookworm/fonts-dejavu-core"],
+  "image_fonts": "fonts-dejavu-core=2.37-6 (Debian bookworm)",
+  "font_paths": ["/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"],
+  "limits": "Actual image/font and restricted-login exports are exact-head CI gates. Mixed-load capacity remains unmeasured."
+}

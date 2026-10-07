@@ -18,6 +18,12 @@
   separate evidence gates. Source/build/synthetic browser checks cannot prove them.
 # Worker integration increment, 2026-10-07
 
+The optional fresh `history` fixture is explicitly bound into its bootstrap
+receipt. Minimal-profile receipt hashes stay unchanged. History initialization,
+canonical import and final live-account receipt are separate durable stages;
+the worker capability marker is complete only after the final receipt returns.
+The stored local fixture choice survives repeat starts and cannot silently switch.
+
 The full operator launcher now composes the reviewed worker overlay. Its API and
 worker database capability profiles are independent from provider activation.
 Web Push remains paused without configured keys; durable work is not consumed by
@@ -25,3 +31,10 @@ a disabled adapter. Key absence chooses rules fallback; an operator-supplied
 OpenAI key selects the named interactive-demo policy, sharing the persistent
 budget ledger. The worker-free base remains the manual C-110 fixture. No host
 deployment, live provider call or physical-phone pass is implied by publication.
+
+2026-10-07: PDF/XLSX exports reuse the authenticated consistent report capture and
+final session recheck. Fixed routes precede generic order reports; both API images
+include pinned DejaVu Cyrillic fonts. Existing B optional push settings and
+conditional model-processing disclosure are imported at exact3ef269, with C110
+strictly rebound at67496. Actual new-head image/browser/PG gates are mandatory;
+source tests do not substitute for those gates.

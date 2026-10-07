@@ -13,6 +13,18 @@ spec=importlib.util.spec_from_file_location('demo_prepare',path)
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 
 class PrivateBootstrapTests(unittest.TestCase):
+    def test_history_choice_survives_repeat_and_cannot_silently_switch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory=Path(tmp)/'private'
+            with patch.object(module.secrets,'token_urlsafe',return_value='SYNTHETIC_'+'x'*34),patch.object(module.secrets,'randbelow',side_effect=[12345678,87654321]),patch.object(module.secrets,'token_hex',return_value='f'*32),contextlib.redirect_stdout(io.StringIO()):
+                module.prepare(directory,'localhost','127.0.0.1',8080,8443,workers=True,fixture_mode='history')
+                before={p.name:p.read_bytes() for p in directory.iterdir()}
+                module.prepare(directory,'localhost','127.0.0.1',8080,8443,workers=True)
+                with self.assertRaises(ValueError):
+                    module.prepare(directory,'localhost','127.0.0.1',8080,8443,workers=True,fixture_mode='minimal')
+            self.assertEqual(before,{p.name:p.read_bytes() for p in directory.iterdir()})
+            self.assertEqual(before['fixture_mode'],b'history\n')
+
     def test_full_profile_preserves_worker_identity_and_named_model_policy(self):
         import json
         with tempfile.TemporaryDirectory() as tmp:

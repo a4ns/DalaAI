@@ -17,12 +17,29 @@ Requires Docker Compose and Python3. From the repository root:
 ./ops/demo/run.sh
 ```
 
+For a **fresh** historical demo, select the profile before first initialization:
+
+```sh
+DALA_DEMO_FIXTURE_MODE=history ./ops/demo/run.sh
+```
+
+The private configuration preserves that choice on repeats. The historical
+profile exposes540 canonical July–September synthetic orders to the live master
+across four sections; the live executor stays in one section. All17 historical
+actors remain disabled. Historical photo placeholders remain missing physical
+evidence, with that disclosure in the reports. New live orders use real uploads,
+worker assessments and human decisions on the same API/database. The default
+profile remains `minimal`. Switching an existing profile is refused; there is
+no automatic import, scope change, reset or repair on a running/minimal instance.
+
 Default bind is loopback only, HTTP8080 and HTTPS8443, hostname localhost. The
 script creates private local inputs only if absent, then builds and starts the
 stack. Existing volumes without their original secret files stop the launcher;
 there is no automatic reset or password rotation. Local browser trust must be
 configured normally; never bypass a certificate warning. CI uses an explicitly
 trusted ephemeral localhost CA and does not change an existing user trust store.
+The human-run preparation creates private demo PIN files; bootstrap receives
+them as operator inputs. No assistant step here creates a live account or host.
 
 For the human-selected VPS after DNS, ports and costs are approved:
 
@@ -103,12 +120,16 @@ as both supplied demo accounts, then follow ops/provision/C5_TWO_ROLE_RUNBOOK.md
 A10-minute two-physical-Android check still requires real devices and explicit
 camera/notification permissions. CI Android emulation does not replace it.
 
-Current source assembly: B product2a12798c19a26b33aabd9ffd572b99586f80e2f1 plus
-only five reviewed harness files from9f37c2951cbffb88db8a254beff033f7e31ed6d9.
-Mobile CI separates13 synthetic Pixel9 rendering cases from C-110's real composed
-API scenarios. An absent/unaccepted C-110 contract is BLOCKED, never a green core
-result. The separate full Compose HTTPS smoke waits for the actual rules worker
-verdict; it still labels live model, browser and phone push outside that scope.
+Current source assembly: exact B product3ef269bba80dbd6eafaff0d5e557da21f2d96244,
+including its identical reviewed863bed harness files. C-110 is strictly rebound
+at67496c1c38051b9c45d960caa3242ff0a37edaa4; every new integration head must pass a
+fresh secrecy preflight and actual Android-emulated browser/API/PostgreSQL run.
+The separate13-case synthetic Pixel9 job retains its explicitly historical B
+source pins. The full Compose HTTPS smoke verifies the actual rules worker,
+physical photo and master closure, plus protected PDF/XLSX exports. In history
+mode it also checks540 orders,568 attempts and444 missing historical photo rows.
+Live model, device push, physical phones and mixed-load capacity are separate
+checks; no overnight deployment is performed.
 
 Official image/config references checked2026-10-07:
 - https://hub.docker.com/_/caddy (2.11.7-alpine)

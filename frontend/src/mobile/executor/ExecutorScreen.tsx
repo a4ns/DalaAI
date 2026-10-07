@@ -236,6 +236,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
           <label htmlFor={`${id}-reason`}>Причина обязательна</label><textarea id={`${id}-reason`} value={draft.reason} maxLength={2000} disabled={frozen} onChange={(event) => patchDraft({ reason: event.target.value })} aria-invalid={Boolean(errors.reason)} aria-describedby={describedBy('reason')} rows={3} />{fieldError('reason')}
           <div className="executor-actions"><button className="executor-button" type="submit" disabled={!canCommand}>{mode === 'reject' ? 'Отклонить с причиной' : 'Поставить на паузу'}</button><button className="executor-button executor-button--secondary" type="button" disabled={frozen} onClick={() => { setMode('result'); setErrors({}); }}>Вернуться без отправки</button></div>
         </form>}
+        {((selected.status === 'in_progress' && mode === 'result') || ['done', 'ai_review', 'rework', 'closed'].includes(selected.status)) && props.resultAnalysisDisclosure}
         {selected.status === 'in_progress' && mode === 'result' && <form className="executor-form" noValidate onSubmit={(event) => { event.preventDefault(); command('submit'); }}>
           <h3>Результат работы</h3><p className="executor-caption">Черновик сохраняется в текущем сеансе. После перезагрузки или выхода он может быть потерян.</p>
           <ResourceNotice resource={props.dictionaries} name="Справочники" />

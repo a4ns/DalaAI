@@ -6,6 +6,7 @@ services:
   prepare:
     environment:
       DALA_DEMO_WORKER_CAPABILITY_ALLOWED: '1'
+      DALA_DEMO_FIXTURE_MODE: ${DALA_DEMO_FIXTURE_MODE:-minimal}
     secrets: [worker_dsn]
   budget-directory:
     build: {context: ../.., dockerfile: ops/demo/Dockerfile.api}

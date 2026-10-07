@@ -7,12 +7,12 @@
   "project": "c110-android-chromium",
   "required_test_title": "C110 real composed master executor lifecycle",
   "expected_test_count": 1,
-  "frontend_sha": "ca320bf692c01d89dd79496fe18d1bc2742052df",
-  "c110_source_sha": "23a135348a0e8ad9a140a36ca60e8440704b7893",
+  "frontend_sha": "3ef269bba80dbd6eafaff0d5e557da21f2d96244",
+  "c110_source_sha": "67496c1c38051b9c45d960caa3242ff0a37edaa4",
   "c110_source_blobs": {
-    "tests/e2e/c110_README.md": "d9f8ec73e5c1e7ffbccf915e8368f110f5377055",
-    "tests/e2e/c110_contract.cjs": "24166008e8acff20c8a5c770f490e79e418cd744",
-    "tests/e2e/c110_contract.test.cjs": "8108f233e1de57dade078a54c75bb42c3fbf6ffe",
+    "tests/e2e/c110_README.md": "c5854fc51631b8ef0ee08c4ef94b0152cac6dd53",
+    "tests/e2e/c110_contract.cjs": "2fafac6302688d9bac9e3182c8a6b0e24057df42",
+    "tests/e2e/c110_contract.test.cjs": "46143bf51c3f853f827eef9752d589471deeb689",
     "tests/e2e/c110_core.spec.cjs": "2e1f40370a81718a37ec228b772c3aaa86ad3f15",
     "tests/e2e/c110_gate.cjs": "2b5323141e106f1ad851996120997921ed2bc36c",
     "tests/e2e/c110_observe.py": "941c04b1e30819894a05ec1ab2eb2ecef8cc3498",
@@ -20,7 +20,7 @@
     "tests/e2e/c110_playwright.config.cjs": "0dea660c9917206067ed033e61628e7e803d5a8d",
     "tests/e2e/c110_preflight.config.cjs": "e587b4c443eef31ae75598b6d2753435928b55fa",
     "tests/e2e/c110_preflight.spec.cjs": "6cc0ee70d17ec2f91cd8821c879752f79455f981",
-    "tests/e2e/c110_preflight.test.cjs": "e7d851818faa61293295620de364cd00f8b573c0",
+    "tests/e2e/c110_preflight.test.cjs": "9405b17e5a42edeaa47d015e90b0a59d5345e07e",
     "tests/e2e/c110_preflight_proof.cjs": "9560a19b406ff6a724eb8233825b7302ac190fe1",
     "tests/e2e/c110_private_boundary.cjs": "21131ea97419332fa4a7c8eabb67359b2b097f61",
     "tests/e2e/c110_resume_source.test.cjs": "cefaecca28e2b83820b84a3a55985bf7b1fd8df7",
@@ -47,5 +47,5 @@
     "tests/e2e/package-lock.json",
     "tests/e2e/package.json"
   ],
-  "acceptance_source": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6047660476"
+  "acceptance_source": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6048503398"
 }

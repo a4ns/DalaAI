@@ -61,3 +61,11 @@ Executor operation tokens and drafts are retained per order/assignment inside th
 Only a new successful authorized list sweep can clear a per-order access fence. An unrelated receipt cannot clear that fence. A late receipt for an order omitted by a newer complete sweep can resolve the old operation without restoring the old order's visible data. Callback drafts and photos are keyed by assignment; late A callbacks do not update B.
 
 Author-side synthetic controller probes: `node frontend/src/app/executorController.test.cjs`. These are in-process injected transport tests, not browser/API/database evidence.
+
+## Optional device notifications
+
+The settings panel is inert on mount. Its explicit buttons use the accepted additive [A0-0031 contract](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6046265475); proposal.2 generated files are unchanged. Configuration, native subscription, backend binding and actual device delivery are separate states. Registration retries reuse the captured JSON bytes without an invented domain operation UUID. Logout starts a synchronous UI fence; expired/changed sessions cannot bind a late native subscription.
+
+Only the reviewed notification worker is included: no API/photo cache, offline queue, background mutations or automatic permission request. Malformed push payloads are dropped with a fixed content-free marker per A0-0036. Existing subscriptions require an explicit clear and a separate fresh enable action. Settings failure does not block order work.
+
+Synthetic integration check: `node frontend/src/app/pushSession.test.cjs` from repository root. Browser permission, HTTPS service-worker lifecycle, provider acceptance, real Android and locked-screen delivery remain NOT_RUN/BLOCKED; source tests do not establish those results.

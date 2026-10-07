@@ -106,8 +106,11 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     app.include_router(create_order_events_router(OrderEventService(connector, real_clock=clock)))
     from app.analytics.c3_repository import RuntimeReportService
     from app.reports.c4_routes import create_c_runtime_router
-    app.include_router(create_c_runtime_router(RuntimeReportService(
-        session_service, domain_clock=clock, synthetic=True)))
+    from app.reports.c5_export_routes import create_c_export_router
+    report_service = RuntimeReportService(session_service, domain_clock=clock, synthetic=True)
+    # Suffix export routes must precede the generic order-report UUID route.
+    app.include_router(create_c_export_router(report_service))
+    app.include_router(create_c_runtime_router(report_service))
     if photo_service is not None:
         from app.photos.http import create_photo_router
         app.include_router(create_photo_router(photo_service))

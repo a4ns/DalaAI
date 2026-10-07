@@ -10,5 +10,7 @@ dependencies = [
   "argon2-cffi==25.1.0",
   "Pillow==12.3.0",
   "python-multipart==0.0.32",
+  "reportlab==4.4.9",
+  "openpyxl==3.1.5",
 ]
 # Install the full exact dependency closure from requirements(-dev).lock.

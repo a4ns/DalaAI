@@ -97,4 +97,6 @@ export interface ExecutorScreenProps {
   photoBusy?: boolean;
   photoBusyReason?: string;
   renderPhotoPicker?: (context: ExecutorPhotoContext) => ReactNode;
+  /** Optional read-only disclosure for the selected authorized result; no mode is inferred here. */
+  resultAnalysisDisclosure?: ReactNode;
 }

@@ -35,6 +35,12 @@ jobs:
           python-version: '3.12.15'
           cache: pip
           cache-dependency-path: backend/requirements*.lock
+      - name: Install renderer test fonts from official Ubuntu package
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y fonts-dejavu-core
+          test -r /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+          test -r /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
       - name: Install pinned dependencies
         run: python -m pip install -r backend/requirements-dev.lock && python -m pip check
       - name: Mandatory frozen real-PostgreSQL gate
