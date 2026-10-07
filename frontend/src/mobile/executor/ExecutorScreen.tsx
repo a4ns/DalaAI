@@ -126,7 +126,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   async function perform(intent?: ExecutorIntent) {
     // Synchronous latch closes the gap before React renders a disabled button.
     if (inFlight.current || pending) return;
-    if (intent && !canCommand) return;
+    if (intent && (!canCommand || draftLocked.current)) return;
     if (!intent && mutation.status !== 'unknown_result') return;
     inFlight.current = true;
     draftLocked.current = true;
