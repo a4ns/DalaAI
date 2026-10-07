@@ -11,11 +11,13 @@ from io import BytesIO
 import math
 import os
 import pickle
+import re
 import subprocess
 import sys
 from pathlib import Path
 import time
 from zoneinfo import ZoneInfo
+from zipfile import ZipFile
 
 from app.analytics.c3_types import AnalyticsFacts
 from app.orders.models import DomainError
@@ -286,6 +288,40 @@ def _shown(value):
     return str(value)
 
 
+def _preserve_xlsx_carriage_returns(output, budget):
+    """Normalize only generated inline-text XML, before any XML parsing.
+
+    openpyxl's stdlib XML writer emits raw CR, which XML readers normalize to
+    LF. Its optional lxml writer uses character references. Use the same valid
+    XML representation for both, without changing cell types or user text.
+    """
+    data = output.getvalue()
+    with ZipFile(BytesIO(data)) as source:
+        changed = {}
+        for item in source.infolist():
+            budget.check()
+            if item.filename.startswith('xl/worksheets/') and item.filename.endswith('.xml'):
+                # This archive is generated above, never supplied by a user.
+                if item.file_size > 32 * 1024 * 1024:
+                    raise _limit()
+                xml = source.read(item)
+                if b'\r' in xml:
+                    fixed = re.sub(rb'(<t(?:\s[^>]*)?>)([^<]*)(</t>)',
+                        lambda m: m[1] + m[2].replace(b'\r', b'&#13;') + m[3], xml)
+                    if fixed != xml:
+                        changed[item.filename] = fixed
+        if not changed:
+            return data
+        corrected = _BoundedBytes()
+        with ZipFile(corrected, 'w') as target:
+            for item in source.infolist():
+                budget.check()
+                content = changed.get(item.filename)
+                target.writestr(item, source.read(item) if content is None else content)
+        budget.check()
+        return corrected.getvalue()
+
+
 def _xlsx(title, tables, budget):
     from openpyxl import Workbook
     from openpyxl.styles import Alignment, Font, PatternFill
@@ -340,7 +376,7 @@ def _xlsx(title, tables, budget):
     output = _BoundedBytes()
     book.save(output)
     budget.check()
-    return output.getvalue()
+    return _preserve_xlsx_carriage_returns(output, budget)
 
 
 def _pdf(title, tables, budget):

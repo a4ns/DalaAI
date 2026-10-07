@@ -7,9 +7,11 @@ from dataclasses import replace
 from datetime import datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
+import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import unittest
 from unittest.mock import patch
 from zipfile import ZipFile
@@ -71,7 +73,9 @@ class ExportFileTests(unittest.TestCase):
 
     def test_formula_dde_hyperlink_error_and_xml_text_are_literal(self):
         attacks = ['=HYPERLINK("https://evil.invalid","x")', '+cmd|\'/C calc\'!A0',
-                   '-1+2', '@SUM(A1:A2)', '\t=1+1', '\r=1+1', '#N/A', ATTACK]
+                   '-1+2', '@SUM(A1:A2)', '\t=1+1', '\r=1+1', '\r\n=1+1', 'before\rafter\nend',
+                   '\r\t@SUM(A1:A2)', 'literal &#13; and _x000D_', '_x005F_', '_x005F_x000D_',
+                   '_x000D_\r_x005F_', '#N/A', ATTACK]
         for attack in attacks:
             with self.subTest(attack=attack):
                 order = replace(self.facts.orders[0].order, description=attack)
@@ -83,12 +87,48 @@ class ExportFileTests(unittest.TestCase):
                 self.assertTrue(cell.quotePrefix)
                 self.assertIsNone(cell.hyperlink)
                 self.assertFalse(any(c.data_type in {'f', 'e'} for c in cells(book)))
+                self.assertEqual(book['Материалы попыток']['C2'].value, 1.125)
+                self.assertEqual(book['Материалы попыток']['C2'].data_type, 'n')
+                self.assertIsInstance(book['Решения мастера']['I3'].value, datetime)
+                self.assertIsNone(book['Решения мастера']['F3'].value)
                 with ZipFile(BytesIO(body)) as archive:
                     for name in archive.namelist():
                         if name.endswith('.rels'):
                             self.assertNotIn(b'TargetMode="External"', archive.read(name))
                     self.assertFalse(any('vbaProject' in name or 'externalLinks' in name or 'media/' in name
                                          for name in archive.namelist()))
+
+    def test_literal_roundtrip_in_fresh_process_with_each_xml_backend(self):
+        # Explicitly disable lxml in a fresh interpreter. Patching openpyxl.LXML
+        # after import does not switch its already-bound XML writer functions.
+        script = r"""
+import importlib.util
+import json
+import os
+import unittest
+import openpyxl
+from test_c5_exports import ExportFileTests
+expected = os.environ['OPENPYXL_LXML'] == 'True' and importlib.util.find_spec('lxml') is not None
+assert openpyxl.LXML is expected, (openpyxl.LXML, expected)
+suite = unittest.TestSuite(ExportFileTests(name) for name in (
+    'test_formula_dde_hyperlink_error_and_xml_text_are_literal',
+    'test_xlsx_numbers_dates_null_zero_and_human_ai_are_distinct',
+))
+result = unittest.TextTestRunner().run(suite)
+assert result.wasSuccessful()
+print(json.dumps({'lxml': openpyxl.LXML, 'tests': result.testsRun}))
+"""
+        for mode in ('False', 'True'):
+            with self.subTest(mode=mode):
+                env = {**os.environ, 'OPENPYXL_LXML': mode,
+                       'PYTHONPATH': os.pathsep.join(str(Path(p or os.getcwd()).resolve()) for p in sys.path)}
+                result = subprocess.run([sys.executable, '-c', script], env=env,
+                                        capture_output=True, text=True, timeout=15, check=False)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                proof = json.loads(result.stdout)
+                self.assertEqual(proof['tests'], 2)
+                if mode == 'False':
+                    self.assertFalse(proof['lxml'])
 
     def test_long_text_is_not_silently_truncated_and_order_is_scoped(self):
         other = replace(self.facts.orders[0], order=replace(self.facts.orders[0].order,
