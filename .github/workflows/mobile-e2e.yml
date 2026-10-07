@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # source identity for the built UI, no frontend overwrite
         with:
-          ref: 3ef269bba80dbd6eafaff0d5e557da21f2d96244
+          ref: 9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c
           path: .ci-c110-frontend-reference
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0

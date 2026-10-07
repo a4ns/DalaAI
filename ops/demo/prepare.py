@@ -40,7 +40,11 @@ def new_pin(exclude):
         if len(set(value))>=3 and value!='71426839' and value!=exclude:return value
 
 
-def prepare(directory,domain,bind,http_port,https_port,workers=False,fixture_mode=None):
+def prepare(directory,domain,bind,http_port,https_port,workers=False,fixture_mode=None,demo_clock=None):
+    if demo_clock is not None and type(demo_clock) is not bool:
+        raise ValueError('Explicit demo-clock boolean required')
+    if demo_clock and not workers:
+        raise ValueError('Demo clock requires full worker profile')
     if not re.fullmatch(r'[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?',domain) or '..' in domain:
         raise ValueError('Use one lowercase DNS hostname, without a scheme/path/port')
     if bind not in {'127.0.0.1','0.0.0.0'} or not all(1<=p<=65535 for p in (http_port,https_port)):
@@ -57,6 +61,22 @@ def prepare(directory,domain,bind,http_port,https_port,workers=False,fixture_mod
         if selected not in {'minimal','history'}:
             raise ValueError('Unsupported fixture mode')
         save_once(mode_path,selected)
+        clock_path=directory/'clock_mode'
+        if demo_clock is True and not clock_path.exists() and (directory/'env').exists():
+            raise ValueError('Existing pre-clock configuration cannot gain clock capability')
+        previous_clock=read_owned(clock_path) if clock_path.exists() else 'false'
+        chosen_clock=('true' if demo_clock else 'false') if demo_clock is not None else previous_clock
+        if chosen_clock not in {'true','false'}:
+            raise ValueError('Invalid persisted demo clock mode')
+        save_once(clock_path,chosen_clock)
+        if chosen_clock=='true':
+            from uuid import UUID,uuid4
+            clock_id_path=directory/'clock_instance'
+            clock_id=read_owned(clock_id_path) if clock_id_path.exists() else str(uuid4())
+            if str(UUID(clock_id))!=clock_id:
+                raise ValueError('Invalid persisted clock instance')
+            save_once(clock_id_path,clock_id)
+
     values={}
     for name in ('postgres_owner_password','postgres_runtime_password','master_pin','executor_pin'):
         path=directory/name
@@ -91,11 +111,12 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--directory',type=Path,required=True);p.add_argument('--domain',required=True)
     p.add_argument('--workers',action='store_true',help='Prepare the reviewed full worker profile and named-demo model policy')
+    p.add_argument('--demo-clock',choices=('true','false'),default=None,help='Fresh-only shared business clock; repeats preserve selection')
     p.add_argument('--fixture-mode',choices=('minimal','history'),default=None,
                    help='Fresh-only fixture choice; repeats preserve the stored choice')
     p.add_argument('--bind',default='127.0.0.1');p.add_argument('--http-port',type=int,default=8080);p.add_argument('--https-port',type=int,default=8443)
     a=p.parse_args()
-    try:prepare(a.directory,a.domain,a.bind,a.http_port,a.https_port,a.workers,a.fixture_mode)
+    try:prepare(a.directory,a.domain,a.bind,a.http_port,a.https_port,a.workers,a.fixture_mode,None if a.demo_clock is None else a.demo_clock=='true')
     except (ValueError,OSError):raise SystemExit('Private demo configuration not prepared; inspect ownership/configuration. No values disclosed.') from None
 
 

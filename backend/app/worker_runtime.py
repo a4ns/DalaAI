@@ -69,6 +69,8 @@ class WorkerSettings:
     telegram_enabled: bool = False
     model_force_off: bool = False
     runtime_mode: str = 'health'
+    demo_clock_enabled: bool = False
+    demo_clock_instance_id: str = ''
     database_url: str = field(default='', repr=False)
     database_schema: str = 'public'
     photo_storage_root: str = ''
@@ -81,6 +83,11 @@ class WorkerSettings:
     max_consecutive_errors: int = 5
 
     def __post_init__(self):
+        from app.demo_clock.runtime import validate_settings
+        try:
+            validate_settings(self.demo_clock_enabled,self.demo_clock_instance_id,self.runtime_mode)
+        except ValueError:
+            raise WorkerConfigurationError('WORKER_DEMO_CLOCK_CONFIG_INVALID') from None
         for name in ('enabled', 'ai_enabled', 'notify_enabled', 'telegram_enabled', 'model_force_off'):
             if type(getattr(self, name)) is not bool:
                 raise WorkerConfigurationError('WORKER_INVALID_FLAG')
@@ -124,6 +131,8 @@ class WorkerSettings:
                 telegram_enabled=_flag(env, 'DALA_WORKER_TELEGRAM_ENABLED'),
                 model_force_off=_flag(env, 'DALA_MODEL_FORCE_OFF'),
                 runtime_mode=env.get('DALA_API_MODE', 'health'),
+                demo_clock_enabled=_flag(env,'DALA_DEMO_CLOCK_ENABLED'),
+                demo_clock_instance_id=env.get('DALA_DEMO_CLOCK_INSTANCE_ID',''),
                 database_url=_secret(env, 'DALA_WORKER_DATABASE_URL'),
                 database_schema=env.get('DALA_DATABASE_SCHEMA', 'public'),
                 photo_storage_root=env.get('DALA_PHOTO_STORAGE_ROOT', ''),
@@ -214,14 +223,22 @@ _NOTIFY_GUARDS = {('employees', 'employees_identity_immutable'),
     ('delivery_dispatch_results', 'delivery_dispatch_results_immutable')}
 
 
-def validate_database(connect, *, ai_enabled=True, notify_enabled=True, web_push=False):
+def validate_database(connect, *, ai_enabled=True, notify_enabled=True, web_push=False,
+                      demo_clock_enabled=False, demo_clock_instance_id=""):
     """Read-only capability gate, including inherited grants; never applies SQL."""
     from psycopg import sql
     from psycopg.pq import TransactionStatus
     from psycopg.rows import dict_row
     grants = worker_grants(ai_enabled=ai_enabled, notify_enabled=notify_enabled, web_push=web_push)
+    if type(demo_clock_enabled) is not bool:
+        raise WorkerPrerequisiteError('WORKER_CLOCK_CAPABILITY_INVALID')
+    if demo_clock_enabled:
+        grants['select']['demo_clock_state'] = '*'
     required = set(grants['select']) | set(grants['insert']) | set(grants['update'])
     guards = _COMMON_GUARDS | (_AI_GUARDS if ai_enabled else set()) | (_NOTIFY_GUARDS if notify_enabled else set())
+    if demo_clock_enabled:
+        from app.demo_clock.runtime import GUARDS
+        guards |= GUARDS
     if web_push:
         guards |= {('push_subscriptions', 'push_subscription_owner_immutable')}
     try:
@@ -255,6 +272,11 @@ def validate_database(connect, *, ai_enabled=True, notify_enabled=True, web_push
                 WHERE n.nspname=current_schema() AND c.relkind IN ('r','p','v','m','f')''').fetchall()
             if not required <= {r['relname'] for r in tables}:
                 raise WorkerPrerequisiteError('WORKER_SCHEMA_MISSING')
+            if any(r['relname']=='demo_clock_state' for r in tables) and not demo_clock_enabled:
+                raise WorkerPrerequisiteError('WORKER_DEMO_CLOCK_CAPABILITY_REQUIRED')
+            if demo_clock_enabled:
+                from app.demo_clock.runtime import verify_state
+                verify_state(db,demo_clock_instance_id)
             for table in tables:
                 name, oid = table['relname'], table['oid']
                 for privilege in ('DELETE', 'TRUNCATE', 'TRIGGER', 'REFERENCES'):
@@ -401,8 +423,7 @@ class WorkerRuntime:
 def build_runtime(settings, *, environment=None, connect=None):
     """Explicit assembly only. Security and domain clocks are separate wall clocks.
 
-    No demo advance/scale input is read. A future shared demo-clock proposal must
-    be reviewed across API and worker; it can never replace the security clock.
+    Optional shared business time never replaces security, budget or lease time.
     """
     if not settings.enabled:
         raise WorkerConfigurationError('WORKER_EXPLICIT_ENABLE_REQUIRED')
@@ -412,6 +433,11 @@ def build_runtime(settings, *, environment=None, connect=None):
     from app.jobs.evidence import UnverifiedPhysicalReferences
     connector = connect or connection_factory(settings)
     real_clock, domain_clock = SystemRealClock(), SystemRealClock()
+    if settings.demo_clock_enabled:
+        from app.demo_clock.clock import DemoClockSettings
+        from app.demo_clock.postgres import build_domain_clock
+        domain_clock = build_domain_clock(DemoClockSettings(enabled=True,mode='demo',isolated_demo=True),
+            connect=connector,instance_id=settings.demo_clock_instance_id)
     runtime = WorkerRuntime(settings)
     adapter = None
     if settings.notify_enabled:
@@ -438,8 +464,9 @@ def build_runtime(settings, *, environment=None, connect=None):
     # A disabled provider never reconciles or claims jobs to mark them failed.
     if not (settings.ai_enabled or active_notify):
         raise WorkerConfigurationError('WORKER_NO_CONFIGURED_LANES')
+    clock_options = dict(demo_clock_enabled=True,demo_clock_instance_id=settings.demo_clock_instance_id) if settings.demo_clock_enabled else {}
     validate_database(connector, ai_enabled=settings.ai_enabled, notify_enabled=settings.notify_enabled,
-                      web_push=settings.notify_enabled and settings.channel == 'web_push')
+                      web_push=settings.notify_enabled and settings.channel == 'web_push', **clock_options)
     references = UnverifiedPhysicalReferences
     verifier = None
     if settings.ai_enabled and settings.photo_storage_root:

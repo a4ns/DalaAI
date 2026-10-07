@@ -69,4 +69,17 @@ class PrivateBootstrapTests(unittest.TestCase):
                 with self.assertRaises(ValueError):module.prepare(target,host,'127.0.0.1',8080,8443)
                 self.assertFalse(target.exists())
 
+    def test_clock_choice_and_instance_survive_repeat_without_silent_switch(self):
+        from uuid import UUID
+        with tempfile.TemporaryDirectory() as root:
+            directory=Path(root)/'private'
+            with patch.object(module.secrets,'token_urlsafe',return_value='SYNTHETIC_'+'x'*34),patch.object(module.secrets,'randbelow',side_effect=[12345678,87654321]),patch.object(module.secrets,'token_hex',return_value='f'*32),contextlib.redirect_stdout(io.StringIO()):
+                module.prepare(directory,'localhost','127.0.0.1',8080,8443,workers=True,demo_clock=True)
+                identifier=(directory/'clock_instance').read_text().strip()
+                self.assertEqual(str(UUID(identifier)),identifier)
+                module.prepare(directory,'localhost','127.0.0.1',8080,8443,workers=True)
+                self.assertEqual((directory/'clock_instance').read_text().strip(),identifier)
+                with self.assertRaises(ValueError):
+                    module.prepare(directory,'localhost','127.0.0.1',8080,8443,workers=True,demo_clock=False)
+
 if __name__=='__main__':unittest.main()

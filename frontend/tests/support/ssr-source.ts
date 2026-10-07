@@ -5,8 +5,9 @@ import { Script } from 'node:vm';
 import ts from 'typescript';
 
 /** Playwright rewrites TSX as component descriptors. Compile a leaf source module
- * with TypeScript's real React runtime for static SSR only, without browser/effect claims. */
-export function ssrSourceModule<T>(relativePath: string): T {
+ * with TypeScript's real React runtime for static SSR only, without browser/effect claims.
+ * Dependencies may supply other actually compiled JSX modules and a no-op CSS module. */
+export function ssrSourceModule<T>(relativePath: string, dependencies: Readonly<Record<string, unknown>> = {}): T {
   if (!relativePath.startsWith('src/') || relativePath.includes('..')) throw new Error('SSR tests may read frontend source only.');
   const filename = path.resolve(process.env.UI_REVIEW_ROOT ?? process.cwd(), relativePath);
   const compiled = ts.transpileModule(readFileSync(filename, 'utf8'), {
@@ -15,6 +16,8 @@ export function ssrSourceModule<T>(relativePath: string): T {
   }).outputText;
   const module = { exports: {} };
   const evaluate = new Script(`(function(require, module, exports) { ${compiled}\n})`, { filename }).runInThisContext() as (require: NodeJS.Require, module: { exports: unknown }, exports: unknown) => void;
-  evaluate(createRequire(filename), module, module.exports);
+  const originalRequire = createRequire(filename);
+  const moduleRequire = ((specifier: string) => Object.hasOwn(dependencies, specifier) ? dependencies[specifier] : originalRequire(specifier)) as NodeJS.Require;
+  evaluate(moduleRequire, module, module.exports);
   return module.exports as T;
 }

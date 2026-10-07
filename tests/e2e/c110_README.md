@@ -1,20 +1,24 @@
 # C-110: real composed browser/API/PostgreSQL core journey
 
-Current optional-UI target: **browser/API/DB rerun NOT_RUN** in C0's environment.
+Current analytics-UI product target: **browser/API/DB rerun NOT_RUN** in C0's environment.
 Source/parser tests are separate evidence. This is an executable Playwright
 journey, not a completed runtime result. No successful business response is
-mocked. For the next C110 gate, the optional push/disclosure frontend is pinned
-**only** to `3ef269bba80dbd6eafaff0d5e557da21f2d96244`, per
-[A0-0050](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6048402934).
+mocked. For the next C110 manual-core gate, the analytics-UI frontend is pinned
+**only** to `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`, per
+[A0-0056](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6048842900).
 
 A5 builds/binds that exact candidate and records its exact backend source SHA.
-The previous `ca320bf` / `2beb2244` baselines, intermediate `45a65ae`, shortened
+The previous `3ef269b` / `ca320bf` / `2beb2244` baselines, intermediate `45a65ae`, shortened
 SHAs and unknown candidates are rejected. Earlier baseline evidence is not relabeled.
 
 Historical ca320bf manual-core PASS was reported by A0 on exact main
 `ab632c0cf411b7670c1a03fe7aa97419950019a2` in
 [this CI job](https://github.com/a4ns/DalaAI/actions/runs/37697793713/job/113053699040).
-That result does not cover the new 3ef269b target; A5 must run fresh preflight and core.
+Historical optional-UI 3ef269b manual-core PASS was later reported by A0 on
+`3d4312b815fd7ca60baa176dc1e3449f9ca3a34f` in
+[this dedicated CI job](https://github.com/a4ns/DalaAI/actions/runs/37701307143/job/113065128591).
+Neither result covers the new 9a1d6109 target or establishes a wholly green
+aggregate. A5 must run fresh preflight and core for the current exact product.
 
 ## Stable A5 integration seam
 
@@ -43,7 +47,7 @@ Required inputs:
 | `DALA_E2E_FIXTURE_FILE` | Public fixture object from A0-0036, without dry-run wrapper |
 | `DALA_E2E_MASTER_PIN_FILE` | Operator-private file for the synthetic master |
 | `DALA_E2E_EXECUTOR_PIN_FILE` | Operator-private file for the synthetic executor |
-| `DALA_E2E_FRONTEND_SHA` | Exactly `3ef269bba80dbd6eafaff0d5e557da21f2d96244`, required for preflight, core and evidence gate |
+| `DALA_E2E_FRONTEND_SHA` | Exactly `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`, required for preflight, core and evidence gate |
 | `DALA_E2E_BACKEND_SHA` | Exact 40-hex source SHA used to build the running backend |
 | `DALA_C110_RUN_ID` | Unique non-secret lowercase identifier, 8–64 chars, digits/hyphens allowed |
 | `DALA_C110_PREFLIGHT_RECEIPT` | New absolute public receipt path written by the mandatory executable preflight below |
@@ -205,8 +209,9 @@ Back reappears only after resumed `in_progress` renders, and result fields appea
 only after Back is clicked. C110 now unconditionally waits for Back (10 seconds),
 clicks it, then waits for the work-result field (10 seconds). The source regression
 rejects the former instantaneous visibility probe and a missing result wait.
-This is a source-proven timing hazard, **not an observed browser failure or a
-browser-verified fix**. Actual rerun and fresh secrecy preflight remain A5 gates.
+The original defect was source-proven, **not an observed browser failure**.
+Historical manual-core reruns later passed on their exact older targets. The
+current product still requires A5's fresh preflight and full core rerun.
 
 ## Optional-UI selector compatibility (source-only)
 
@@ -221,5 +226,23 @@ its unknown assessment copy does not claim a model or rules verdict.
 lookup, service-worker registration and permission/subscription actions require
 explicit push buttons, which this core test never clicks. Service workers stay
 blocked; native push/provider delivery remains NOT_RUN. This source compatibility
-review is not a runtime pass for the newer product. Upcoming analytics UI is not
-part of this exact candidate or C110 binding.
+review did not itself establish a runtime pass; its later exact runtime result
+is recorded separately above.
+
+## Analytics-UI product compatibility (source-only)
+
+Compared exact `3ef269bba80dbd6eafaff0d5e557da21f2d96244` with
+`9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`. Master/executor screens, photo controls,
+review controls, panel history, push mount and disclosure are byte-unchanged.
+The master gains «Аналитика и отчёты». C110 stays in «Наряды» until it opens
+«Обзор смены», whose controls and visibility remain compatible.
+
+The hidden analytics mount only constructs a controller and subscribes to session
+changes; its initial state is idle. Facts/reports are requested by explicit
+analytics actions, which C110 never invokes. Existing core API request handling
+is preserved; analytics-only validators and response limits are additive.
+
+This is only the manual-core source binding. The separate C112 journey owns
+analytics/report browser acceptance. Future download-control candidates are not
+accepted by this exact pin, and no analytics, download or new-product runtime
+PASS is inferred from selector inspection or older core evidence.

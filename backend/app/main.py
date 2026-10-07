@@ -35,6 +35,12 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     from app.discovery.workload import POLICY_NAME, WorkloadPolicy
     connector = connect or connection_factory(settings)
     clock = SystemRealClock()
+    domain_clock = clock
+    if settings.demo_clock_enabled:
+        from app.demo_clock.clock import DemoClockSettings
+        from app.demo_clock.postgres import build_domain_clock
+        domain_clock = build_domain_clock(DemoClockSettings(enabled=True,mode='demo',isolated_demo=True),
+            connect=connector,instance_id=settings.demo_clock_instance_id)
     photo_enabled = bool(settings.photo_storage_root)
     references_factory = UnavailablePhotoReferences
     photo_service = None
@@ -50,6 +56,10 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
         references_factory = partial(VerifiedPhotoReferences, verifier=PhotoIntegrityVerifier(store))
 
     def check_database():
+        if settings.demo_clock_enabled:
+            return validate_database(connector,photo_enabled=photo_enabled,
+                notification_enabled=settings.notification_enabled,push_enabled=settings.push_enabled,
+                demo_clock_enabled=True,demo_clock_instance_id=settings.demo_clock_instance_id)
         if settings.notification_enabled or settings.push_enabled:
             return validate_database(connector, photo_enabled=photo_enabled,
                 notification_enabled=settings.notification_enabled, push_enabled=settings.push_enabled)
@@ -98,16 +108,25 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     session_service = SessionService(connector, allowed_origin=settings.allowed_origin,
                                     demo_enabled=True, real_clock=clock)
     app.include_router(session_router(session_service))
+    if settings.demo_clock_enabled:
+        from app.core.auth_policy import Role
+        from app.demo_clock.runtime import DEMO_MASTER_ID
+        from app.demo_clock.service import DemoClockService, postgres_authorization_scope
+        from app.demo_clock.http import create_demo_clock_router
+        app.include_router(create_demo_clock_router(DemoClockService(domain_clock,
+            authorization_scope=postgres_authorization_scope(connector),allowed_origin=settings.allowed_origin,
+            allowed_operator_ids=frozenset({DEMO_MASTER_ID}),operator_roles=frozenset({Role.MASTER}),real_clock=clock)))
+
     app.include_router(command_router(CommandService(connector, allowed_origin=settings.allowed_origin,
-                       delivery_channel=settings.delivery_channel, domain_clock=clock, real_clock=clock,
+                       delivery_channel=settings.delivery_channel, domain_clock=domain_clock, real_clock=clock,
                        references_factory=references_factory)))
-    app.include_router(create_discovery_router(DiscoveryService(connector, domain_clock=clock,
+    app.include_router(create_discovery_router(DiscoveryService(connector, domain_clock=domain_clock,
                        real_clock=clock, dictionary_policy=WorkloadPolicy(POLICY_NAME))))
     app.include_router(create_order_events_router(OrderEventService(connector, real_clock=clock)))
     from app.analytics.c3_repository import RuntimeReportService
     from app.reports.c4_routes import create_c_runtime_router
     from app.reports.c5_export_routes import create_c_export_router
-    report_service = RuntimeReportService(session_service, domain_clock=clock, synthetic=True)
+    report_service = RuntimeReportService(session_service, domain_clock=domain_clock, synthetic=True)
     # Suffix export routes must precede the generic order-report UUID route.
     app.include_router(create_c_export_router(report_service))
     app.include_router(create_c_runtime_router(report_service))

@@ -17,9 +17,13 @@ class RuntimeSettings:
     notification_enabled: bool = False
     push_enabled: bool = False
     delivery_channel: str = 'synthetic'
+    demo_clock_enabled: bool = False
+    demo_clock_instance_id: str = ''
 
     def __post_init__(self):
         from pathlib import Path
+        from app.demo_clock.runtime import validate_settings
+        validate_settings(self.demo_clock_enabled,self.demo_clock_instance_id,self.mode)
         if any(type(v) is not bool for v in (self.notification_enabled, self.push_enabled)):
             raise ValueError('Runtime capabilities must be explicit booleans')
         if self.delivery_channel not in {'synthetic', 'web_push', 'telegram'}:
@@ -54,7 +58,9 @@ class RuntimeSettings:
                    photo_max_total_bytes=int(os.environ.get('DALA_PHOTO_MAX_TOTAL_BYTES',str(1024*1024*1024))),
                    notification_enabled=flag('DALA_NOTIFICATION_CAPABILITY'),
                    push_enabled=flag('DALA_PUSH_CAPABILITY'),
-                   delivery_channel=os.environ.get('DALA_DELIVERY_CHANNEL', 'synthetic'))
+                   delivery_channel=os.environ.get('DALA_DELIVERY_CHANNEL', 'synthetic'),
+                   demo_clock_enabled=flag('DALA_DEMO_CLOCK_ENABLED'),
+                   demo_clock_instance_id=os.environ.get('DALA_DEMO_CLOCK_INSTANCE_ID',''))
 
 
 def connection_factory(settings):
@@ -118,11 +124,12 @@ class RuntimePrerequisiteError(RuntimeError):
         super().__init__('Runtime database prerequisites failed')
 
 
-def validate_database(connect, *, photo_enabled=False, push_enabled=False, notification_enabled=False):
+def validate_database(connect, *, photo_enabled=False, push_enabled=False, notification_enabled=False,
+                      demo_clock_enabled=False, demo_clock_instance_id=""):
     """No grants, seeds, migrations or external calls. Never include DSN in errors."""
     from psycopg import sql
     from psycopg.rows import dict_row
-    if any(type(v) is not bool for v in (photo_enabled, push_enabled, notification_enabled)):
+    if any(type(v) is not bool for v in (photo_enabled, push_enabled, notification_enabled, demo_clock_enabled)):
         raise RuntimePrerequisiteError('INVALID_RUNTIME_CAPABILITY')
     insert_tables = (*INSERT_TABLES, 'photos') if photo_enabled else INSERT_TABLES
     table_columns = dict(TABLE_COLUMNS)
@@ -142,6 +149,12 @@ def validate_database(connect, *, photo_enabled=False, push_enabled=False, notif
         update_columns['push_subscriptions'] = table_columns['push_subscriptions'][1:]
         insert_tables = (*insert_tables, 'push_subscriptions')
         required_triggers.add(('push_subscriptions','push_subscription_owner_immutable'))
+    if demo_clock_enabled:
+        from app.demo_clock.runtime import STATE_COLUMNS, CONTROL_COLUMNS, STATE_UPDATES, GUARDS
+        table_columns.update(demo_clock_state=STATE_COLUMNS,demo_clock_controls=CONTROL_COLUMNS)
+        update_columns['demo_clock_state'] = STATE_UPDATES
+        insert_tables = (*insert_tables,'demo_clock_controls')
+        required_triggers |= GUARDS
     try:
         with connect() as db:
             if not db.autocommit:
@@ -162,10 +175,26 @@ def validate_database(connect, *, photo_enabled=False, push_enabled=False, notif
                     sql.SQL(',').join(map(sql.Identifier,columns)),sql.Identifier(table)))
             found = db.execute('''SELECT c.relname,t.tgname FROM pg_trigger t
                 JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace
-                WHERE n.nspname=current_schema() AND t.tgenabled IN ('O','A')''').fetchall()
+                WHERE n.nspname=current_schema() AND t.tgenabled IN ('O','A')
+                UNION ALL SELECT 'demo_clock_state','__installed__'
+                WHERE to_regclass('demo_clock_state') IS NOT NULL''').fetchall()
+            if ('demo_clock_state','__installed__') in {(r['relname'],r['tgname']) for r in found} and not demo_clock_enabled:
+                raise RuntimePrerequisiteError('DEMO_CLOCK_CAPABILITY_REQUIRED')
             if not required_triggers <= {(r['relname'],r['tgname']) for r in found}:
                 raise RuntimePrerequisiteError('REQUIRED_GUARD_MISSING')
+            if demo_clock_enabled:
+                from app.demo_clock.runtime import verify_state
+                verify_state(db,demo_clock_instance_id)
             for table in table_columns:
+                if demo_clock_enabled and table in {'demo_clock_state','demo_clock_controls'}:
+                    for privilege in ('REFERENCES','SELECT WITH GRANT OPTION','INSERT WITH GRANT OPTION','UPDATE WITH GRANT OPTION'):
+                        if db.execute('SELECT has_table_privilege(%s,%s) AS ok',(table,privilege)).fetchone()['ok']:
+                            raise RuntimePrerequisiteError('FORBIDDEN_GRANT')
+                    clock_columns = db.execute("SELECT attname FROM pg_attribute WHERE attrelid=%s::regclass AND attnum>0 AND NOT attisdropped",(table,)).fetchall()
+                    for column in clock_columns:
+                        for privilege in ('REFERENCES','SELECT WITH GRANT OPTION','INSERT WITH GRANT OPTION','UPDATE WITH GRANT OPTION','REFERENCES WITH GRANT OPTION'):
+                            if db.execute('SELECT has_column_privilege(%s,%s,%s) AS ok',(table,column['attname'],privilege)).fetchone()['ok']:
+                                raise RuntimePrerequisiteError('FORBIDDEN_GRANT')
                 for privilege in ('DELETE','TRUNCATE','TRIGGER'):
                     if db.execute('SELECT has_table_privilege(%s,%s) AS ok',(table,privilege)).fetchone()['ok']:
                         raise RuntimePrerequisiteError('FORBIDDEN_GRANT')

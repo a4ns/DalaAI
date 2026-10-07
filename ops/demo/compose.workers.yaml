@@ -6,6 +6,8 @@ services:
   prepare:
     environment:
       DALA_DEMO_WORKER_CAPABILITY_ALLOWED: '1'
+      DALA_DEMO_CLOCK_ENABLED: ${DALA_DEMO_CLOCK_ENABLED:-false}
+      DALA_DEMO_CLOCK_INSTANCE_ID: ${DALA_DEMO_CLOCK_INSTANCE_ID:-}
       DALA_DEMO_FIXTURE_MODE: ${DALA_DEMO_FIXTURE_MODE:-minimal}
     secrets: [worker_dsn]
   budget-directory:
@@ -20,6 +22,8 @@ services:
     read_only: true
   api:
     environment:
+      DALA_DEMO_CLOCK_ENABLED: ${DALA_DEMO_CLOCK_ENABLED:-false}
+      DALA_DEMO_CLOCK_INSTANCE_ID: ${DALA_DEMO_CLOCK_INSTANCE_ID:-}
       DALA_NOTIFICATION_CAPABILITY: 'true'
       DALA_PUSH_CAPABILITY: 'true'
       DALA_DELIVERY_CHANNEL: web_push
@@ -33,6 +37,8 @@ services:
     environment:
       DALA_API_MODE: demo
       DALA_DATABASE_SCHEMA: dalaai_demo
+      DALA_DEMO_CLOCK_ENABLED: ${DALA_DEMO_CLOCK_ENABLED:-false}
+      DALA_DEMO_CLOCK_INSTANCE_ID: ${DALA_DEMO_CLOCK_INSTANCE_ID:-}
       DALA_WORKER_ENABLED: 'true'
       DALA_WORKER_AI_ENABLED: 'true'
       DALA_WORKER_NOTIFY_ENABLED: 'true'

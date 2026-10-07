@@ -12,8 +12,8 @@ and report export remain separate gates. No deployment is performed.
 ## C-110 accepted source and build provenance
 
 `scenarios.json` accepts exact C source
-`67496c1c38051b9c45d960caa3242ff0a37edaa4` and optional frontend
-`3ef269bba80dbd6eafaff0d5e557da21f2d96244`. C includes the bounded resume/Back
+`d674d8a1cc261760c89b04b555123ca775f3c845` and analytics frontend
+`9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`. C includes the bounded resume/Back
 render waits and version-2 frontend/source-bound receipt. Missing or altered
 source still blocks before private execution. Do not lower counts or silently
 skip a missing input.
@@ -24,6 +24,12 @@ The earlier exact `ca320bf` / C`23a135` manual-core PASS on main
 It does not cover this optional frontend. A fresh target/source-bound secrecy
 preflight and actual core run are required. The added push/disclosure UI does not
 turn this manual-core gate into provider or notification-delivery evidence.
+
+The optional frontend `3ef269b` / C`67496` later passed this manual core on
+`4d38c71164a56b0eeefa9eb0430eb9100bcd7a3d`, with all seven then-existing CI
+workflows green. That preserved result does not cover the new `9a1d610` target.
+C112's read-only historical analytics journey is a separate forthcoming gate;
+its future result must not be inferred from a C110 core pass.
 
 The active integration uses C's unchanged config
 `tests/e2e/c110_playwright.config.cjs`, project `c110-android-chromium`, and C's own

@@ -120,9 +120,8 @@ as both supplied demo accounts, then follow ops/provision/C5_TWO_ROLE_RUNBOOK.md
 A10-minute two-physical-Android check still requires real devices and explicit
 camera/notification permissions. CI Android emulation does not replace it.
 
-Current source assembly: exact B product3ef269bba80dbd6eafaff0d5e557da21f2d96244,
-including its identical reviewed863bed harness files. C-110 is strictly rebound
-at67496c1c38051b9c45d960caa3242ff0a37edaa4; every new integration head must pass a
+Current source assembly: exact B analytics product9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c.
+C-110 is strictly rebound atd674d8a1cc261760c89b04b555123ca775f3c845; every new integration head must pass a
 fresh secrecy preflight and actual Android-emulated browser/API/PostgreSQL run.
 The separate13-case synthetic Pixel9 job retains its explicitly historical B
 source pins. The full Compose HTTPS smoke verifies the actual rules worker,
@@ -135,3 +134,29 @@ Official image/config references checked2026-10-07:
 - https://hub.docker.com/_/caddy (2.11.7-alpine)
 - https://hub.docker.com/_/node (24.21.0-bookworm-slim)
 - https://caddyserver.com/docs/caddyfile/directives/reverse_proxy
+
+## Optional shared business clock
+
+Before first initialization only, run
+`DALA_DEMO_CLOCK_ENABLED=true ops/demo/run.sh`. The launcher persists one UUID
+and the choice beside its private configuration. API and worker share the same
+PostgreSQL mapping; normal repeats preserve it. An already initialized profile
+cannot gain this capability or switch back to wall time silently. Use the
+operator-approved fresh schema/profile; no reset or database deletion is offered.
+
+The existing synthetic master alone can GET/POST `/api/v1/demo/clock`; executor
+and other identities cannot control it. Use the same cookie, exact Origin and
+session CSRF header. POST includes `instance_id`, `expected_version`, and either
+`action: set_scale` with integer `scale`0–60 or `action: advance` with `seconds`1–3600.
+Zero pauses business time,1 resumes. Stale or repeated control returns409; GET
+before deciding on another action. No rewind/reset exists. The seven-business-day
+horizon is fixed. Clock controls do not change session/photo TTL, lease/backoff,
+provider timeout or OpenAI budget/approval clocks. The UI should display the
+returned Russian synthetic-time label whenever consuming this optional clock.
+
+The separate optional Compose gate tests pause/advance/CAS and the real
+photo/rules/human-close cycle. Physical devices and real provider timing remain
+outside those checks. Render operators use `enable_demo_clock.py` on a fresh
+schema and forward identical `DALA_DEMO_CLOCK_ENABLED=true` and
+`DALA_DEMO_CLOCK_INSTANCE_ID` to API/worker; the managed supervisor allows only
+these non-secret settings, no owner credentials.

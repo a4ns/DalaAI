@@ -18,6 +18,7 @@ def main():
     p.add_argument('--base-url',required=True);p.add_argument('--ca-file',type=Path,required=True)
     p.add_argument('--secrets',type=Path,required=True);p.add_argument('--report',type=Path,required=True)
     p.add_argument('--source-sha',required=True);p.add_argument('--expect-rules-worker',action='store_true')
+    p.add_argument('--expect-demo-clock',choices=('true','false'),default='false')
     p.add_argument('--fixture-mode',choices=('minimal','history'),default='minimal');a=p.parse_args()
     parsed=urlsplit(a.base_url)
     if parsed.scheme!='https' or parsed.hostname!='localhost' or parsed.path:
@@ -52,6 +53,23 @@ def main():
             actor_tokens[actor]=session['csrf_token']
             assert json_call(actor,'/api/v1/me')['principal']['role']==actor
         report['steps'].append('two real Argon2 cookie sessions and CSRF')
+        clock_snapshot=None
+        if a.expect_demo_clock=='true':
+            snapshot=json_call('master','/api/v1/demo/clock')
+            assert snapshot['mode']=='synthetic_demo' and snapshot['storage']=='postgres_shared'
+            assert call('executor','/api/v1/demo/clock')[0]==403
+            paused=json_call('master','/api/v1/demo/clock',{'instance_id':snapshot['instance_id'],
+                'expected_version':snapshot['version'],'action':'set_scale','scale':0})
+            command={'instance_id':paused['instance_id'],'expected_version':paused['version'],
+                     'action':'advance','seconds':3600}
+            clock_snapshot=json_call('master','/api/v1/demo/clock',command)
+            assert call('master','/api/v1/demo/clock',command)[0]==409
+            assert datetime.fromisoformat(clock_snapshot['domain_now'])-datetime.fromisoformat(paused['domain_now'])==timedelta(hours=1)
+            assert json_call('executor','/api/v1/me')['principal']['role']=='executor'
+            report['clock']='PASS_SHARED_PAUSE_ADVANCE_CAS_MASTER_ONLY'
+        else:
+            assert call('master','/api/v1/demo/clock')[0]==404
+
         d=json_call('master','/api/v1/dicts');actor=d['executors'][0]
         section=actor['section_ids'][0];executor=actor['id']
         equipment=next(row['id'] for row in d['equipment'] if row['section_id']==section)
@@ -75,6 +93,8 @@ def main():
             'equipment_id':equipment,'assignment':{'executor_id':executor,'brigade_id':None},
             'due_at':(datetime.now(timezone.utc)+timedelta(hours=2)).isoformat(),'norm_minutes':30,
             'priority':'normal','comment':'Только тестовые данные','before_photo_ids':[]}},expected=201)
+        if clock_snapshot:
+            assert created['order']['issued_at']==clock_snapshot['domain_now']
         order=created['order']['id'];route=f'/api/v1/orders/{order}/commands'
         for version,action in ((1,'accept'),(2,'start')):
             json_call('executor',route,{'operation_id':str(uuid4()),'expected_version':version,'action':action,'payload':{}})
@@ -132,6 +152,9 @@ def main():
                 assert call('executor',path)[0]==403
         report['exports']='PASS_ACTUAL_CONTAINER_PDF_XLSX_MASTER_ONLY'
         report['steps'].append('actual API image renders four protected PDF/XLSX exports with embedded Cyrillic font')
+        if clock_snapshot:
+            assert json_call('master','/api/v1/demo/clock')['domain_now']==clock_snapshot['domain_now']
+            report['steps'].append('API and separate rules worker completed while shared business time stayed paused; real auth remained valid')
         report['status']='PASS_COMPOSE_PHOTO_CYCLE'
     except Exception as error:
         report['error_type']=type(error).__name__

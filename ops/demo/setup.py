@@ -10,6 +10,10 @@ for key,name in MAPPING.items():
     value=(Path('/run/secrets')/name).read_text().strip()
     if not value:raise SystemExit('Required setup secret file is empty')
     os.environ[key]=value
-helper='enable_worker_capabilities.py' if worker_profile else 'enable_photo_capability.py'
+clock_mode=os.environ.get('DALA_DEMO_CLOCK_ENABLED','false')
+if clock_mode not in ('true','false') or (clock_mode=='true' and not worker_profile):
+    raise SystemExit('Invalid explicit clock capability')
+if clock_mode=='true':os.environ['DALA_DEMO_CLOCK_CAPABILITY_ALLOWED']='1'
+helper='enable_demo_clock.py' if clock_mode=='true' else ('enable_worker_capabilities.py' if worker_profile else 'enable_photo_capability.py')
 os.execvp('python',['python','ops/provision/'+helper,'--backend','/service',
     '--schema',os.environ['DALA_DATABASE_SCHEMA'],'--expected-database','naryadai','--bootstrap','--apply'])

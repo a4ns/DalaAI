@@ -38,3 +38,11 @@ include pinned DejaVu Cyrillic fonts. Existing B optional push settings and
 conditional model-processing disclosure are imported at exact3ef269, with C110
 strictly rebound at67496. Actual new-head image/browser/PG gates are mandatory;
 source tests do not substitute for those gates.
+
+2026-10-07: shared synthetic business-clock capability is a fresh, explicit opt-in.
+One persisted instance is read by API and worker; only the existing synthetic
+master controls it. State/audit constraints, scoped grants and expected-version
+CAS are validated. Authentication/photo expiry, lease/retry and provider/budget
+clocks remain real. Default profiles are unchanged, no reset/adoption/rewind is
+implemented. B9a1d analytics source and strict Cd674 core binding are assembled;
+actual analytics/history browser coverage is a separate forthcoming C112 gate.

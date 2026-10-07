@@ -9,15 +9,22 @@ concurrency:
   cancel-in-progress: true
 jobs:
   compose:
-    name: Compose HTTPS ${{ matrix.fixture_mode }} fixture
+    name: Compose HTTPS ${{ matrix.fixture_mode }} clock=${{ matrix.clock }}
     strategy:
       fail-fast: false
       matrix:
-        fixture_mode: [minimal, history]
+        include:
+          - fixture_mode: minimal
+            clock: 'false'
+          - fixture_mode: history
+            clock: 'false'
+          - fixture_mode: minimal
+            clock: 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       DALA_DEMO_FIXTURE_MODE: ${{ matrix.fixture_mode }}
+      DALA_DEMO_CLOCK_ENABLED: ${{ matrix.clock }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false}
@@ -43,7 +50,7 @@ jobs:
           python ops/demo/smoke_https.py --base-url https://localhost:8443
           --ca-file "$RUNNER_TEMP/dalaai-local-ca.crt" --secrets ops/demo/.local
           --report compose-demo-summary.json --source-sha "$GITHUB_SHA" --expect-rules-worker
-          --fixture-mode "$DALA_DEMO_FIXTURE_MODE"
+          --fixture-mode "$DALA_DEMO_FIXTURE_MODE" --expect-demo-clock "$DALA_DEMO_CLOCK_ENABLED"
       - name: Repeat startup without migration, grants or account reset
         run: ops/demo/run.sh
       - name: Stop disposable services
