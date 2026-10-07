@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { sourceModule } from '../support/source';
-import analytics from '../fixtures/analytics/analytics-shift.json';
-import shift from '../fixtures/analytics/report-shift.json';
-import order from '../fixtures/analytics/report-order.json';
-import zero from '../fixtures/analytics/report-shift-zero.json';
+import analytics from '../fixtures/analytics/analytics-shift.json' with { type: 'json' };
+import shift from '../fixtures/analytics/report-shift.json' with { type: 'json' };
+import order from '../fixtures/analytics/report-order.json' with { type: 'json' };
+import zero from '../fixtures/analytics/report-shift-zero.json' with { type: 'json' };
 import type * as Protocol from '../../src/shared/api/analyticsProtocol';
 import type * as Model from '../../src/features/analytics/model';
 const { isAnalyticsFacts, isShiftReport, isOrderReport } = sourceModule<typeof Protocol>('src/shared/api/analyticsProtocol.ts');

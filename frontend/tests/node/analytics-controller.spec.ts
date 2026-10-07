@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { sourceModule } from '../support/source';
 import { deferred, ids, json, session } from '../support/synthetic';
-import facts from '../fixtures/analytics/analytics-shift.json';
-import shift from '../fixtures/analytics/report-shift.json';
-import order from '../fixtures/analytics/report-order.json';
+import facts from '../fixtures/analytics/analytics-shift.json' with { type: 'json' };
+import shift from '../fixtures/analytics/report-shift.json' with { type: 'json' };
+import order from '../fixtures/analytics/report-order.json' with { type: 'json' };
 import type * as Client from '../../src/shared/api/client';
 import type * as Controller from '../../src/features/analytics/controller';
 import type { PeriodRequest } from '../../src/shared/api/analyticsProtocol';
