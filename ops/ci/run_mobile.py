@@ -18,6 +18,7 @@ import urllib.request
 from uuid import uuid4
 
 from startup_diagnostics import collect as startup_diagnostics
+from core_diagnostics import python_environment
 from fixtures import ORIGIN, prepare_private, prepare_credentials, prepare_tls, write_private
 from c110_driver import C110Error, verify_service_inventory, verify_started_inventory, verify_source_blobs, verify_frontend_provenance, secrecy_preflight, observer_dsn, execute_core, TITLE
 
@@ -189,6 +190,11 @@ def run_gate(report: dict, contract: dict) -> None:
             DALA_C110_PLAYWRIGHT_PACKAGE=str(package_dir / "node_modules/@playwright/test"),
             DALA_E2E_FRONTEND_SHA=contract["frontend_sha"],
         )
+        report["stage"] = "credential_free_observer_import"
+        browser_env, import_status = python_environment(browser_env)
+        report["observer_python_import"] = import_status
+        if import_status.startswith("FAIL"):
+            raise GateError("C110_OBSERVER_PYTHON_IMPORT_UNAVAILABLE")
         report["stage"] = "c110_dummy_secret_preflight"
         proof = secrecy_preflight(ROOT, browser_env, private)
         report["secrecy_preflight"] = proof["public"]
@@ -217,6 +223,19 @@ def run_gate(report: dict, contract: dict) -> None:
             report["actual_service_inventory"] = verify_started_inventory(inventory.stdout)
             report["stage"] = "trusted_https_readiness"
             wait_ready(private / "tls/root.crt")
+            report["stage"] = "public_browser_tls_probe"
+            probe = subprocess.run(["node", str(HERE / "browser_transport_probe.cjs")], cwd=ROOT, env=browser_env,
+                                   capture_output=True, timeout=60, check=False)
+            try:
+                probe_data = json.loads(probe.stdout)
+            except Exception:
+                probe_data = {"status":"FAIL","code":"PUBLIC_TLS_HEALTH_PROBE_FAILED"}
+            allowed_probe_codes={"BROWSER_CA_UNTRUSTED","BROWSER_CA_HOSTNAME_MISMATCH","NODE_CA_UNTRUSTED","BROWSER_CONNECTION_REFUSED","PUBLIC_TLS_HEALTH_PROBE_FAILED"}
+            if probe.returncode or probe_data.get("status")!="PASS":
+                code=probe_data.get("code")
+                report["browser_transport_probe"]={"status":"FAIL","code":code if code in allowed_probe_codes else "PUBLIC_TLS_HEALTH_PROBE_FAILED"}
+                raise GateError("C110_PUBLIC_BROWSER_TLS_PROBE_FAILED")
+            report["browser_transport_probe"]={"status":"PASS","scope":"public_health_browser_and_node_tls_only"}
             browser_env.update(
                 DALA_E2E_BASE_URL=ORIGIN,
                 DALA_E2E_FIXTURE_FILE=str(private / "fixture.json"),
@@ -272,6 +291,8 @@ def main() -> int:
         run_gate(report, contract)
         code = 0
     except (GateError, C110Error) as error:
+        if isinstance(error, C110Error) and error.diagnostic is not None:
+            report["core_diagnostic"] = error.diagnostic
         report["reason_code"] = str(error)
         report["status"] = "FAIL" if report["stage"] != "input_contract" else "BLOCKED_NOT_RUN"
     except Exception as error:

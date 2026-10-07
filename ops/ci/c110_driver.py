@@ -9,13 +9,16 @@ import re
 import shutil
 import subprocess
 from urllib.parse import urlsplit
+from core_diagnostics import failure_projection
 
 TITLE = "C110 real composed master executor lifecycle"
 SERVICES = {"db", "photo-directory", "prepare", "api", "web"}
 
 
 class C110Error(RuntimeError):
-    pass
+    def __init__(self, code, *, diagnostic=None):
+        super().__init__(code)
+        self.diagnostic=diagnostic
 
 
 def verify_service_inventory(model: dict) -> list[str]:
@@ -186,7 +189,7 @@ def execute_core(root: Path, env: dict, private: Path, cli: Path) -> dict:
         gate = run(["node", str(root / "tests/e2e/c110_gate.cjs"), str(report),
                     str(evidence or (private / "missing-evidence.json"))], env, root, 30)
         if code or gate or evidence is None:
-            raise C110Error("C110_REAL_CORE_OR_EVIDENCE_GATE_FAILED")
+            raise C110Error("C110_REAL_CORE_OR_EVIDENCE_GATE_FAILED", diagnostic=failure_projection(report,evidence))
         raw = evidence.read_bytes()
         # Extra allowlist-layer check before publication; never display the matching value.
         for name in ("master_pin", "executor_pin", "postgres_owner_password", "postgres_runtime_password"):
