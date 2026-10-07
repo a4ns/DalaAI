@@ -2,7 +2,7 @@ import { useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } fro
 import type { MutationOutcome, ResourceState } from '../../shared/ui/types';
 import type { MasterCreateDraft, MasterOrderVM, MasterPhotoControlProps, MasterScreenProps } from './types';
 import { emptyMasterCreateDraft, emptyMasterReviewDraft } from './types';
-import { canApplyPhotoResult, closeBlockers, executorLoad, formatMasterTime, normalizeOutcome, orderStatusLabels, resourceIsCurrent, reviewErrors, validateCreate, type DraftErrors } from './masterModel';
+import { canApplyPhotoResult, canStartMasterIntent, closeBlockers, executorLoad, formatMasterTime, normalizeOutcome, orderStatusLabels, resourceIsCurrent, reviewErrors, validateCreate, type DraftErrors } from './masterModel';
 import './master.css';
 
 export type * from './types';
@@ -69,6 +69,8 @@ export function MasterScreen(props: MasterScreenProps) {
   const mounted = useRef(true);
   useLayoutEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const latestProps = useRef(props);
+  const currentReviewStates = useRef<Record<string, Operation>>({});
+  const applyReviewState = (orderId: string, state: Operation) => { currentReviewStates.current = { ...currentReviewStates.current, [orderId]: state }; setReviewStates(currentReviewStates.current); };
   const currentCreateState = useRef(createState);
   const applyCreateState = (state: Operation) => { currentCreateState.current = state; setCreateState(state); };
   const photoContext = useMemo(() => ({ sectionId: props.createDraft.sectionId, phase: createState.phase }), [props.createDraft.sectionId, createState.phase]);
@@ -101,40 +103,42 @@ export function MasterScreen(props: MasterScreenProps) {
   }
   async function create(retry = false) {
     if (!mounted.current || createInFlight.current || !props.online) return;
+    if (!canStartMasterIntent(currentCreateState.current.phase, retry)) return;
     if (!retry) {
-      if (createLocked || !createReady) return;
+      if (!createReady) return;
       const errors = validateCreate(props.createDraft, dictionaries, props.domainNow);
       setCreateErrors(errors);
       if (Object.keys(errors).length) return;
-    } else if (createState.phase !== 'unknown' || !props.onRetryCreate) return;
+    } else if (!props.onRetryCreate) return;
     createInFlight.current = true; latestPhotoContext.current = null; applyCreateState({ phase: 'pending', message: '' });
     let result: MutationOutcome;
     try {
       result = normalizeOutcome(await (retry ? props.onRetryCreate!() : props.onCreate({ ...props.createDraft, beforePhotoIds: [...props.createDraft.beforePhotoIds] })));
     } catch { result = unknown(); }
-    createInFlight.current = false;
     if (mounted.current) applyCreateState({ phase: result.kind, message: result.message || '', conflictStamp: latestProps.current.dictionaries.lastConfirmedAt });
+    createInFlight.current = false;
   }
   async function review(order: MasterOrderVM, decision: 'close' | 'rework', retry = false) {
-    const state = forOrder(reviewStates[order.id], order);
+    const state = forOrder(currentReviewStates.current[order.id], order);
     if (!mounted.current || reviewInFlight.current.has(order.id) || !props.online) return;
     const draft = props.reviewDrafts[order.id] || emptyMasterReviewDraft();
+    if (!canStartMasterIntent(state.phase, retry)) return;
     if (!retry) {
-      if (locked(state) || !ordersReady || order.status !== 'ai_review' || !order.submission || order.submission.assignmentRevision !== order.assignmentRevision) return;
+      if (!ordersReady || order.status !== 'ai_review' || !order.submission || order.submission.assignmentRevision !== order.assignmentRevision) return;
       const errors = [...reviewErrors(draft), ...(decision === 'close' ? closeBlockers(order) : [])];
       setReviewValidation(current => ({ ...current, [order.id]: errors }));
       if (errors.length) return;
-    } else if (state.phase !== 'unknown' || !props.onRetryReview) return;
+    } else if (!props.onRetryReview) return;
     const capturedOrder = retry ? state.order || order : order;
     const capturedSubmissionId = retry ? state.submissionId : order.submission?.id;
     reviewInFlight.current.add(order.id);
-    setReviewStates(current => ({ ...current, [order.id]: { phase: 'pending', message: '', submissionId: capturedSubmissionId, order: capturedOrder } }));
+    applyReviewState(order.id, { phase: 'pending', message: '', submissionId: capturedSubmissionId, order: capturedOrder });
     let result: MutationOutcome;
     try {
       result = normalizeOutcome(await (retry ? props.onRetryReview!(order.id) : props.onReview({ orderId: order.id, expectedVersion: order.version, submissionId: order.submission!.id, decision, reason: draft.reason.trim(), finalScore: draft.finalScore.trim() ? Number(draft.finalScore) : null })));
     } catch { result = unknown(); }
+    if (mounted.current) applyReviewState(order.id, { phase: result.kind, message: result.message || '', conflictStamp: latestProps.current.orders.lastConfirmedAt, submissionId: capturedSubmissionId, order: capturedOrder });
     reviewInFlight.current.delete(order.id);
-    if (mounted.current) setReviewStates(current => ({ ...current, [order.id]: { phase: result.kind, message: result.message || '', conflictStamp: latestProps.current.orders.lastConfirmedAt, submissionId: capturedSubmissionId, order: capturedOrder } }));
   }
   const draft = props.createDraft;
   const inputId = (key: keyof MasterCreateDraft) => `${prefix}-${key}`;
@@ -208,7 +212,7 @@ export function MasterScreen(props: MasterScreenProps) {
           </fieldset>
           {!!reviewValidation[order.id]?.length && <ul className="master-error" role="alert">{reviewValidation[order.id].map((error, index) => <li key={index}>{error}</li>)}</ul>}
           <div className="master-actions"><button className="master-primary" type="button" disabled={!ordersReady || frozen || !validTarget || blockers.length > 0} onClick={() => void review(order, 'close')}>Принять и закрыть</button><button type="button" disabled={!ordersReady || frozen || !validTarget} onClick={() => void review(order, 'rework')}>Вернуть на доработку</button></div>
-          <OperationNotice state={state} confirmedText="Решение мастера подтверждено сервером." online={props.online} retry={props.onRetryReview ? () => void review(order, 'close', true) : undefined} canResolve={freshAfter(props.orders, state)} resolve={() => setReviewStates(current => ({ ...current, [order.id]: idle() }))} />
+          <OperationNotice state={state} confirmedText="Решение мастера подтверждено сервером." online={props.online} retry={props.onRetryReview ? () => void review(order, 'close', true) : undefined} canResolve={freshAfter(props.orders, state)} resolve={() => applyReviewState(order.id, idle())} />
         </article>;
       })}
     </section>
