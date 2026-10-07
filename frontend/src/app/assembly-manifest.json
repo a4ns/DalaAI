@@ -12,7 +12,7 @@
     },
     {
       "lane": "B-103",
-      "sha": "15508816f57a038224cbdc8c6c74a147e5e21e4b",
+      "sha": "09691f6268f7cc08cedc65dc25121094313c901b",
       "paths": [
         "frontend/src/mobile/executor"
       ]
@@ -35,7 +35,7 @@
     },
     {
       "lane": "B-106",
-      "sha": "f0a76a3ce8ea3df815c97ab1fc65566016e462f3",
+      "sha": "8f170602b8ddd57ae6674ea5b987ae408e27ad89",
       "paths": [
         "frontend/tests",
         "frontend/playwright.config.ts"
@@ -43,7 +43,7 @@
     },
     {
       "lane": "B-102",
-      "sha": "96af1d506e1e36f74e1393f14280ec3b930d38f4",
+      "sha": "95bd59cf1c8766197a96307ce5c49b200db7f46c",
       "paths": [
         "frontend/src/mobile/master"
       ]
@@ -65,6 +65,7 @@
     "frontend/src/app/mutationFailure.ts: sticky unknown result classification",
     "frontend/src/shared/api/client.ts: bind receipts and reads to requested object IDs",
     "frontend/index.html: link imported local manifest",
-    "frontend/README.md: composition behavior and verification limits"
+    "frontend/README.md: composition behavior and verification limits",
+    "frontend/src/app/Workspace.tsx: pending/unknown intent guards precede every new-intent preflight and conflict resolution"
   ]
 }

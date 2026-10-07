@@ -42,3 +42,28 @@ test('photos: online hint and prepared selection never claim delivery', () => {
   expect(connectivity.connectivityMessage('offline')).toContain('Автоматической отправки нет');
   expect(connectivity.connectivityMessage('unknown')).toContain('только ответом сервера');
 });
+
+test('photos: preparation busy is synchronous and releases exactly once after any finish/cancel sequence', () => {
+  const { beginPhotoPreparation } = sourceModule<typeof import('../../src/pwa/preparationActivity')>('src/pwa/preparationActivity.ts');
+  for (const actions of [['finish', 'finish', 'cancel'], ['cancel', 'finish', 'cancel']] as const) {
+    const states: boolean[] = [];
+    const activity = beginPhotoPreparation(value => states.push(value));
+    expect(states).toEqual([true]);
+    for (const action of actions) activity[action]();
+    expect(states).toEqual([true, false]);
+    expect(activity.signal.aborted).toBe(true);
+  }
+});
+
+test('photos: completion from a canceled context cannot release a new preparation batch', () => {
+  const { beginPhotoPreparation } = sourceModule<typeof import('../../src/pwa/preparationActivity')>('src/pwa/preparationActivity.ts');
+  let busy = false;
+  const old = beginPhotoPreparation(value => { busy = value; });
+  old.cancel();
+  const current = beginPhotoPreparation(value => { busy = value; });
+  old.finish(); old.cancel();
+  expect(busy).toBe(true);
+  expect(current.signal.aborted).toBe(false);
+  current.finish();
+  expect(busy).toBe(false);
+});

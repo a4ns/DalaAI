@@ -82,3 +82,8 @@ export function normalizeOutcome(value: unknown): MutationOutcome {
 export function canApplyPhotoResult(context: { mounted: boolean; locked: boolean; expectedGeneration: unknown; currentGeneration: unknown; expectedSection: string; currentSection: string }): boolean {
   return context.mounted && !context.locked && context.expectedGeneration === context.currentGeneration && context.expectedSection === context.currentSection;
 }
+
+/** Evaluate the synchronous operation state, never a handler's captured render state. */
+export function canStartMasterIntent(phase: 'idle' | 'pending' | MutationOutcome['kind'], retry: boolean): boolean {
+  return retry ? phase === 'unknown' : phase === 'idle' || phase === 'rejected';
+}

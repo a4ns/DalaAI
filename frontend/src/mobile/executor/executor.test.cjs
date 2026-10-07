@@ -272,3 +272,14 @@ test('background polling cannot satisfy a conflict review without explicit refre
   h.render({ ...refreshed, orders: { ...refreshed.orders, lastConfirmedAt: '2026-10-07T19:02:00Z' } });
   assert.equal(h.button('Состояние проверено, продолжить').props.disabled, false);
 });
+
+test('unknown response keeps old DOM callbacks locked before the next render commits', async () => {
+  let resolve; const response = new Promise((done) => { resolve = done; }); let intents = 0;
+  const h = harness(props({ onIntent: () => { intents++; return response; } }));
+  const oldClick = h.button('Принять').props.onClick;
+  oldClick(); assert.equal(intents, 1);
+  resolve({ kind: 'unknown', message: 'Ответ не подтверждён' }); await settle();
+  // Deliberately invoke the previously rendered callback before simulating React's next commit.
+  oldClick(); assert.equal(intents, 1);
+  h.render(); assert.equal(h.button('Принять').props.disabled, true);
+});

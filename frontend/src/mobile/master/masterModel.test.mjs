@@ -1,7 +1,7 @@
 // Synthetic view-model tests. No backend, HTTP, browser or physical device is exercised.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canApplyPhotoResult, closeBlockers, dueLocalToIso, executorLoad, normalizeOutcome, resourceIsCurrent, reviewErrors, validateCreate } from './masterModel.ts';
+import { canApplyPhotoResult, canStartMasterIntent, closeBlockers, dueLocalToIso, executorLoad, normalizeOutcome, resourceIsCurrent, reviewErrors, validateCreate } from './masterModel.ts';
 const dictionaries = {
   sections: [{ id: 's1', label: 'Участок 1' }], equipment: [{ id: 'eq1', label: 'Насос', sectionId: 's1' }],
   brigades: [{ id: 'b1', label: 'Бригада 1' }],
@@ -44,3 +44,26 @@ const photoContext = { mounted: true, locked: false, expectedGeneration: 1, curr
 test('current photo callback may update latest draft', () => assert.equal(canApplyPhotoResult(photoContext), true));
 for (const patch of [{ mounted: false }, { locked: true }, { currentGeneration: 2 }, { currentSection: 's2' }]) test(`late photo callback ignored: ${JSON.stringify(patch)}`, () => assert.equal(canApplyPhotoResult({ ...photoContext, ...patch }), false));
 test('photo context uses identity, not merely equal-looking section metadata', () => assert.equal(canApplyPhotoResult({ ...photoContext, expectedGeneration: { sectionId: 's1' }, currentGeneration: { sectionId: 's1' } }), false));
+
+for (const kind of ['create', 'review']) test(`${kind}: captured old handler cannot start a new intent after unknown settles before render`, () => {
+  // Synthetic event-boundary model: render state stays idle while current async state changes.
+  const renderedPhase = 'idle';
+  let currentPhase = renderedPhase;
+  let inFlight = false;
+  let newIntents = 0;
+  let retries = 0;
+  const capturedHandler = retry => {
+    if (inFlight || !canStartMasterIntent(currentPhase, retry)) return;
+    if (retry) retries++; else newIntents++;
+  };
+  inFlight = true;
+  currentPhase = 'unknown';
+  inFlight = false;
+  assert.equal(renderedPhase, 'idle');
+  capturedHandler(false);
+  capturedHandler(true);
+  assert.equal(newIntents, 0);
+  assert.equal(retries, 1);
+});
+for (const phase of ['pending', 'conflict', 'confirmed']) test(`synchronous ${phase} state blocks a stale new-intent handler`, () => assert.equal(canStartMasterIntent(phase, false), false));
+test('known rejection can be corrected as a new intent, but not replayed as unknown', () => { assert.equal(canStartMasterIntent('rejected', false), true); assert.equal(canStartMasterIntent('rejected', true), false); });

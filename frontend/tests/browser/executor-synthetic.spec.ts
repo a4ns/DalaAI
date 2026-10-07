@@ -58,3 +58,21 @@ test('synthetic: stale snapshot retains context and disables mutation at 390px',
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await page.screenshot({ path: info.outputPath('synthetic-executor-stale-390.png'), fullPage: true });
 });
+
+test('synthetic: photo activity blocks submission without inventing a command, and settling it preserves unknown command lock', async ({ page }) => {
+  await page.getByRole('textbox', { name: 'Что выполнено' }).fill('Синтетический результат с выбранным фото');
+  const submit = page.getByRole('button', { name: 'Отправить неполный результат на проверку' });
+  await page.getByTestId('photo-busy').check();
+  await expect(submit).toBeDisabled();
+  await page.locator('form.executor-form').evaluate(form => (form as HTMLFormElement).requestSubmit());
+  await expect(page.getByTestId('calls')).toHaveText('0');
+  await expect(page.getByText('Синтетическая загрузка фото не подтверждена').first()).toBeVisible();
+  await page.getByTestId('photo-busy').uncheck();
+  await expect(submit).toBeEnabled();
+  await submit.click();
+  await expect(page.getByRole('alert')).toContainText('Результат не подтверждён');
+  await page.getByTestId('photo-busy').check();
+  await page.getByTestId('photo-busy').uncheck();
+  await expect(submit).toBeDisabled();
+  await expect(page.getByTestId('calls')).toHaveText('1');
+});

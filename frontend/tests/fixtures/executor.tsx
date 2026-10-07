@@ -20,6 +20,7 @@ function Fixture() {
   const [drafts, setDrafts] = useState<Record<string, ExecutorDraft>>({ [order.id]: emptyExecutorDraft() });
   const [orders, setOrders] = useState(resource([order]));
   const [outcome, setOutcome] = useState('unknown');
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [calls, setCalls] = useState(0);
   const [retries, setRetries] = useState(0);
   const [intent, setIntent] = useState<ExecutorIntent | null>(null);
@@ -33,13 +34,14 @@ function Fixture() {
     <aside aria-label="Синтетический тест" style={{ background: '#ffe9ab', padding: 16 }}>
       <strong>СИНТЕТИЧЕСКИЙ UI-ТЕСТ. Без настоящего API, БД, AI и устройства.</strong>
       <label>Тестовый исход<select data-testid="outcome" value={outcome} onChange={event => setOutcome(event.target.value)}><option value="unknown">Потерян ответ</option><option value="conflict">Конфликт 409</option><option value="pending">Ожидание</option></select></label>
+      <label><input data-testid="photo-busy" type="checkbox" checked={photoBusy} onChange={event => setPhotoBusy(event.target.checked)}/>Синтетическая подготовка или загрузка фото</label>
       <button data-testid="switch-identity" onClick={() => { setEpoch(value => value + 1); setDrafts({ [order.id]: emptyExecutorDraft() }); setIntent(null); setOrders(resource([order])); }}>Сменить тестовую сессию</button>
       <button data-testid="resolve-old" onClick={() => pending.current?.({ kind: 'confirmed' })}>Завершить старый ответ</button>
       <button data-testid="stale" onClick={() => setOrders(value => ({ ...value, freshness: 'stale', loadStatus: 'error', error: 'Синтетический отказ загрузки' }))}>Устаревший снимок</button>
       <output hidden data-testid="calls">{calls}</output><output hidden data-testid="retries">{retries}</output><output hidden data-testid="intent">{JSON.stringify(intent)}</output>
     </aside>
     <ExecutorScreen sessionKey={`synthetic:${epoch}`} orders={orders} dictionaries={resource({ workCodes: [{ id: 'code', code: 'TEST', label: 'Тестовый шифр' }], materials: [] })}
-      selectedOrderId={order.id} drafts={drafts} mutation={{ status: 'idle', error: null }} pendingIntent={null}
+      photoBusy={photoBusy} photoBusyReason="Синтетическая загрузка фото не подтверждена" selectedOrderId={order.id} drafts={drafts} mutation={{ status: 'idle', error: null }} pendingIntent={null}
       onSelectOrder={() => undefined} onDraftChange={(id, draft) => setDrafts(value => ({ ...value, [id]: draft }))}
       onIntent={onIntent} onRetry={async () => { setRetries(value => value + 1); return { kind: 'confirmed' }; }}
       onRefresh={() => setOrders(() => ({ ...resource([{ ...order, version: 2 }]), lastConfirmedAt: '2026-10-07T19:01:00Z' }))}
