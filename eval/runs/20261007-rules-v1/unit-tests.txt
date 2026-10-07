@@ -1,0 +1,27 @@
+test_detector_gets_only_typed_facts (test_isolation.DatasetIsolationTests.test_detector_gets_only_typed_facts) ... ok
+test_duplicate_json_keys_rejected (test_isolation.DatasetIsolationTests.test_duplicate_json_keys_rejected) ... ok
+test_fixed_manifest_hashes_and_partition (test_isolation.DatasetIsolationTests.test_fixed_manifest_hashes_and_partition) ... ok
+test_input_only_subprocess_needs_no_label_argument (test_isolation.DatasetIsolationTests.test_input_only_subprocess_needs_no_label_argument) ... ok
+test_inputs_contain_only_facts_with_no_labels_or_scenario_hints (test_isolation.DatasetIsolationTests.test_inputs_contain_only_facts_with_no_labels_or_scenario_hints) ... ok
+test_labels_rejected_at_every_allowed_object_boundary (test_isolation.DatasetIsolationTests.test_labels_rejected_at_every_allowed_object_boundary) ... ok
+test_prediction_succeeds_while_all_label_file_reads_are_denied (test_isolation.DatasetIsolationTests.test_prediction_succeeds_while_all_label_file_reads_are_denied) ... ok
+test_absent_class_not_given_fictitious_f1 (test_metrics.MetricOracleTests.test_absent_class_not_given_fictitious_f1) ... ok
+test_all_abstentions_have_zero_recall_not_perfect_accuracy (test_metrics.MetricOracleTests.test_all_abstentions_have_zero_recall_not_perfect_accuracy) ... ok
+test_duplicate_foreign_or_contradictory_rows_rejected (test_metrics.MetricOracleTests.test_duplicate_foreign_or_contradictory_rows_rejected) ... ok
+test_eight_episode_hand_calculated_oracle (test_metrics.MetricOracleTests.test_eight_episode_hand_calculated_oracle) ... ok
+test_empty_denominators_are_null_and_cannot_pass (test_metrics.MetricOracleTests.test_empty_denominators_are_null_and_cannot_pass) ... ok
+test_invalid_telemetry_cannot_hide_unsafe_permit (test_metrics.MetricOracleTests.test_invalid_telemetry_cannot_hide_unsafe_permit) ... ok
+test_malformed_prediction_never_becomes_false_success (test_metrics.MetricOracleTests.test_malformed_prediction_never_becomes_false_success) ... ok
+test_missing_prediction_is_in_denominator (test_metrics.MetricOracleTests.test_missing_prediction_is_in_denominator) ... ok
+test_quantiles_and_input_validation (test_metrics.MetricOracleTests.test_quantiles_and_input_validation) ... ok
+test_blocking_gate_suppresses_even_a_matching_stub (test_provider_seam.ProviderSeamTests.test_blocking_gate_suppresses_even_a_matching_stub) ... ok
+test_input_payload_has_no_label_score_identity_or_images (test_provider_seam.ProviderSeamTests.test_input_payload_has_no_label_score_identity_or_images) ... ok
+test_real_adapter_objects_are_not_executable_in_synthetic_harness (test_provider_seam.ProviderSeamTests.test_real_adapter_objects_are_not_executable_in_synthetic_harness) ... ok
+test_successful_synthetic_outputs_remain_rules_fallback (test_provider_seam.ProviderSeamTests.test_successful_synthetic_outputs_remain_rules_fallback) ... ok
+test_timeout_unavailable_invalid_and_injection_are_explicit_fallbacks (test_provider_seam.ProviderSeamTests.test_timeout_unavailable_invalid_and_injection_are_explicit_fallbacks) ... ok
+test_untrusted_provider_schema_cannot_claim_photos_or_execute_commands (test_provider_seam.ProviderSeamTests.test_untrusted_provider_schema_cannot_claim_photos_or_execute_commands) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.099s
+
+OK

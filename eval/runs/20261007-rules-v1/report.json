@@ -1,0 +1,579 @@
+{
+  "schema_version": "1",
+  "run_id": "closure-eval-345d7cb9-d233-407c-a20f-3019c8d7fb83",
+  "executed_at": "2026-10-07T19:16:11.951998Z",
+  "code_sha": "10c8e4d859190c3ad6b6241388aace7e00b69884",
+  "working_tree_dirty": false,
+  "evidence_level": "synthetic_local_rules_unit",
+  "python": "3.12.14",
+  "dataset_version": "closure-eval-v1",
+  "dataset_manifest_sha256": "d6e9a5f47c7d4c02536c67e9e45423905317e768ee6e87f8a577e3b54727e2ff",
+  "dataset_hashes": {
+    "dev": {
+      "n": 24,
+      "inputs": {
+        "path": "inputs/dev.jsonl",
+        "sha256": "fe3167c510be67e8de9ab6bda0b3a2d210d1bbc53c584af850258b0a3993b5e9"
+      },
+      "labels": {
+        "path": "labels/dev.jsonl",
+        "sha256": "7a1337b1562c5d8d4559d0a4b6b0367f1bfbbb7f914c10f2573b27372a88040e"
+      }
+    },
+    "holdout": {
+      "n": 24,
+      "inputs": {
+        "path": "inputs/holdout.jsonl",
+        "sha256": "272e66c55e230bdcf70ee05a4af715cdcc35a6989862322c1b7cd337cdf53d7f"
+      },
+      "labels": {
+        "path": "labels/holdout.jsonl",
+        "sha256": "407715432ed0628122a9db28b1300e6a712605ba53eede16f3845d90cb708e9b"
+      }
+    }
+  },
+  "dataset_seed": null,
+  "config": {
+    "mode": "rules_fallback",
+    "entrypoint": "app.ai.rules.assess_rules",
+    "prompt": null,
+    "threshold_tuning": false,
+    "retries": 0
+  },
+  "rules_baseline": {
+    "status": "MEASURED",
+    "splits": {
+      "dev": {
+        "mandatory_gates": {
+          "n_expected": 24,
+          "confusion_matrix": {
+            "gate_permit": {
+              "gate_permit": 6,
+              "gate_block": 0,
+              "abstain": 0,
+              "invalid": 0,
+              "no_output": 0
+            },
+            "gate_block": {
+              "gate_permit": 0,
+              "gate_block": 18,
+              "abstain": 0,
+              "invalid": 0,
+              "no_output": 0
+            }
+          },
+          "per_class": {
+            "gate_permit": {
+              "support": 6,
+              "tp": 6,
+              "fp": 0,
+              "fn": 0,
+              "precision": {
+                "numerator": 6,
+                "denominator": 6,
+                "value": 1.0
+              },
+              "recall": {
+                "numerator": 6,
+                "denominator": 6,
+                "value": 1.0
+              },
+              "f1": {
+                "numerator": 12,
+                "denominator": 12,
+                "value": 1.0
+              }
+            },
+            "gate_block": {
+              "support": 18,
+              "tp": 18,
+              "fp": 0,
+              "fn": 0,
+              "precision": {
+                "numerator": 18,
+                "denominator": 18,
+                "value": 1.0
+              },
+              "recall": {
+                "numerator": 18,
+                "denominator": 18,
+                "value": 1.0
+              },
+              "f1": {
+                "numerator": 36,
+                "denominator": 36,
+                "value": 1.0
+              }
+            }
+          },
+          "accuracy_all_episodes": {
+            "numerator": 24,
+            "denominator": 24,
+            "value": 1.0
+          },
+          "decision_coverage": {
+            "numerator": 24,
+            "denominator": 24,
+            "value": 1.0
+          },
+          "accuracy_on_decisions": {
+            "numerator": 24,
+            "denominator": 24,
+            "value": 1.0
+          },
+          "macro_f1_supported_classes": {
+            "value": 1.0,
+            "denominator_classes": 2
+          },
+          "abstention_rate": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          },
+          "invalid_output_rate": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          },
+          "no_output_rate": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          }
+        },
+        "text_semantics": {
+          "n_expected": 24,
+          "confusion_matrix": {
+            "match": {
+              "match": 0,
+              "mismatch": 0,
+              "unknown": 0,
+              "abstain": 20,
+              "invalid": 0,
+              "no_output": 0
+            },
+            "mismatch": {
+              "match": 0,
+              "mismatch": 0,
+              "unknown": 0,
+              "abstain": 1,
+              "invalid": 0,
+              "no_output": 0
+            },
+            "unknown": {
+              "match": 0,
+              "mismatch": 0,
+              "unknown": 0,
+              "abstain": 3,
+              "invalid": 0,
+              "no_output": 0
+            }
+          },
+          "per_class": {
+            "match": {
+              "support": 20,
+              "tp": 0,
+              "fp": 0,
+              "fn": 20,
+              "precision": {
+                "numerator": 0,
+                "denominator": 0,
+                "value": null
+              },
+              "recall": {
+                "numerator": 0,
+                "denominator": 20,
+                "value": 0.0
+              },
+              "f1": {
+                "numerator": 0,
+                "denominator": 20,
+                "value": 0.0
+              }
+            },
+            "mismatch": {
+              "support": 1,
+              "tp": 0,
+              "fp": 0,
+              "fn": 1,
+              "precision": {
+                "numerator": 0,
+                "denominator": 0,
+                "value": null
+              },
+              "recall": {
+                "numerator": 0,
+                "denominator": 1,
+                "value": 0.0
+              },
+              "f1": {
+                "numerator": 0,
+                "denominator": 1,
+                "value": 0.0
+              }
+            },
+            "unknown": {
+              "support": 3,
+              "tp": 0,
+              "fp": 0,
+              "fn": 3,
+              "precision": {
+                "numerator": 0,
+                "denominator": 0,
+                "value": null
+              },
+              "recall": {
+                "numerator": 0,
+                "denominator": 3,
+                "value": 0.0
+              },
+              "f1": {
+                "numerator": 0,
+                "denominator": 3,
+                "value": 0.0
+              }
+            }
+          },
+          "accuracy_all_episodes": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          },
+          "decision_coverage": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          },
+          "accuracy_on_decisions": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "macro_f1_supported_classes": {
+            "value": 0.0,
+            "denominator_classes": 3
+          },
+          "abstention_rate": {
+            "numerator": 24,
+            "denominator": 24,
+            "value": 1.0
+          },
+          "invalid_output_rate": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          },
+          "no_output_rate": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          }
+        },
+        "critical_false_accept_rate": {
+          "numerator": 0,
+          "denominator": 18,
+          "value": 0.0
+        },
+        "critical_false_accept_case_ids": [],
+        "gate_disagreements": [],
+        "fallback_rate": {
+          "numerator": 24,
+          "denominator": 24,
+          "value": 1.0
+        },
+        "fallback_status_unknown_rate": {
+          "numerator": 0,
+          "denominator": 24,
+          "value": 0.0
+        },
+        "mode_counts": {
+          "rules_fallback": 24
+        },
+        "latency_ms": {
+          "p50": 0.059214,
+          "p95": 0.14223,
+          "observed_episodes": 24,
+          "expected_episodes": 24,
+          "method": "nearest_rank; input_decode_and_rules_in_process; excludes_process_startup"
+        },
+        "fixture_gate_expectations": "PASS",
+        "prediction_sha256": "92abd5855cc703f7b03fa2da628e1c2088a95e71a393ac53eb72fd087803e957"
+      },
+      "holdout": {
+        "mandatory_gates": {
+          "n_expected": 24,
+          "confusion_matrix": {
+            "gate_permit": {
+              "gate_permit": 6,
+              "gate_block": 0,
+              "abstain": 0,
+              "invalid": 0,
+              "no_output": 0
+            },
+            "gate_block": {
+              "gate_permit": 0,
+              "gate_block": 18,
+              "abstain": 0,
+              "invalid": 0,
+              "no_output": 0
+            }
+          },
+          "per_class": {
+            "gate_permit": {
+              "support": 6,
+              "tp": 6,
+              "fp": 0,
+              "fn": 0,
+              "precision": {
+                "numerator": 6,
+                "denominator": 6,
+                "value": 1.0
+              },
+              "recall": {
+                "numerator": 6,
+                "denominator": 6,
+                "value": 1.0
+              },
+              "f1": {
+                "numerator": 12,
+                "denominator": 12,
+                "value": 1.0
+              }
+            },
+            "gate_block": {
+              "support": 18,
+              "tp": 18,
+              "fp": 0,
+              "fn": 0,
+              "precision": {
+                "numerator": 18,
+                "denominator": 18,
+                "value": 1.0
+              },
+              "recall": {
+                "numerator": 18,
+                "denominator": 18,
+                "value": 1.0
+              },
+              "f1": {
+                "numerator": 36,
+                "denominator": 36,
+                "value": 1.0
+              }
+            }
+          },
+          "accuracy_all_episodes": {
+            "numerator": 24,
+            "denominator": 24,
+            "value": 1.0
+          },
+          "decision_coverage": {
+            "numerator": 24,
+            "denominator": 24,
+            "value": 1.0
+          },
+          "accuracy_on_decisions": {
+            "numerator": 24,
+            "denominator": 24,
+            "value": 1.0
+          },
+          "macro_f1_supported_classes": {
+            "value": 1.0,
+            "denominator_classes": 2
+          },
+          "abstention_rate": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          },
+          "invalid_output_rate": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          },
+          "no_output_rate": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          }
+        },
+        "text_semantics": {
+          "n_expected": 24,
+          "confusion_matrix": {
+            "match": {
+              "match": 0,
+              "mismatch": 0,
+              "unknown": 0,
+              "abstain": 21,
+              "invalid": 0,
+              "no_output": 0
+            },
+            "mismatch": {
+              "match": 0,
+              "mismatch": 0,
+              "unknown": 0,
+              "abstain": 1,
+              "invalid": 0,
+              "no_output": 0
+            },
+            "unknown": {
+              "match": 0,
+              "mismatch": 0,
+              "unknown": 0,
+              "abstain": 2,
+              "invalid": 0,
+              "no_output": 0
+            }
+          },
+          "per_class": {
+            "match": {
+              "support": 21,
+              "tp": 0,
+              "fp": 0,
+              "fn": 21,
+              "precision": {
+                "numerator": 0,
+                "denominator": 0,
+                "value": null
+              },
+              "recall": {
+                "numerator": 0,
+                "denominator": 21,
+                "value": 0.0
+              },
+              "f1": {
+                "numerator": 0,
+                "denominator": 21,
+                "value": 0.0
+              }
+            },
+            "mismatch": {
+              "support": 1,
+              "tp": 0,
+              "fp": 0,
+              "fn": 1,
+              "precision": {
+                "numerator": 0,
+                "denominator": 0,
+                "value": null
+              },
+              "recall": {
+                "numerator": 0,
+                "denominator": 1,
+                "value": 0.0
+              },
+              "f1": {
+                "numerator": 0,
+                "denominator": 1,
+                "value": 0.0
+              }
+            },
+            "unknown": {
+              "support": 2,
+              "tp": 0,
+              "fp": 0,
+              "fn": 2,
+              "precision": {
+                "numerator": 0,
+                "denominator": 0,
+                "value": null
+              },
+              "recall": {
+                "numerator": 0,
+                "denominator": 2,
+                "value": 0.0
+              },
+              "f1": {
+                "numerator": 0,
+                "denominator": 2,
+                "value": 0.0
+              }
+            }
+          },
+          "accuracy_all_episodes": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          },
+          "decision_coverage": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          },
+          "accuracy_on_decisions": {
+            "numerator": 0,
+            "denominator": 0,
+            "value": null
+          },
+          "macro_f1_supported_classes": {
+            "value": 0.0,
+            "denominator_classes": 3
+          },
+          "abstention_rate": {
+            "numerator": 24,
+            "denominator": 24,
+            "value": 1.0
+          },
+          "invalid_output_rate": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          },
+          "no_output_rate": {
+            "numerator": 0,
+            "denominator": 24,
+            "value": 0.0
+          }
+        },
+        "critical_false_accept_rate": {
+          "numerator": 0,
+          "denominator": 18,
+          "value": 0.0
+        },
+        "critical_false_accept_case_ids": [],
+        "gate_disagreements": [],
+        "fallback_rate": {
+          "numerator": 24,
+          "denominator": 24,
+          "value": 1.0
+        },
+        "fallback_status_unknown_rate": {
+          "numerator": 0,
+          "denominator": 24,
+          "value": 0.0
+        },
+        "mode_counts": {
+          "rules_fallback": 24
+        },
+        "latency_ms": {
+          "p50": 0.057865,
+          "p95": 0.185529,
+          "observed_episodes": 24,
+          "expected_episodes": 24,
+          "method": "nearest_rank; input_decode_and_rules_in_process; excludes_process_startup"
+        },
+        "fixture_gate_expectations": "PASS",
+        "prediction_sha256": "fd37529e61dd7c751f102f244e9d4ca7879ab425123300bf4c0b3af1086361d3"
+      }
+    }
+  },
+  "model_enabled": {
+    "status": "NOT_RUN",
+    "model": null,
+    "model_version": null,
+    "reason": "No real adapter, approved provider or spending budget; synthetic seam is not a model"
+  },
+  "cost": {
+    "usd": null,
+    "status": "NOT_MEASURED",
+    "paid_provider_calls": 0
+  },
+  "production_acceptance": "NOT_EVALUATED; final decision belongs to master",
+  "limits": [
+    "Hand-authored synthetic fixtures, not enterprise validation or a random sample",
+    "Holdout frozen before first evaluation; backend rules were visible to the independent label author",
+    "No image bytes or visual/repair quality evaluated",
+    "No HTTP, database, real device, model or notification evidence",
+    "Zero observed critical false accepts cannot establish zero future risk"
+  ]
+}

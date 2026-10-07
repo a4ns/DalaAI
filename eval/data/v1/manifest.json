@@ -1,0 +1,33 @@
+{
+  "dataset_version": "closure-eval-v1",
+  "authored_at": "2026-10-07T19:13:03.978326+00:00",
+  "provenance": "C2 hand-authored fictional text and server-evidence snapshots; labels based on repo requirements and contract, not backend or model outputs",
+  "independence": "Separate author from production rules. Production interfaces and rules were visible; this is not a blinded or real-world validation.",
+  "split_policy": "24 dev and 24 holdout episodes assigned by authored scenario before first run; no runtime tuning; holdout reusable only as a regression suite after first exposure",
+  "seed": null,
+  "label_source": "AGENTS.md sections 7 and 9; accepted proposal.2 quantity and evidence constraints",
+  "splits": {
+    "dev": {
+      "n": 24,
+      "inputs": {
+        "path": "inputs/dev.jsonl",
+        "sha256": "fe3167c510be67e8de9ab6bda0b3a2d210d1bbc53c584af850258b0a3993b5e9"
+      },
+      "labels": {
+        "path": "labels/dev.jsonl",
+        "sha256": "7a1337b1562c5d8d4559d0a4b6b0367f1bfbbb7f914c10f2573b27372a88040e"
+      }
+    },
+    "holdout": {
+      "n": 24,
+      "inputs": {
+        "path": "inputs/holdout.jsonl",
+        "sha256": "272e66c55e230bdcf70ee05a4af715cdcc35a6989862322c1b7cd337cdf53d7f"
+      },
+      "labels": {
+        "path": "labels/holdout.jsonl",
+        "sha256": "407715432ed0628122a9db28b1300e6a712605ba53eede16f3845d90cb708e9b"
+      }
+    }
+  }
+}
