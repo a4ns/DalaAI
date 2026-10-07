@@ -83,6 +83,16 @@
     "frontend/src/shared/api/client.ts: same-origin additive push requests and bounded safe error codes",
     "frontend/src/app/pushSession.ts: explicit-action backend bridge with logout/epoch/expiry fences",
     "frontend/src/app/PushPreferences.tsx: inert per-session push settings mount",
-    "frontend/src/app/Workspace.tsx: conditional result-analysis disclosure with explicit unknown defaults and no inferred provider provenance"
-  ]
+    "frontend/src/app/Workspace.tsx: conditional result-analysis disclosure with explicit unknown defaults and no inferred provider provenance",
+    "frontend/src/features/analytics: master-only read-only period analytics and protected JSON reports",
+    "frontend/src/shared/api/analyticsProtocol.ts: additive exact C3/C4 JSON shapes, decimals and relational guards",
+    "frontend/src/shared/api/client.ts: documented protected analytics/report GET routes and capture-limit errors",
+    "frontend/src/app/App.tsx and Workspace.tsx: master analytics navigation without unmounting active drafts"
+  ],
+  "analytics_base": "3ef269bba80dbd6eafaff0d5e557da21f2d96244",
+  "analytics_contracts": {
+    "C111": "2945e3d3b6ba187a510cfb715e22d9feb70c4408",
+    "C108": "711e2fbd69598d06f43da9ff47de60d2c569634c",
+    "C109": "e999232014be8b16717058c6d9b70b41dec75c89"
+  }
 }

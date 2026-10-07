@@ -2,7 +2,9 @@ import type { CommandResult, CreateOrder, CreatePayload, Dictionaries, EventPage
 import { assertWire, isWire } from './validation';
 import { isPushConfig, isPushConfirmation, validPushEndpoint, validPushRegistration } from './pushProtocol';
 import type { PushApiConfig } from './pushProtocol';
-type ApiProblem = Omit<Problem, 'code'> & { code: Problem['code'] | 'SUBSCRIPTION_CONFLICT' | 'PUSH_DISABLED' };
+import { isAnalyticsFacts, isOrderReport, isShiftReport, validPeriod } from './analyticsProtocol';
+import type { AnalyticsFacts, OrderReport, PeriodRequest, ShiftReport } from './analyticsProtocol';
+type ApiProblem = Omit<Problem, 'code'> & { code: Problem['code'] | 'SUBSCRIPTION_CONFLICT' | 'PUSH_DISABLED' | 'REPORT_LIMIT_EXCEEDED' };
 
 const BASE = '/api/v1';
 type SchemaName = 'Session' | 'Order' | 'Dictionaries' | 'OrderPage' | 'EventPage' | 'Submission' | 'StagedPhoto' | 'CommandResult';
@@ -93,7 +95,7 @@ export class ApiClient {
   subscribe(listener: () => void): () => void { this.#listeners.add(listener); return () => { this.#listeners.delete(listener); }; }
   clearIdentity(): void { this.#epoch += 1; this.#session = null; this.#listeners.forEach(listener => listener()); }
   #assertEpoch(epoch: number): void { if (epoch !== this.#epoch) throw new SessionChangedError(); }
-  async #request<T>(path: string, options: { method?: 'GET' | 'POST'; body?: string | Blob; contentType?: string; schema?: SchemaName; successStatus?: number; epoch?: number; auth?: boolean; mutation?: boolean; signal?: AbortSignal; image?: boolean; validate?: (data: unknown) => boolean; push?: boolean; emptyBody?: boolean } = {}): Promise<T> {
+  async #request<T>(path: string, options: { method?: 'GET' | 'POST'; body?: string | Blob; contentType?: string; schema?: SchemaName; successStatus?: number; epoch?: number; auth?: boolean; mutation?: boolean; signal?: AbortSignal; image?: boolean; validate?: (data: unknown) => boolean; push?: boolean; emptyBody?: boolean; analytics?: boolean; maxBytes?: number } = {}): Promise<T> {
     const epoch = options.epoch ?? this.#epoch;
     this.#assertEpoch(epoch);
     if (!this.#online()) throw new ApiError('Нет сети. Изменения не отправлены.');
@@ -125,6 +127,7 @@ export class ApiClient {
         this.#assertEpoch(epoch);
         let problem: ApiProblem | null = isWire<Problem>('Problem', data) ? data : null;
         if (options.push && data && typeof data === 'object' && 'code' in data && (data.code === 'SUBSCRIPTION_CONFLICT' || data.code === 'PUSH_DISABLED') && isWire<Problem>('Problem', { ...data, code: 'TEMPORARILY_UNAVAILABLE' })) problem = data as ApiProblem;
+        if (options.analytics && data && typeof data === 'object' && 'code' in data && data.code === 'REPORT_LIMIT_EXCEEDED' && isWire<Problem>('Problem', { ...data, code: 'VALIDATION_FAILED' })) problem = data as ApiProblem;
         const delay = retryDelay(response.headers.get('Retry-After'));
         if ((response.status === 429 || response.status === 503) && delay !== null) this.#cooldowns.set(routeKey, { until: Date.now() + delay * 1000, status: response.status });
         throw new ApiError('Сервер отклонил запрос. Повторите позже.', response.status, problem, Boolean(options.mutation && response.status >= 500), delay);
@@ -139,7 +142,10 @@ export class ApiClient {
         const blob = await response.blob(); this.#assertEpoch(epoch); return blob as T;
       }
       let data: unknown;
-      try { data = await response.json(); } catch { throw new ApiError('Сервер вернул неподдерживаемый ответ.', response.status, null, Boolean(options.mutation)); }
+      try {
+        if (options.maxBytes) { const text = await response.text(); if (new TextEncoder().encode(text).length > options.maxBytes) throw new Error('Response too large'); data = JSON.parse(text); }
+        else data = await response.json();
+      } catch { throw new ApiError('Сервер вернул неподдерживаемый ответ.', response.status, null, Boolean(options.mutation)); }
       this.#assertEpoch(epoch);
       if (options.validate ? !options.validate(data) : !options.schema || !isWire<T>(options.schema, data)) throw new ApiError('Ответ сервера не соответствует согласованному контракту.', response.status, null, Boolean(options.mutation));
       return data as T;
@@ -174,6 +180,25 @@ export class ApiClient {
     const epoch = this.#epoch;
     try { await this.#request<void>('/auth/logout', { method: 'POST', successStatus: 204, mutation: true }); }
     finally { if (this.#epoch === epoch) this.clearIdentity(); }
+  }
+  #analyticsQuery(period: PeriodRequest): string {
+    if (!this.#session?.principal.active || !(Date.parse(this.#session.expires_at) > Date.now())) throw new ApiError('Сессия завершена. Войдите снова.', 401);
+    if (this.#session.principal.role !== 'master' || !this.#session.principal.section_ids.length) throw new ApiError('Отчёты доступны мастеру с разрешённым участком.', 403);
+    if (!validPeriod(period)) throw new ApiError('Укажите корректный период не более 93 суток.', 422);
+    return new URLSearchParams({ start: period.start, end: period.end, format: 'json' }).toString();
+  }
+  async #report<T extends AnalyticsFacts | ShiftReport | OrderReport>(path: string, period: PeriodRequest, validate: (data: unknown) => boolean, signal?: AbortSignal): Promise<T> {
+    const start=period.start, end=period.end;
+    const result = await this.#request<T>(`${path}?${this.#analyticsQuery({ start, end })}`, { validate, signal, analytics: true, maxBytes: 8 * 1024 * 1024 });
+    if (Date.parse(result.period.start)!==Date.parse(start) || Date.parse(result.period.end)!==Date.parse(end)) throw new ApiError('Ответ относится к другому периоду. Загрузите отчёт снова.');
+    return result;
+  }
+  getShiftAnalytics(period: PeriodRequest, signal?: AbortSignal): Promise<AnalyticsFacts> { return this.#report('/analytics/shift', period, isAnalyticsFacts, signal); }
+  getShiftReport(period: PeriodRequest, signal?: AbortSignal): Promise<ShiftReport> { return this.#report('/reports/shift', period, isShiftReport, signal); }
+  async getOrderReport(orderId: string, period: PeriodRequest, signal?: AbortSignal): Promise<OrderReport> {
+    const result = await this.#report<OrderReport>(`/reports/orders/${id(orderId)}`, period, isOrderReport, signal);
+    if (result.order.order.id.toLowerCase() !== orderId.toLowerCase()) throw new ApiError('Ответ содержит отчёт другого наряда.');
+    return result;
   }
   #assertPushSession(): void {
     if (!this.#session?.principal.active || !(Date.parse(this.#session.expires_at) > Date.now())) throw new ApiError('Сессия завершена. Войдите снова.', 401);

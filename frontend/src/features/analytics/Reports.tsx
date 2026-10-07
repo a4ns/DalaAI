@@ -1,0 +1,53 @@
+import type { AnalyticsFacts, MetricFact, OrderReport, ReportProvenance, ShiftReport, AnalyticsPeriod } from '../../shared/api/analyticsProtocol';
+import { metricLabels, showTime, snapshotMetrics, statusLabels } from './model';
+
+const value=(v:string|number|null)=>v===null?'Не оценено / нет данных':String(v);
+export function Provenance({ source, period }: { source:ReportProvenance;period:AnalyticsPeriod }) {
+  const history=source.historical_evidence;
+  return <section className="analytics-provenance" aria-label="Происхождение отчёта">
+    <strong>{source.synthetic?'СИНТЕТИЧЕСКИЕ ДАННЫЕ — не история предприятия':'ДАННЫЕ ИСТОЧНИКА'}</strong>
+    <p>{source.scope_description}</p>
+    <p>Период: {showTime(period.start)} — {showTime(period.end)}. Начало включено, конец исключён.</p>
+    <p>Доменное время снимка: <strong>{showTime(source.domain_as_of)}</strong>. Текущее состояние не восстанавливается на конец выбранного периода.</p>
+    <p>Получение источником: {showTime(source.captured_at_real)}.</p>
+    <p>{['consistent_snapshot','frozen_complete_export'].includes(source.coverage)?'Источник заявил согласованный полный снимок разрешённой области.':'Полнота снимка не подтверждена.'} {source.history_complete?'Полная история заявлена источником.':'Полнота истории не подтверждена.'} Это не итог по предприятию и не доказательство качества работ.</p>
+    {history&&<aside className="notice" aria-label="Исторические фото недоступны"><strong>Исторические доказательства недоступны</strong><p>Исторических нарядов: {history.historical_order_count}; попыток: {history.historical_submission_count}; ссылок на фото после работ: {history.historical_after_photo_reference_count}; отсутствующих записей фото: {history.missing_after_photo_row_count}.</p><p>Физические доказательства не проверены. Полнота исторического результата не означает проверку фото, выполнение ИИ или успешное живое закрытие.</p></aside>}
+    <details><summary>Источник и границы снимка</summary><p>{source.source_ref}</p><p>Область определена сервером по текущему доступу.</p>{history&&<p>Исторический источник: {history.source_commit}; версия загрузки: {history.loader_version}. SHA-256 истории: {history.history_sha256}. SHA-256 сопоставления: {history.identity_mapping_sha256}. Эти сведения не подтверждают доступность изображения.</p>}</details>
+  </section>;
+}
+export function Metric({ metric }: {metric:MetricFact}) {
+  const status={ok:'Доступно',no_cohort:'Нет подходящих записей',missing:'Значения отсутствуют',partial:'Частичные данные'}[metric.status];
+  return <article className="analytics-metric"><h4>{metricLabels[metric.name]??metric.name}</h4><p className="analytics-value">{value(metric.value)}</p><p>{status}{metric.small_sample?' · малая выборка':''}</p><p>Подходящих: {metric.eligible}; без данных: {metric.missing}; исключено: {metric.excluded}.</p>
+    <details><summary>Исходные значения показателя</summary><p>Числитель: {value(metric.numerator)}. Знаменатель: {metric.denominator===null?'Не применяется к счётчику':metric.denominator}.</p><p>Значение показано с точностью источника; отсутствующее значение не заменено нулём.</p><p>Таблица: {metric.source_table}. Записи: {metric.source_ids.join(', ')||'Нет'}.</p><p>Без значения: {metric.missing_source_ids.join(', ')||'Нет'}. Исключено: {metric.excluded_source_ids.join(', ')||'Нет'}.</p></details>
+  </article>;
+}
+export function Unavailable({ reasons }: {reasons:string[]}) { return reasons.length>0?<aside className="notice"><strong>Ограничения исходных данных</strong><p>Сводный рейтинг, закономерности неисправностей и эффективность производства не вычисляются из отсутствующих показателей.</p><details><summary>Причины, возвращённые источником</summary><ul>{reasons.map((reason,index)=><li key={index}>{reason}</li>)}</ul></details></aside>:null; }
+export function FactTotals({ data }: {data:AnalyticsFacts|ShiftReport}) {
+  if(!data.totals_available)return <p className="notice" role="status">Итоги недоступны: полный согласованный снимок и история не подтверждены. Это не нулевой итог смены.</p>;
+  const metrics=data.metrics!;
+  return <>
+    <section><h3>События за выбранный период</h3><p>Выдача, отправка, закрытие и доработка учитываются по времени соответствующего события, включая ранее выданные наряды.</p><div className="analytics-grid">{metrics.filter(m=>!snapshotMetrics.has(m.name)).map(m=><Metric key={m.name} metric={m}/>)}</div></section>
+    <section><h3>Состояние на доменное время снимка</h3><p>Эти показатели относятся к {showTime(data.provenance.domain_as_of)}, а не к концу периода.</p><div className="analytics-grid">{metrics.filter(m=>snapshotMetrics.has(m.name)).map(m=><Metric key={m.name} metric={m}/>)}</div></section>
+    <section><h3>Показатели исполнителей</h3><p>Это исходные описательные показатели, не рейтинг мест. Сводная оценка недоступна: нет необходимых исходных данных. Оценки мастера не заменяются оценками ИИ.</p>
+      {data.ratings!.length===0?<p>В выбранной когорте закрытия нет записей для показателей исполнителей.</p>:data.ratings!.map(row=><details className="analytics-rating" key={row.executor_id}><summary>Исполнитель {row.executor_id}</summary><div className="analytics-grid">{[row.human_score,row.closed_on_time,row.closed_with_rework].map(m=><Metric key={m.name} metric={m}/>)}</div></details>)}
+    </section>
+    <section><h3>Заявленные материалы закрытых попыток</h3><p>Заявления исполнителей; не подтверждённые складские списания.</p>{data.closed_materials!.length===0?<p>В выбранной когорте материалы не заявлены.</p>:<ul>{data.closed_materials!.map(m=><li key={m.material_id}><strong>{m.label??'Название отсутствует'}</strong>: {m.quantity} {m.unit??'(единица не указана)'}<details><summary>Связанные записи</summary><p>Материал: {m.material_id}; наряды: {m.order_ids.join(', ')}; попытки: {m.submission_ids.join(', ')}; решения: {m.review_ids.join(', ')}.</p></details></li>)}</ul>}</section>
+  </>;
+}
+export function OrderReportView({ data }: {data:OrderReport}) {
+  const {order,attempts,is_overdue}=data.order;
+  return <>
+    <h3>Защищённый отчёт: наряд №{order.number}</h3><Provenance source={data.provenance} period={data.period}/>
+    <section><h4>{statusLabels[order.status]??order.status} · {order.type==='planned'?'Плановый':'Внеплановый'}</h4><p>{order.description}</p><p>Комментарий мастера: {order.comment||'Не указан'}</p><p>Выдан: {showTime(order.issued_at)}. Срок: {showTime(order.due_at)}.</p><p>Просрочен на время снимка: {is_overdue?'Да':'Нет'}. Норма: {order.norm_minutes} мин.</p><p>Участок: {order.section_id}. Оборудование: {order.equipment_id}. Исполнитель: {order.assignment.executor_id}. Бригада: {order.assignment.brigade_id??'Не указана'}.</p><p>Фото до работ: {order.before_photo_ids.length===0?'Не указаны; сравнение до/после не применимо':`${order.before_photo_ids.length} ссылок, изображения этим отчётом не проверены`}.</p></section>
+    {attempts.length===0&&<p>В источнике нет попыток выполнения. Состояние задания ИИ неизвестно.</p>}
+    {attempts.map(attempt=>{const sub=attempt.submission,review=attempt.review;const current=sub.id===order.current_submission_id&&sub.assignment_revision===order.assignment_revision;return <section className="analytics-attempt" key={sub.id}>
+      <h4>Попытка {sub.attempt_number} · ревизия назначения {sub.assignment_revision}</h4><p>{current?'Текущая попытка':'Прежняя попытка'}. Отправлена: {showTime(sub.submitted_at)}.</p><p>Отправлено после срока: {sub.done_late===null?'Неизвестно':sub.done_late?'Да':'Нет'}.</p><p>{sub.payload.work_description}</p><p>Шифр работ: {sub.payload.work_code_id??'Не указан'}. Комментарий исполнителя: {sub.payload.comment||'Не указан'}.</p><p>Полнота по записи источника: {sub.completeness==='complete'?'Полный результат':sub.completeness==='incomplete'?'Неполный результат':'Не подтверждена'}. Это не проверка физических доказательств.</p>{sub.missing_evidence.length>0&&<p>Не хватает: {sub.missing_evidence.map(reason=>reason==='WORK_CODE_REQUIRED'?'шифра работ':reason==='AFTER_PHOTO_REQUIRED'?'фото после работ':'неуточнённого обязательного доказательства').join(', ')}.</p>}
+      <p>Фото после работ: {sub.payload.after_photo_ids.length} ссылок. Изображения и исправность этим отчётом не проверялись.</p>
+      <details><summary>Материалы и ссылки попытки</summary><p>Фото: {sub.payload.after_photo_ids.join(', ')||'Нет'}.</p>{sub.payload.materials.length===0?<p>Материалы явно не заявлены.</p>:<ul>{sub.payload.materials.map(m=><li key={m.material_id}>{m.material_id}: {m.quantity}</li>)}</ul>}</details>
+      <div className="analytics-human"><h4>Решение мастера</h4>{review?<><p>{review.decision==='close'?'Закрыть':'Вернуть на доработку'} · {showTime(review.created_at)}</p><p>Оценка мастера: <strong>{review.final_score===null?'Не оценено':review.final_score}</strong></p><p>{review.reason||'Причина не указана'}</p></>:<p>Решения мастера в источнике нет.</p>}</div>
+      <div className="analytics-ai"><h4>Записанные рекомендации ИИ / правил</h4>{attempt.assessments.length===0?<p>Оценок в источнике нет; состояние задания ИИ неизвестно.</p>:attempt.assessments.map(ai=><article key={ai.id}><p>Режим: {ai.mode==='model'?'Модель':ai.mode==='rules_fallback'?'Правила (резервный режим)':'Ручной режим'}. Балл рекомендации: {ai.score===null?'Не оценено':ai.score}.</p><p>Модель: {ai.model??'Не указана'}; версия: {ai.model_version??'Не указана'}.</p><p>{ai.recommendation==='satisfactory'?'Удовлетворительно':ai.recommendation==='rework_recommended'?'Рекомендуется доработка':'Требуется проверка мастера'}.</p><p>{ai.stale?'Устаревшая оценка':current?'Оценка текущей попытки по данным источника':'Оценка прежней попытки'}. Время: {showTime(ai.created_at)}.</p>{review&&<p>{Date.parse(ai.created_at)>Date.parse(review.created_at)?'Записана после решения мастера.':'Записана не позже решения мастера; это не подтверждает её просмотр.'}</p>}<ul>{ai.reasons.map((reason,index)=><li key={index}>{reason}</li>)}</ul>{ai.fallback_reason&&<p>Причина резервного режима: {ai.fallback_reason}</p>}<p>Рекомендация не заменяет решение мастера и не доказывает качество фото.</p></article>)}</div>
+    </section>;})}
+    <Unavailable reasons={data.unavailable_reasons}/><ul>{data.limitations.map((line,index)=><li key={index}>{line}</li>)}</ul>
+  </>;
+}
+export function ShiftReportView({ data }: {data:ShiftReport}) { return <><h3>Защищённый отчёт смены / периода</h3><Provenance source={data.provenance} period={data.period}/><FactTotals data={data}/><Unavailable reasons={data.unavailable_reasons}/><ul>{data.limitations.map((line,index)=><li key={index}>{line}</li>)}</ul></>; }

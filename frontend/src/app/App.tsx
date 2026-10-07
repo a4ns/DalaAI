@@ -23,7 +23,7 @@ export function App({ client = defaultClient, orders = defaultOrders, renderWork
   const [pin, setPin] = useState('');
   const authPending = useRef(false);
   const sessionKey = `${client.epoch}:${session?.principal.user_id ?? 'anonymous'}`;
-  const tabs = !session ? ['Наряды', 'Исполнение', 'Проверка'] : session.principal.role === 'master' ? ['Наряды', 'Обзор смены'] : session.principal.role === 'executor' ? ['Мои наряды'] : session.principal.role === 'manager' ? ['Обзор смены'] : ['Доступ'];
+  const tabs = !session ? ['Наряды', 'Исполнение', 'Проверка'] : session.principal.role === 'master' ? ['Наряды', 'Обзор смены', 'Аналитика и отчёты'] : session.principal.role === 'executor' ? ['Мои наряды'] : session.principal.role === 'manager' ? ['Обзор смены'] : ['Доступ'];
   const activeSection = tabs.includes(section) ? section : tabs[0];
   useEffect(() => {
     let active = true;
