@@ -14,7 +14,7 @@ workflow can skip the opt-in DB classes without a DSN; that is not DB acceptance
 ## Application-role profile
 
 The additional gate reuses the 24 command-service cases with an actual separate
-LOGIN connection and adds five explicit permission tests. The role is non-owner,
+LOGIN connection and adds nine explicit permission/security tests. The role is non-owner,
 NOSUPERUSER, NOCREATEDB, NOCREATEROLE, NOINHERIT and NOBYPASSRLS. It is generated
 only inside the disposable CI database, with a random credential that is never
 printed or saved in the repository. Schema creation, migrations, synthetic fixture
@@ -29,11 +29,14 @@ immutability and deferred completeness must remain effective under this login.
 
 PostgreSQL FOR SHARE/UPDATE requires UPDATE on at least one column, including on
 auth/reference tables. This candidate profile uses id/employee_id column grants
-rather than broad auth-table UPDATE. This still permits direct modification of
-those identifier columns if SQL access is compromised: it is an explicit remaining
-DB privilege-design risk, not production hardening or row-level SQL authorization.
-A reviewed lock-helper/provisioning design may reduce that risk later; do not grant
-UPDATE(role/active/pin_hash/token_hash/csrf_token) just to make locks work.
+rather than broad auth-table UPDATE. Migration 004 adds immutable-key/ownership triggers: actual identifier changes,
+session-subject changes, and both employee_sections key changes are rejected;
+no-op updates and row locks still work. The CI control first reproduces the old
+membership/session-ID abuse on 001+002, then applies 004 to those existing synthetic
+rows and proves denial without changing grants. The expanded role suite also tests
+all granted identity columns, preserved revoked-session behavior and foreign-section
+denial. This is not a blanket production hardening or row-level SQL authorization
+claim. Do not grant UPDATE(role/active/pin_hash/token_hash/csrf_token) merely for locks.
 
 References:
 - https://www.postgresql.org/docs/17/sql-select.html

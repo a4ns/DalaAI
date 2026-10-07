@@ -1,7 +1,7 @@
 name: PostgreSQL persistence validation
 'on':
   push:
-    branches: ['pod-a/A-009-persistence-runtime']
+    branches: ['main', 'pod-a/A-009-persistence-runtime', 'pod-a/A-010-reference-key-hardening']
 permissions:
   contents: read
 concurrency:
@@ -50,6 +50,8 @@ jobs:
           assert not re.search(r'\bskipped\b', log), 'Skipped tests cannot satisfy acceptance'
           print('PASS: 24 real PostgreSQL tests, zero skips')
           PY
+      - name: Reproduce old gap and verify populated-schema forward fix
+        run: python scripts/probe_reference_key_hardening.py
       - name: Non-owner application-role gate
         shell: bash
         run: |
@@ -59,9 +61,9 @@ jobs:
           import pathlib, re
           log = pathlib.Path('postgres-role-gate.log').read_text()
           count = re.search(r'Ran (\d+) tests? in', log)
-          assert count and int(count.group(1)) == 29, 'Expected 24 inherited cases plus 5 role checks'
+          assert count and int(count.group(1)) == 33, 'Expected 24 inherited cases plus 9 role/security checks'
           assert not re.search(r'\bskipped\b', log), 'Skipped role tests cannot satisfy acceptance'
-          print('PASS: 29 application-role cases, zero skips')
+          print('PASS: 33 application-role cases, zero skips')
           PYCODE
       - name: Aggregate with real PostgreSQL configured
         run: make check

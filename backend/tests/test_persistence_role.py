@@ -9,7 +9,7 @@ import secrets
 from uuid import uuid4
 
 import test_persistence_postgres as candidate
-from app.persistence.postgres import PostgresRepository
+from app.persistence.postgres import PostgresRepository, PostgresPrincipals
 from app.persistence.service import CommandService
 
 
@@ -125,3 +125,58 @@ class ApplicationRoleTests(candidate.PostgresCommandTests):
             with db.transaction():
                 PostgresRepository(db).reserve(candidate.MASTER, str(uuid4()), "a" * 64, candidate.NOW)
         self.assertEqual(self.query("SELECT * FROM operation_receipts"), [])
+
+
+    def test_runtime_cannot_transfer_section_membership(self):
+        self.query("INSERT INTO employee_sections VALUES (%s,%s) RETURNING employee_id",
+                   (candidate.EXECUTOR, candidate.SECOND_SECTION))
+        command = candidate.create_command()
+        command["operation_id"] = str(uuid4())
+        command["payload"]["section_id"] = candidate.SECOND_SECTION
+        command["payload"]["equipment_id"] = candidate.SECOND_EQUIPMENT
+        created = self.run_command(command)
+        self.query("DELETE FROM employee_sections WHERE employee_id=%s AND section_id=%s RETURNING employee_id",
+                   (candidate.EXECUTOR, candidate.SECOND_SECTION))
+        with self.assertRaises(self.pg.errors.CheckViolation):
+            self.runtime_query("UPDATE employee_sections SET employee_id=%s WHERE employee_id=%s AND section_id=%s RETURNING employee_id",
+                               (candidate.EXECUTOR, candidate.MASTER, candidate.SECOND_SECTION))
+        rows = self.query("SELECT employee_id FROM employee_sections WHERE section_id=%s", (candidate.SECOND_SECTION,))
+        self.assertEqual([str(row["employee_id"]) for row in rows], [candidate.MASTER])
+        with self.runtime_connect() as db:
+            principal = PostgresPrincipals(db).lookup(candidate.EXECUTOR)
+            self.assertNotIn(candidate.SECOND_SECTION, principal.section_ids)
+        with self.assertRaises(candidate.AccessDenied):
+            self.service.get_order(created.body["order"]["id"], session_handle=candidate.EXECUTOR)
+
+    def test_runtime_cannot_rewrite_lock_key_identifiers(self):
+        unused_employee, brigade = str(uuid4()), str(uuid4())
+        with self.connect() as db:
+            db.execute("INSERT INTO employees(id,employee_code,role,pin_hash) VALUES (%s,%s,'executor','synthetic')",
+                       (unused_employee, "unused-" + uuid4().hex))
+            db.execute("INSERT INTO brigades(id,section_id,code,label) VALUES (%s,%s,%s,'Synthetic')",
+                       (brigade, candidate.SECTION, "brigade-" + uuid4().hex))
+        session = self.query("SELECT id FROM auth_sessions WHERE employee_id=%s", (candidate.MASTER,))[0]["id"]
+        keys = (("auth_sessions", session), ("employees", unused_employee),
+                ("equipment", candidate.EQUIPMENT), ("brigades", brigade),
+                ("work_codes", candidate.CODE), ("materials", candidate.MATERIAL))
+        for table, current_id in keys:
+            with self.subTest(table=table), self.assertRaises(self.pg.errors.CheckViolation):
+                statement = self.sql.SQL("UPDATE {} SET id=%s WHERE id=%s RETURNING id").format(self.sql.Identifier(table))
+                self.runtime_query(statement, (str(uuid4()), current_id))
+
+    def test_owner_cannot_reassign_immutable_ownership(self):
+        with self.assertRaises(self.pg.errors.CheckViolation):
+            self.query("UPDATE employee_sections SET section_id=%s WHERE employee_id=%s AND section_id=%s RETURNING employee_id",
+                       (candidate.SECOND_SECTION, candidate.OTHER, candidate.SECTION))
+        with self.assertRaises(self.pg.errors.CheckViolation):
+            self.query("UPDATE auth_sessions SET employee_id=%s WHERE employee_id=%s RETURNING id",
+                       (candidate.OTHER, candidate.MASTER))
+
+    def test_reference_noops_and_session_revocation_still_work(self):
+        self.assertTrue(self.runtime_query("UPDATE employees SET id=id WHERE id=%s RETURNING id", (candidate.MASTER,)))
+        self.assertTrue(self.runtime_query("UPDATE auth_sessions SET id=id WHERE employee_id=%s RETURNING id", (candidate.MASTER,)))
+        self.assertTrue(self.runtime_query("UPDATE employee_sections SET employee_id=employee_id WHERE employee_id=%s RETURNING employee_id", (candidate.MASTER,)))
+        created, _ = self.create()
+        self.query("UPDATE auth_sessions SET revoked_at=%s WHERE employee_id=%s RETURNING id", (candidate.NOW, candidate.MASTER))
+        with self.assertRaises(candidate.AuthenticationRequired):
+            self.service.get_order(created.body["order"]["id"], session_handle=candidate.MASTER)
