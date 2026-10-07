@@ -56,6 +56,7 @@ export class ApiClient {
   #fetch: typeof fetch;
   #online: () => boolean;
   #timeout: number;
+  #cooldowns = new Map<string, { until: number; status: number }>();
   constructor(options: { fetch?: typeof fetch; online?: () => boolean; timeoutMs?: number } = {}) {
     this.#fetch = options.fetch ?? globalThis.fetch.bind(globalThis);
     this.#online = options.online ?? (() => typeof navigator === 'undefined' || navigator.onLine);
@@ -70,6 +71,10 @@ export class ApiClient {
     const epoch = options.epoch ?? this.#epoch;
     this.#assertEpoch(epoch);
     if (!this.#online()) throw new ApiError('Нет сети. Изменения не отправлены.');
+    const routeKey = `${options.method ?? 'GET'} ${path.split('?')[0].replace(/[0-9a-f]{8}-[0-9a-f-]{27}/gi, ':id')}`;
+    const cooldown = this.#cooldowns.get(routeKey);
+    if (cooldown && cooldown.until > Date.now()) throw new ApiError('Повторите запрос после указанной сервером задержки.', cooldown.status, null, false, Math.ceil((cooldown.until - Date.now()) / 1000));
+    this.#cooldowns.delete(routeKey);
     const headers = new Headers({ Accept: options.image ? 'image/jpeg, image/png, image/webp' : 'application/json' });
     if (options.contentType) headers.set('Content-Type', options.contentType);
     if (options.method === 'POST' && options.auth !== false) {
@@ -93,7 +98,9 @@ export class ApiClient {
         try { data = await response.json(); } catch { /* A proxy may return non-JSON. Never render its body. */ }
         this.#assertEpoch(epoch);
         const problem = isWire<Problem>('Problem', data) ? data : null;
-        throw new ApiError('Сервер отклонил запрос. Повторите позже.', response.status, problem, Boolean(options.mutation && response.status >= 500), retryDelay(response.headers.get('Retry-After')));
+        const delay = retryDelay(response.headers.get('Retry-After'));
+        if ((response.status === 429 || response.status === 503) && delay !== null) this.#cooldowns.set(routeKey, { until: Date.now() + delay * 1000, status: response.status });
+        throw new ApiError('Сервер отклонил запрос. Повторите позже.', response.status, problem, Boolean(options.mutation && response.status >= 500), delay);
       }
       if (response.status !== (options.successStatus ?? 200)) throw new ApiError('Получен неожиданный ответ сервера.', response.status, null, Boolean(options.mutation));
       if (response.status === 204) return undefined as T;
@@ -142,6 +149,7 @@ export class ApiClient {
     return this.#request(`/orders?${query}`, { schema: 'OrderPage', signal });
   }
   listOrderEvents(orderId: string, afterSequence = 0, signal?: AbortSignal): Promise<EventPage> {
+    if (!Number.isSafeInteger(afterSequence) || afterSequence < 0) return Promise.reject(new ApiError('Курсор истории не может быть безопасно представлен. Запрос не отправлен.'));
     return this.#request(`/orders/${id(orderId)}/events?after_sequence=${afterSequence}&limit=200`, { schema: 'EventPage', signal });
   }
   prepareCreate(payload: CreatePayload): PreparedMutation<CommandResult> {
@@ -159,6 +167,11 @@ export class ApiClient {
     return token;
   }
   async preparePhoto(input: StagePhotoInput): Promise<PreparedMutation<StagedPhoto>> {
+    id(input.sectionId);
+    if (input.purpose === 'after') {
+      id(input.orderId);
+      if (!Number.isSafeInteger(input.assignmentRevision) || input.assignmentRevision < 1) throw new ApiError('Некорректная версия назначения. Фото не отправлено.');
+    }
     const epoch = this.#epoch;
     const operationId = crypto.randomUUID();
     const form = new FormData();
