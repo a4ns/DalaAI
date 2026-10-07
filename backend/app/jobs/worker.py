@@ -86,17 +86,22 @@ class AssessmentWorker:
                         raise LostLease()
                     if not jobs.owns(claim, now=self._real()):
                         raise LostLease()
+                    # Assessment chronology is business time. Sample once after
+                    # locks; audit, leases and duration remain real/monotonic.
+                    domain_now = utc(self.domain_clock.now())
+                    if domain_now < max(order.updated_at, sub.submitted_at):
+                        raise RuntimeError('Assessment business clock precedes snapshot')
                     started = monotonic_ns()
                     assessment, _ = assess_rules(data, context,
                         assessment_id=str(uuid5(UUID(claim.id), 'rules-assessment-v1')),
-                        created_at=self._real())
+                        created_at=domain_now)
                     # Actual deterministic rule execution duration, never a model latency.
                     from dataclasses import replace
                     assessment = replace(assessment, duration_ms=(monotonic_ns()-started)//1_000_000)
                     jobs.persist_assessment(assessment)
                     if not assessment.stale:
                         jobs.publish_current(order, assessment,
-                            domain_now=utc(self.domain_clock.now()), real_now=self._real())
+                            domain_now=domain_now, real_now=self._real())
                     if not jobs.finish(claim, now=self._real()):
                         raise LostLease()
                 return RunResult('done', claim.id, assessment.id, assessment.stale)

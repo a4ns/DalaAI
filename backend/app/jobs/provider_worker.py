@@ -293,13 +293,18 @@ class ProviderAssessmentWorker(AssessmentWorker):
                         derivation_status='changed_or_unavailable'
                         candidate=replace(candidate,observation=None,evidence_ids=(),
                             fallback_reason='provider_unavailable',diagnostic_code='model_image_source_changed')
+                    # Provider approval/budget/lease time stays real. The saved
+                    # recommendation belongs to the business timeline.
+                    domain_now=utc(self.domain_clock.now())
+                    if domain_now < order.updated_at:
+                        raise RuntimeError('Assessment business clock precedes snapshot')
                     assessment,_ = finalize_candidate(candidate,current.data,current.context,
                         assessment_id=str(uuid5(UUID(claim.id),'provider-assessment-v1')),
-                        created_at=self._real(),before_photos=current.assets.before_photos)
+                        created_at=domain_now,before_photos=current.assets.before_photos)
                     jobs.persist_finalized(assessment)
                     if not assessment.stale:
                         jobs.publish_finalized(order,assessment,candidate,
-                            domain_now=utc(self.domain_clock.now()),real_now=self._real(),
+                            domain_now=domain_now,real_now=self._real(),
                             image_derivations=image_derivations,derivation_status=derivation_status)
                     # Failure AFTER provisional INSERT/event/version also rolls
                     # every effect back. Never trust lease time from before locks.

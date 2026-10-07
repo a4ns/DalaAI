@@ -27,7 +27,7 @@ class Store:
         self.data,self.context=good()
         self.order=SimpleNamespace(id=self.data.order_id,version=4,assignment_revision=1,
             scheduling_revision=1,before_photo_ids=(),type='unplanned',description=self.data.problem_description,
-            current_submission_id=self.data.submission_id,status='ai_review',section_id=uid(90))
+            current_submission_id=self.data.submission_id,status='ai_review',section_id=uid(90),updated_at=NOW)
         self.sub=SimpleNamespace(id=self.data.submission_id,order_id=self.data.order_id,assignment_revision=1,
             payload=SimpleNamespace(work_description=self.data.work_description,work_code_id=self.data.work_code_id,
                 materials=self.data.materials,after_photo_ids=self.data.after_photo_ids),

@@ -79,3 +79,11 @@ Tests:
 `PYTHONPATH=backend python -m unittest discover -s ops/provision/tests -p test_worker_capabilities.py -v`
 
 Current local: 26 runtime/config/assembly tests and 7 bootstrap-source tests PASS, plus existing profile tests. Mock catalog/source tests are not PostgreSQL or hosted evidence. Disposable bootstrap PG, actual worker processing, Compose/managed deployment, provider/model quality, mobile Playwright and real phones remain NOT_RUN here. No remote writes, live grants, credential creation, provider sends or deployment occurred.
+
+Assessment `created_at` is business/domain time, sampled once after the locked
+snapshot and lease checks and reused for the order/event occurrence. This matches
+submission and human-review chronology. Event `recorded_at`, lease completion,
+retry/backoff, provider budgets/approvals and duration remain real/monotonic.
+A business clock earlier than the locked snapshot fails the completion; no
+existing immutable timestamp is rewritten. Paused/advanced clock acceptance
+includes protected JSON/binary report capture.

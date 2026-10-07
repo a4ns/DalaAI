@@ -140,12 +140,22 @@ class MountedClockTests(WorkerRuntimePostgresTests):
             order,submission,photo=self._submit(master,executor,mcsrf,ecsr,with_photo=True)
             self.assertEqual(datetime.fromisoformat(order['issued_at']),domain_now)
             result=self._assert_persisted(master,order,submission,recommendation='needs_master_review')
-            self.assertLess(abs((result['created_at']-datetime.now(timezone.utc)).total_seconds()),10)
+            self.assertEqual(result['created_at'],domain_now)
+            event=self.query("SELECT occurred_at,recorded_at FROM order_events WHERE kind='order.assessment_recorded'")[0]
+            self.assertEqual(event['occurred_at'],domain_now)
+            self.assertLess(abs((event['recorded_at']-datetime.now(timezone.utc)).total_seconds()),10)
             current=dict(order,version=order['version']+1)
             closed=self._command(master,mcsrf,current,'review',{'submission_id':submission,'decision':'close',
                 'reason':'Синтетическое демо-время; ручное решение','final_score':None})
             self.assertEqual(closed['order']['status'],'closed')
             self.assertEqual(master.get('/api/v1/demo/clock').json()['domain_now'],snapshot['domain_now'])
+            query={'start':(domain_now-timedelta(days=1)).isoformat(),'end':domain_now.isoformat()}
+            for stem in ('shift','orders/'+order['id']):
+                for extension in ('pdf','xlsx'):
+                    exported=master.get('/api/v1/reports/'+stem+'.'+extension,params=query)
+                    self.assertEqual(exported.status_code,200,'Business-time report export failed')
+                    self.assertTrue(exported.content.startswith(b'%PDF-') if extension=='pdf' else exported.content.startswith(b'PK'))
+
 
 
 # The dedicated runner selects the three new cases explicitly. Ordinary aggregate

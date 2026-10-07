@@ -175,6 +175,10 @@ class DurableJobPostgresTests(unittest.TestCase):
         self.assertEqual(self.worker.run_once().state,'idle')
         self.real.value = job['next_attempt_at']
         self.assertEqual(self.worker.run_once().state,'done')
+        assessment=self.query('SELECT created_at FROM ai_assessments')[0]
+        event=self.query("SELECT occurred_at,recorded_at FROM order_events WHERE kind='order.assessment_recorded'")[0]
+        self.assertEqual(assessment['created_at'],self.domain.now())
+        self.assertEqual(event,{'occurred_at':self.domain.now(),'recorded_at':self.real.now()})
 
     def test_expiry_after_provisional_result_rolls_back_assessment_event_version(self):
         self.submitted()

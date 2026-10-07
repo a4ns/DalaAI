@@ -60,14 +60,18 @@ class ProviderWorkerPostgresTests(unittest.TestCase):
     def test_model_actual_mode_metadata_provenance_without_state_transition(self):
         order,sub,_=self.submitted();claim,prepared=self.authorize_claim()
         candidate=self.compute(prepared)
+        self.domain.value += timedelta(hours=1)  # Business advance while provider candidate was in flight.
         result=self.worker.complete(claim,candidate)
         self.assertEqual(result.state,'done')
         a=self.query('SELECT * FROM ai_assessments')[0]
+        self.assertEqual(a['created_at'],self.domain.now())
         self.assertEqual(a['mode'],'model');self.assertIsNone(a['score']);self.assertIsNone(a['fallback_reason'])
         self.assertEqual(a['model_version'],self.adapter.settings.model_version)
         self.assertEqual(self.query('SELECT status,version FROM orders')[0],{'status':'ai_review','version':5})
         self.assertEqual(self.query('SELECT * FROM reviews'),[])
         e=self.query("SELECT * FROM order_events WHERE kind='order.assessment_recorded'")[0]
+        self.assertEqual(e['occurred_at'],self.domain.now())
+        self.assertEqual(e['recorded_at'],self.real.now())
         self.assertEqual(e['details']['mode'],'model')
         self.assertEqual(e['details']['provider_provenance']['payload_sha256'],candidate.payload_hash)
         self.assertEqual(self.query('SELECT state FROM ai_jobs')[0]['state'],'done')
@@ -101,6 +105,7 @@ class ProviderWorkerPostgresTests(unittest.TestCase):
 
     def test_lease_expiry_after_provider_persists_nothing(self):
         self.submitted();claim,prepared=self.authorize_claim();candidate=self.compute(prepared)
+        self.domain.value += timedelta(days=3)
         self.real.value=claim.lease_until
         self.assertEqual(self.worker.complete(claim,candidate).state,'lost_lease')
         self.assertEqual(self.query('SELECT * FROM ai_assessments'),[])
@@ -109,7 +114,10 @@ class ProviderWorkerPostgresTests(unittest.TestCase):
 
     def test_final_lease_failure_rolls_back_assessment_event_and_version(self):
         self.submitted();claim,prepared=self.authorize_claim();candidate=self.compute(prepared)
-        with patch.object(ProviderJobRepository,'finish',return_value=False):
+        def slow_business_read():
+            self.real.value=claim.lease_until
+            return self.domain.value
+        with patch.object(self.domain,'now',side_effect=slow_business_read):
             self.assertEqual(self.worker.complete(claim,candidate).state,'lost_lease')
         self.assertEqual(self.query('SELECT * FROM ai_assessments'),[])
         self.assertEqual(self.query("SELECT * FROM order_events WHERE kind='order.assessment_recorded'"),[])
