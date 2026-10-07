@@ -27,6 +27,16 @@ class FixturesTests(unittest.TestCase):
             self.assertEqual(root.stat().st_mode & 0o777, 0o700)
             self.assertIn("@db:5432/naryadai", (root / "runtime_dsn").read_text())
 
+    def test_credentials_can_be_delayed_until_after_dummy_preflight(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "private"
+            fixtures.prepare_private(root, credentials=False)
+            self.assertEqual({path.name for path in root.iterdir()}, {".fixture-owner"})
+            fixtures.prepare_credentials(root)
+            self.assertTrue((root / "master_pin").exists())
+            with self.assertRaises(ValueError):
+                fixtures.prepare_credentials(root)
+
     def test_existing_directory_not_touched(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

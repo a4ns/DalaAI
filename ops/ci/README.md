@@ -1,128 +1,130 @@
-# Real composed-app mobile CI (C-110 integration)
+# Real composed-app Android-emulation CI
 
-This is an Android **browser-emulation** gate on the standard GitHub Ubuntu runner.
-It uses the accepted `ops/demo` Dockerfiles, real PostgreSQL, the mounted
-`app.main:app`, the composed frontend, and C-110-owned scenarios. It does not
-substitute API responses or duplicate the team's test scenarios.
+This workflow has two deliberately separate jobs:
 
-## Current source-preparation state
+1. `mobile-core`: C-110's actual composed browser/API/PostgreSQL manual journey
+2. `b-synthetic-rendering`: the independently pinned B synthetic Pixel 9 UI suite
 
-- Infrastructure fixture/safety tests run locally
-- Real Compose/browser execution is **NOT RUN** in the preparation environment:
-  Docker is unavailable there
-- `scenarios.json` deliberately has `accepted: false` until the actual C-110
-  package, configuration, test IDs and expected count are handed over
-- A missing package, zero tests, skipped test, expected failure, retry, missing
-  mandatory ID, duplicate mandatory ID, or unexpected count fails the gate
-- The existing synthetic frontend suite is a separate evidence level
+Neither job can mark the complete demo/release green. Physical Android, native
+camera, live push delivery, model/rules worker execution, throttled upload SLA
+and report export remain separate gates. No deployment is performed.
 
-Do not publish a green full-cycle/demo claim from this workflow. Even a successful
-core result leaves physical Android, actual provider-to-browser notification
-delivery, camera permissions, and hardware behavior as separate acceptance gates.
-The output always reports `full_cycle_green: false`, `real_android_device:
-NOT_RUN`, and `real_webpush_provider_delivery: NOT_RUN`.
+## C-110 accepted source and build provenance
 
-## Inputs and ownership
+`scenarios.json` accepts exact C source
+`23a135348a0e8ad9a140a36ca60e8440704b7893` and frontend
+`ca320bf692c01d89dd79496fe18d1bc2742052df`. C includes the bounded resume/Back
+render waits and version-2 frontend/source-bound receipt. Missing or altered
+source still blocks before private execution. Do not lower counts or silently
+skip a missing input.
 
-A5 supplies the accepted backend, migrations, `ops/provision`, `ops/demo`, and the
-unmodified accepted frontend. This package changes only `ops/ci/**` and
-`.github/workflows/mobile-e2e.yml`. It changes no B frontend or C scenarios.
+The active integration uses C's unchanged config
+`tests/e2e/c110_playwright.config.cjs`, project `c110-android-chromium`, and C's own
+`c110_gate.cjs`. Exactly one test named `C110 real composed master executor
+lifecycle` must pass, with all six asserted stages, 11 committed UI commands and
+13 persisted events. It uses two independent Pixel 7 Android-emulated contexts.
+No successful business request is mocked. The earlier generic CI Playwright
+wrapper/reporter is retained as frozen infrastructure history and is not used to
+run C-110; C correctly rejects alternate configurations and reporters.
 
-C-110 supplies:
+Before execution, CI verifies every accepted C source blob from the manifest and
+checks that all non-harness frontend inputs in the built checkout match the exact
+accepted frontend reference checkout. C separately binds its runtime proof to its
+actual committed harness HEAD and file hashes. The report records the integrated
+source SHA, the accepted C source SHA and the reviewed frontend source SHA.
 
-1. `tests/e2e/package.json` and `package-lock.json`, with exact `@playwright/test`
-2. Exported `tests/e2e/playwright.config.ts`, project `android-chromium`
-3. Actual test files and fixtures in `tests/e2e/**`
-4. Required public IDs in test titles, such as `C-110-HERO`, plus exact test count
-5. Acceptance of the runtime interface below, or a coordinated adapter change
+The normal checkout must be clean, with no untracked source inputs. The workflow
+provides `.ci-c110-frontend-reference` at the exact frontend SHA listed in the
+contract. It never copies that checkout over the integration source or backend.
 
-The config may retain C-owned fixtures/global setup, but cannot start a mock
-`webServer`, use an alternative browser binary, supply custom launch arguments,
-or rely on project dependencies that this focused gate would otherwise omit.
-Required scenarios must use two independent browser contexts configured from
-Playwright's project `use` settings; creating an unconfigured context does not
-inherit Android emulation automatically. C-110 must assert actual secure context,
-mobile user agent/touch/viewport, separate cookie jars, and real HTTP results.
+## Credentials and mandatory failure-output preflight
 
-After source handoff, the integrator sets `accepted: true`, the exact project,
-`required_test_ids`, `expected_test_count`, and `required_source_files` in
-`scenarios.json`. Do not reduce those expectations to make an incomplete run pass.
+Only official matching Playwright 1.63 Chromium is installed. The runner creates a
+new browser-only HOME/NSS database and one-day localhost-only TLS certificate
+chain. No existing browser/profile/system trust store is changed. Hostname checks
+remain on for the browser, Node and Python clients; no `ignoreHTTPSErrors`, browser
+warning bypass, insecure-origin flag, tunnel or public certificate request exists.
 
-## Runtime interface
+Before even generating real synthetic PIN/database credentials or supplying any
+fixture/PIN/observer fields to C, the runner
+executes `c110_secrecy_preflight.cjs` in that allowed disposable environment. This
+must observe exactly one intentional dummy failure, scan every bounded output,
+find zero sentinels, and produce a fresh source/hash/version-bound receipt. That
+intentional failure is never a core pass. Missing/stale proof stops credential
+reads. The source-bound preflight is repeated on every run and every source change.
 
-Only the child Playwright process receives:
+After the preflight, the real C process receives:
 
-- `DALA_E2E_BASE_URL=https://localhost:18443`
-- `DALA_E2E_FIXTURE_FILE`: public synthetic fixture manifest JSON, generated from
-  `ops/provision/provision_synthetic_demo.py:public_manifest()`
-- `DALA_E2E_MASTER_PIN_FILE`, `DALA_E2E_EXECUTOR_PIN_FILE`: transient private files
-- `HOME`: a newly created disposable browser-only home/NSS trust DB
-- `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`: one-day localhost-only CA file
-- `PLAYWRIGHT_BROWSERS_PATH`: installed official matching Chromium path
+- Exact HTTPS origin `https://localhost:18443`
+- The public fixture OBJECT from `public_manifest()`, with no dry-run wrapper
+- Random private master/executor PIN file paths; no sessions/orders/photos seeded
+- Exact frontend/backend source identities and a unique non-secret run ID
+- C's accepted synthetic-only authorization marker and verified worker-disabled state
+- Existing restricted runtime PostgreSQL credentials for read-only observation
+- Per-process CA paths; never debug/protocol/HAR/auth capture or `PG*` overrides
 
-Employee codes are `DALA-DEMO-MASTER` / `DALA-DEMO-EXECUTOR`; IDs, dictionaries and
-scope come from the fixture manifest. PINs are randomly generated for each
-isolated database. No application sessions are preseeded. Tests must log in over
-real HTTP and must never print PINs, session/CSRF values, cookies, or headers.
+The source/provisioning identities remain `DALA-DEMO-MASTER` and
+`DALA-DEMO-EXECUTOR`. The private fixture directory is 0700. Assigned Compose
+secret files are 0444 within it so the nonroot container UID can read its own
+explicit mounts. Other host users cannot traverse the 0700 parent. Secret values,
+raw runner errors, raw Playwright reports and credential-bearing diagnostics are
+never printed or uploaded.
 
-No OpenAI key reaches the composed app. Rules fallback must be asserted honestly;
-no paid model or real notification-provider calls are authorized by this gate.
-The test runner does not fake worker output, provider receipts, or notification
-success. If a required runtime worker/capability is absent, report/fix the failure
-in its owned source; never skip that scenario.
+## Actual runtime, worker exclusion and observer
 
-## Reproduction after all inputs are accepted
+A5 owns the real `ops/demo` Dockerfiles/runtime/provisioning. The CI overlay adds
+only test inputs, a loopback trusted HTTPS endpoint and a CI-only PostgreSQL bind
+`127.0.0.1:15432`. The API is never exposed directly; the ordinary demo Compose
+remains unchanged. The observer uses existing `naryadai_api` direct LOGIN and
+C's read-only repeatable-read transaction, not an owner credential or new grant.
 
-Run at repository root on a disposable Linux host with local Docker Compose,
-Node 24.21.0, Python 3.12, OpenSSL and Ubuntu `libnss3-tools`:
+CI inspects the resolved Compose model before setting C's worker-disabled marker.
+The five core services must exist. Any extra worker service must be profile-gated
+and cannot be a dependency of a core service. Enabled worker flags/provider keys
+fail. The command starts only `api web` and their approved dependencies, with no
+inherited `COMPOSE_PROFILES`. The actual started service inventory is checked
+again. Workers/provider delivery are therefore not merely declared disabled.
+
+The manual journey queues AI jobs but expects no assessment because workers are
+disabled. This gate does not exercise or claim rules fallback. The absent model
+key and manual-core evidence are distinct from the separate no-key rules-worker
+gate that A5 owns.
+
+A random `dalaai-ci-<id>` project owns fresh database/photo volumes. Teardown only
+removes that disposable project's containers/volumes. It never operates on the
+human's `dalaai-demo` project. C artifacts must use a fresh directory created by
+this invocation, then are removed. Both Playwright and C's evidence gate must
+succeed; the gate is still invoked when Playwright fails or evidence is absent.
+Only C's bound allowlisted synthetic projection can be published, after an extra
+check against the known ephemeral credential values. Raw output is discarded.
+
+## Reproduction on the disposable runner
+
+After all accepted sources are integrated and the frontend reference checkout is
+present at the exact recorded SHA:
 
 ```sh
 python -m unittest discover -s ops/ci/tests -v
 node --test ops/ci/tests/test_reporter.cjs
 python ops/ci/run_mobile.py --check-inputs
 npm ci --prefix tests/e2e --ignore-scripts
+python -m pip install -r backend/requirements.lock
 node tests/e2e/node_modules/@playwright/test/cli.js install --with-deps chromium
+# Ubuntu also requires openssl and libnss3-tools from its official repositories.
 python ops/ci/run_mobile.py --report mobile-ci-summary.json
 ```
 
-The normal test requires installed C-110 packages; it never implicitly installs
-an unpinned package. The official Playwright browser is tied to that exact version.
-The GitHub workflow executes the same sequence. It uses ordinary public-repo CI,
-read-only repository token permissions and no deployment/provider secrets.
+A local Docker daemon is required; remote Docker contexts are rejected. The
+source-preparation environment has no Docker, so local unit/parser/certificate
+checks are not represented as an actual composed-app run.
 
-## TLS, secrets and cleanup
-
-The accepted app requires an exact HTTPS Origin and retains its normal Secure
-cookies and CSRF checks. CI therefore uses a real TLS endpoint with a fresh
-one-day root/leaf chain constrained to localhost/127.0.0.1. Only the new disposable
-Chromium home trusts that root; Python and Node test clients use an explicit CA
-bundle. There is no `ignoreHTTPSErrors`, certificate-warning bypass, insecure-origin
-flag, tunnel, public certificate request, or system/existing-browser trust change.
-
-The CI Compose overlay preserves A5's services and Dockerfiles, changing only
-private test inputs, fixed loopback origin and Caddy's CI certificate. DB/API stay
-unpublished. HTTP port18080 has no application listener; HTTPS18443 is bound only
-to127.0.0.1. A random `dalaai-ci-<id>` project owns fresh volumes; cleanup removes
-only those disposable containers/volumes, never the `dalaai-demo` project.
-
-All secret fixture files stay under a fresh0700 directory outside the checkout.
-File-backed Compose secrets are0444 there so nonroot container UID10001 can read
-only explicitly mounted files; the0700 parent prevents other host users from
-traversing to them. All browser output stays in that private temporary directory
-and is removed. Traces, videos, screenshots and raw error bodies are not published.
-Only a bounded ID/status/count summary can enter the public artifact/log.
-
-## Evidence and official references
-
-The run binds evidence to the checkout's exact SHA and fails on tracked source
-changes. The artifact contains source SHA, stage, test counts, required IDs and
-explicit untested levels. It is not an industrial-data or physical-device claim.
+## Official references
 
 - [Playwright CI](https://playwright.dev/docs/ci)
 - [Playwright device emulation](https://playwright.dev/docs/emulation)
 - [Chromium Linux NSS certificate management](https://chromium.googlesource.com/chromium/src/+/main/docs/linux/cert_management.md)
 - [Compose secret file ownership limitations](https://docs.docker.com/reference/compose-file/services/#secrets)
-- [setup-node v7 immutable release](https://github.com/actions/setup-node/releases/tag/v7.0.0)
+- [GitHub expression context availability](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts)
 
 ## Independent B synthetic Android-emulation job
 
@@ -140,7 +142,7 @@ file fails rather than being overwritten. This is explicitly two-SHA evidence,
 not a claim that the product commit already contains the later harness.
 
 After installing the product lockfile and matching official Chromium, the job
-typechecks B's tests and executes all13 `android-emulation-pixel-9` browser cases
+typechecks B's tests and executes all 13 `android-emulation-pixel-9` browser cases
 with no skip/retry allowance. This is equivalent to B's
 `npm run test:ui -- --project=android-emulation-pixel-9`, invoked directly through
 its identical installed Playwright CLI to capture only the JSON report. The
@@ -149,13 +151,13 @@ wrapper unsets inherited `UI_TEST_NO_SERVER`, `UI_REVIEW_ROOT` and
 server. The safe report records both source SHAs and the workflow SHA, discarding
 raw assertion/log/attachment content.
 
-The accepted Playwright1.63 Pixel9 descriptor is Android14,360×732,touch/mobile,
-DPR3. The B shell test asserts Android user agent, touch support,DPR3 and360px
+The accepted Playwright 1.63 Pixel 9 descriptor is Android 14, 360×732, touch/mobile,
+DPR 3. The B shell test asserts Android user agent, touch support,DPR 3 and 360px
 inner width during actual execution. This establishes real rendering of synthetic
 fixtures under Android browser emulation. It does not prove actual backend/DB
 effects, a physical Android device, camera/push permission UX or real notification
 delivery. The separate required C-110 core remains fail-closed.
 
 The original desktop390px delta is preserved as a frozen earlier artifact; this
-replacement delta moves only the separate synthetic job to the accepted Pixel9
+replacement delta moves only the separate synthetic job to the accepted Pixel 9
 pair. It does not edit B product/harness source or the C-110 tests.

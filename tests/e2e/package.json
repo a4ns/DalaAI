@@ -1,0 +1,17 @@
+{
+  "name": "dalaai-c110-real-browser-acceptance",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test:source": "node --test c110_contract.test.cjs c110_preflight.test.cjs c110_resume_source.test.cjs",
+    "test:e2e": "playwright test --config=c110_playwright.config.cjs",
+    "test:gate": "node c110_gate.cjs",
+    "test:secrecy-preflight": "node c110_secrecy_preflight.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

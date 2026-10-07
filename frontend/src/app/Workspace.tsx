@@ -4,12 +4,11 @@ import { dueLocalToIso } from '../mobile/master/masterModel';
 import { emptyMasterCreateDraft } from '../mobile/master/types';
 import type { MasterCreateDraft, MasterReviewDraft, MasterReviewIntent } from '../mobile/master/types';
 import { ExecutorScreen } from '../mobile/executor/ExecutorScreen';
-import { emptyExecutorDraft } from '../mobile/executor/model';
-import type { ExecutorDraft, ExecutorIntent, ExecutorIntentSummary } from '../mobile/executor/types';
+import type { ExecutorDraft, ExecutorIntent } from '../mobile/executor/types';
 import { PanelScreen } from '../panel/PanelScreen';
 import type { PanelHistory } from '../panel/types';
 import { ApiError, SessionChangedError, safeErrorMessage } from '../shared/api/client';
-import type { ApiClient, OrderCommandIntent, PreparedMutation } from '../shared/api/client';
+import type { ApiClient, PreparedMutation } from '../shared/api/client';
 import { readAllOrderEvents } from '../shared/api/orderStore';
 import type { OrderStore } from '../shared/api/orderStore';
 import type { CommandResult, Order, Session, Submission } from '../shared/api/wire';
@@ -17,33 +16,31 @@ import type { MutationOutcome, MutationState } from '../shared/ui/types';
 import { useConnectivity } from '../pwa/useConnectivity';
 import { executorDictionaries, executorOrder, mapResource, masterDictionaries, masterOrder, panelEmployees, panelEvent, panelOrder } from './adapters';
 import { useResource } from './useResource';
-import { canResolveIntent, mutationFailureState, withNewIntentGuard } from './mutationFailure';
+import { mutationFailureState, withNewIntentGuard } from './mutationFailure';
 import { PhotoStore } from './photoStore';
 import type { PhotoContext } from './photoStore';
 import { PhotoStages } from './PhotoStages';
 import { ProtectedPhoto } from './ProtectedPhoto';
+import { ExecutorController } from './executorController';
 
 const submissionKey = (order: Order): string => `${order.id}:${order.version}:${order.assignment_revision}:${order.current_submission_id ?? 'none'}`;
-type Pending = { token: PreparedMutation<CommandResult>; status: MutationState['status']; epoch: number; unresolved: boolean; clearDraftOrder?: string };
+type Pending = { token: PreparedMutation<CommandResult>; status: MutationState['status']; epoch: number; unresolved: boolean };
 export function Workspace({ client, orders, session, sessionKey, section }: { client: ApiClient; orders: OrderStore; session: Session; sessionKey: string; section: string }) {
   const source = useSyncExternalStore(orders.subscribe, orders.getSnapshot);
   const { state: dictState, refresh: refreshDicts } = useResource(client, () => client.getDictionaries());
   const [createDraft, setCreateDraft] = useState(emptyMasterCreateDraft);
   const [draftGeneration, setDraftGeneration] = useState(0);
-  const [photoGenerations, setPhotoGenerations] = useState<Record<string, number>>({});
   const [photos] = useState(() => new PhotoStore(client));
   useSyncExternalStore(photos.subscribe, photos.getSnapshot);
+  const [executor] = useState(() => new ExecutorController(client, orders, photos, sessionKey));
+  useSyncExternalStore(executor.subscribe, executor.getSnapshot);
   useEffect(() => { const timer = setInterval(() => photos.tick(), 1000); return () => clearInterval(timer); }, [photos]);
   const beforeContext: PhotoContext = { key: `${sessionKey}:draft:${draftGeneration}:${createDraft.sectionId}:before`, phase: 'before', sectionId: createDraft.sectionId };
-  const afterContext = (order: { id: string; section_id: string; assignment_revision: number }): PhotoContext => ({ key: `${sessionKey}:${order.id}:${order.assignment_revision}:${order.section_id}:${photoGenerations[order.id] ?? 0}:after`, phase: 'after', sectionId: order.section_id, orderId: order.id, assignmentRevision: order.assignment_revision });
   const [reviewDrafts, setReviewDrafts] = useState<Record<string, MasterReviewDraft>>({});
-  const [executorDrafts, setExecutorDrafts] = useState<Record<string, ExecutorDraft>>({});
   const [selected, setSelected] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [mutation, setMutation] = useState<MutationState>({ status: 'idle', error: null });
-  const [pendingIntent, setPendingIntent] = useState<ExecutorIntentSummary | null>(null);
   const pending = useRef(new Map<string, Pending>());
-  const dirty = JSON.stringify(createDraft) !== JSON.stringify(emptyMasterCreateDraft()) || Object.values(reviewDrafts).some(draft => draft.reason || draft.finalScore) || Object.values(executorDrafts).some(draft => draft.workDescription || draft.workCodeId || draft.materials.length || draft.comment || draft.reason) || photos.hasWork;
+  const dirty = JSON.stringify(createDraft) !== JSON.stringify(emptyMasterCreateDraft()) || Object.values(reviewDrafts).some(draft => draft.reason || draft.finalScore) || executor.hasDrafts || photos.hasWork;
   useEffect(() => {
     if (!dirty) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
@@ -87,23 +84,21 @@ export function Workspace({ client, orders, session, sessionKey, section }: { cl
   const selectedVersion = rows.find(order => order.id === selected)?.version;
   useEffect(() => { if (selected && (session.principal.role === 'master' || session.principal.role === 'manager')) void refreshHistory(); }, [selected, selectedVersion, refreshHistory, session.principal.role]);
 
-  async function execute(key: string, make: (() => PreparedMutation<CommandResult>) | null, clearDraftOrder?: string): Promise<MutationOutcome> {
+  async function execute(key: string, make: (() => PreparedMutation<CommandResult>) | null): Promise<MutationOutcome> {
     let entry = pending.current.get(key);
     if (make) {
       if (entry && (entry.status === 'pending' || entry.status === 'unknown_result')) return { kind: 'unknown', message: 'Предыдущее действие ещё не подтверждено. Повторите исходную операцию.' };
-      try { entry = { token: make(), status: 'pending', epoch: client.epoch, unresolved: false, clearDraftOrder }; }
+      try { entry = { token: make(), status: 'pending', epoch: client.epoch, unresolved: false }; }
       catch (error) { return { kind: 'rejected', message: safeErrorMessage(error) }; }
       pending.current.set(key, entry);
     }
     if (!entry) return { kind: 'rejected', message: 'Исходная операция недоступна в этой сессии.' };
     entry.status = 'pending';
-    if (key === 'executor') setMutation({ status: 'pending', error: null });
     try {
       const result = await client.execute(entry.token);
       if (!mounted.current || entry.epoch !== client.epoch) return { kind: 'rejected', message: 'Сессия изменилась.' };
       orders.record(result.order, entry.epoch); entry.status = 'confirmed'; entry.unresolved = false;
       if (key === 'create') { setCreateDraft(emptyMasterCreateDraft()); setDraftGeneration(value => value + 1); }
-      if (key === 'executor') { setMutation({ status: 'confirmed', error: null }); const clearedOrder = entry.clearDraftOrder; if (clearedOrder) { setExecutorDrafts(previous => ({ ...previous, [clearedOrder]: emptyExecutorDraft() })); setPhotoGenerations(previous => ({ ...previous, [clearedOrder]: (previous[clearedOrder] ?? 0) + 1 })); } }
       void refresh();
       return { kind: 'confirmed' };
     } catch (error) {
@@ -111,7 +106,6 @@ export function Workspace({ client, orders, session, sessionKey, section }: { cl
       const status = mutationFailureState(error, entry.unresolved);
       entry.unresolved = status === 'unknown_result'; entry.status = status;
       const message = status === 'unknown_result' ? `Результат исходной операции всё ещё не подтверждён. Последняя попытка: ${safeErrorMessage(error)}` : safeErrorMessage(error);
-      if (key === 'executor') setMutation({ status, error: message });
       if (status === 'conflict') void refresh();
       return { kind: status === 'unknown_result' ? 'unknown' : status === 'conflict' ? 'conflict' : 'rejected', message };
     }
@@ -127,19 +121,15 @@ export function Workspace({ client, orders, session, sessionKey, section }: { cl
   function review(intent: MasterReviewIntent): Promise<MutationOutcome> {
     return execute(`review:${intent.orderId}`, () => client.prepareCommand(intent.orderId, { expected_version: intent.expectedVersion, action: 'review', payload: { submission_id: intent.submissionId, decision: intent.decision, reason: intent.reason, final_score: intent.finalScore } }));
   }
-  function act(intent: ExecutorIntent): Promise<MutationOutcome> {
-    return withNewIntentGuard(pending.current.get('executor'), () => {
-    const currentOrder = orders.getSnapshot().snapshot?.find(order => order.id === intent.orderId);
-    if (!currentOrder || currentOrder.version !== intent.expectedVersion) return Promise.resolve({ kind: 'conflict', message: 'Наряд изменился. Обновите состояние перед новым действием.' });
-    const photoContext = afterContext(currentOrder);
-    if (intent.action === 'submit' && photos.blocked(photoContext)) return Promise.resolve({ kind: 'rejected', message: 'Подтвердите загрузку выбранных фото или удалите неудачный выбор.' });
-    setPendingIntent({ orderId: intent.orderId, expectedVersion: intent.expectedVersion, action: intent.action });
-    let command: OrderCommandIntent;
-    if (intent.action === 'submit') command = { action: 'submit', expected_version: intent.expectedVersion, payload: { work_description: intent.payload.workDescription, work_code_id: intent.payload.workCodeId, materials: intent.payload.materials.map(item => ({ material_id: item.materialId, quantity: item.quantity })), after_photo_ids: photos.confirmedIds(photoContext), comment: intent.payload.comment } };
-    else if (intent.action === 'pause' || intent.action === 'reject') command = { action: intent.action, expected_version: intent.expectedVersion, payload: { reason: intent.payload.reason } };
-    else command = { action: intent.action, expected_version: intent.expectedVersion, payload: {} };
-    return execute('executor', () => client.prepareCommand(intent.orderId, command), intent.action === 'submit' ? intent.orderId : undefined);
-    });
+  async function act(intent: ExecutorIntent): Promise<MutationOutcome> {
+    const outcome = await executor.act(intent);
+    if (outcome.kind === 'confirmed' || outcome.kind === 'conflict') void refresh();
+    return outcome;
+  }
+  async function retryExecutor(scope: string): Promise<MutationOutcome> {
+    const outcome = await executor.retry(scope);
+    if (outcome.kind === 'confirmed' || outcome.kind === 'conflict') void refresh();
+    return outcome;
   }
   const masterRows = mapResource(source, items => items.map(order => masterOrder(order, dictState.snapshot, submissionState.snapshot?.[submissionKey(order)] ?? null)));
   if (rows.some(order => order.status === 'ai_review') && (submissionState.freshness !== 'fresh' || submissionState.loadStatus !== 'ready' || rows.some(order => order.status === 'ai_review' && !submissionState.snapshot?.[submissionKey(order)]))) {
@@ -148,10 +138,12 @@ export function Workspace({ client, orders, session, sessionKey, section }: { cl
   }
   const domainNow = rows.reduce<string | null>((latest, order) => !latest || Date.parse(order.domain_now) > Date.parse(latest) ? order.domain_now : latest, null);
   const access = orders.access;
-  const visibleDrafts = { ...executorDrafts };
-  for (const order of rows) visibleDrafts[order.id] = { ...(executorDrafts[order.id] ?? emptyExecutorDraft()), afterPhotoIds: photos.confirmedIds(afterContext(order)) };
-  const selectedOrder = rows.find(order => order.id === selected);
-  const selectedPhotosBusy = selectedOrder ? photos.blocked(afterContext(selectedOrder)) : false;
+  const executorRows = executor.visibleOrders();
+  const visibleDrafts: Record<string, ExecutorDraft> = Object.fromEntries(executorRows.map(order => [order.id, executor.draft(order)]));
+  const selectedOrder = executorRows.find(order => order.id === selected);
+  const selectedPhotosBusy = selectedOrder ? photos.blocked(executor.photoContext(selectedOrder)) : false;
+  const executorView = executor.view(selectedOrder);
+  const quarantinedScopes = executor.quarantinedScopes();
   function changeCreateDraft(next: MasterCreateDraft) {
     const intent = pending.current.get('create');
     if (intent?.status === 'pending' || intent?.unresolved) return;
@@ -167,7 +159,19 @@ export function Workspace({ client, orders, session, sessionKey, section }: { cl
   return <>
     {notice && <p className="error" role="alert">{notice}</p>}
     {session.principal.role === 'master' && <div hidden={section === 'Обзор смены'}><MasterScreen dictionaries={mapResource(dictState, masterDictionaries)} orders={masterRows} createDraft={{ ...createDraft, beforePhotoIds: photos.confirmedIds(beforeContext) }} onCreateDraftChange={changeCreateDraft} beforePhotosBusy={photos.blocked(beforeContext)} renderBeforePhotos={context => <PhotoStages store={photos} context={beforeContext} disabled={context.disabled} canEdit={() => { const intent = pending.current.get('create'); return intent?.status !== 'pending' && !intent?.unresolved; }}/>} renderAfterPhotos={order => { const wire = rows.find(item => item.id === order.id); const result = wire ? submissionState.snapshot?.[submissionKey(wire)] : null; return result?.payload.after_photo_ids.map((photoId, index) => <ProtectedPhoto key={photoId} client={client} photoId={photoId} index={index}/>); }} reviewDrafts={reviewDrafts} onReviewDraftChange={(orderId, draft) => { const intent = pending.current.get(`review:${orderId}`); if (intent?.status === 'pending' || intent?.unresolved) return; setReviewDrafts(previous => ({ ...previous, [orderId]: draft })); }} online={online} domainNow={domainNow} onCreate={create} onReview={review} onRetryCreate={() => execute('create', null)} onRetryReview={orderId => execute(`review:${orderId}`, null)} onReload={refresh}/></div>}
-    {session.principal.role === 'executor' && <ExecutorScreen sessionKey={sessionKey} orders={mapResource(source, items => items.map(order => executorOrder(order, dictState.snapshot)))} dictionaries={mapResource(dictState, executorDictionaries)} selectedOrderId={selected} drafts={visibleDrafts} photoBusy={selectedPhotosBusy} renderPhotoPicker={context => <PhotoStages store={photos} context={afterContext({ id: context.orderId, section_id: context.sectionId, assignment_revision: context.assignmentRevision })} disabled={context.disabled} required={selectedOrder?.type === 'unplanned'} canEdit={() => { const intent = pending.current.get('executor'); return intent?.status !== 'pending' && !intent?.unresolved; }}/>} mutation={mutation} pendingIntent={pendingIntent} onSelectOrder={setSelected} onDraftChange={(orderId, draft) => { const intent = pending.current.get('executor'); if (intent?.status === 'pending' || intent?.unresolved) return; setExecutorDrafts(previous => ({ ...previous, [orderId]: draft })); }} onIntent={act} onRetry={() => execute('executor', null)} onRefresh={() => void refresh()} onResolveConflict={() => { const current = pending.current.get('executor'); if (!canResolveIntent(current, source)) return; pending.current.delete('executor'); setMutation({ status: 'idle', error: null }); setPendingIntent(null); }}/>}
+    {session.principal.role === 'executor' && <>
+      <ExecutorScreen sessionKey={sessionKey} operationScopeKey={executorView.scope} quarantinedIntentCount={quarantinedScopes.length}
+        orders={mapResource(source, () => executorRows.map(order => executorOrder(order, dictState.snapshot)))}
+        dictionaries={mapResource(dictState, executorDictionaries)} selectedOrderId={selected} drafts={visibleDrafts} photoBusy={selectedPhotosBusy}
+        renderPhotoPicker={context => <PhotoStages store={photos} context={executor.photoContext({ id: context.orderId, section_id: context.sectionId, assignment_revision: context.assignmentRevision })} disabled={context.disabled} required={selectedOrder?.type === 'unplanned'} canEdit={() => executor.canEdit(context.orderId, context.assignmentRevision)}/>}
+        mutation={executorView.mutation} pendingIntent={executorView.pendingIntent} onSelectOrder={setSelected}
+        onDraftChange={(orderId, draft, revision) => executor.setDraft(orderId, revision, draft)} onIntent={act}
+        onRetry={() => retryExecutor(executorView.scope)} onRefresh={() => void refresh()} onResolveConflict={() => executor.resolveConflict(executorView.scope)}/>
+      {quarantinedScopes.length > 0 && <aside className="notice" aria-label="Сохранённые неподтверждённые действия">
+        <p>Прежние данные скрыты, пока доступ к назначению не подтверждён. Исходные запросы и черновики сохранены только в этой сессии. Повтор не создаёт новую попытку.</p>
+        {quarantinedScopes.map((scope, index) => <button type="button" key={scope} onClick={() => void retryExecutor(scope)}>Повторить исходное действие {index + 1}</button>)}
+      </aside>}
+    </>}
     {(session.principal.role === 'master' || session.principal.role === 'manager') && <div hidden={session.principal.role === 'master' && section !== 'Обзор смены'}><PanelScreen orders={mapResource(source, items => items.map(order => panelOrder(order, dictState.snapshot)))} employees={mapResource(dictState, panelEmployees)} selectedOrderId={selected} onSelectOrder={setSelected} history={historyState} onRefresh={() => void refresh()} onRefreshHistory={() => void refreshHistory()} access={access}/></div>}
     {session.principal.role === 'admin' && <section className="card"><h3>Административная сессия</h3><p>Производственные действия и административные инструменты не предоставлены этой версии интерфейса.</p></section>}
   </>;

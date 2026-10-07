@@ -53,3 +53,11 @@ Photo preparation, upload pending/unknown/failed and confirmed staged IDs are se
 Session revalidation fences a changed CSRF handle, principal, role, active state or effective section scope. Mere section ordering, shift-status or expiry refresh does not invent an identity change. Command receipts and order/submission/history reads are checked against their requested object IDs before display or confirmation.
 
 Current local evidence: aggregate lint/typecheck/build and independent synthetic source checks. Actual browser rendering, live API/database effects, Android capture, upload latency, notifications and deployment remain separately unverified. A manifest link alone does not prove installability or offline support.
+
+## Executor operation quarantine
+
+Executor operation tokens and drafts are retained per order/assignment inside the current authenticated session. A lost response followed by a403 remains unknown; it is not converted into a known failure. Inaccessible order details and drafts are excluded from the rendered list/form, while unrelated currently authorized orders remain usable. A newer assignment of the same order does not bypass its older unresolved operation. Retry is explicit and reuses the original token/body; nothing is resent automatically.
+
+Only a new successful authorized list sweep can clear a per-order access fence. An unrelated receipt cannot clear that fence. A late receipt for an order omitted by a newer complete sweep can resolve the old operation without restoring the old order's visible data. Callback drafts and photos are keyed by assignment; late A callbacks do not update B.
+
+Author-side synthetic controller probes: `node frontend/src/app/executorController.test.cjs`. These are in-process injected transport tests, not browser/API/database evidence.

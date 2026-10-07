@@ -23,6 +23,7 @@ export class OrderStore {
   #state: ResourceState<Order[]> = initialResource();
   #listeners = new Set<() => void>();
   #access: 'allowed' | 'forbidden' = 'allowed';
+  #confirmation = 0;
   #run = 0;
   #pending: Promise<void> | null = null;
   #unsubscribe: () => void;
@@ -30,10 +31,11 @@ export class OrderStore {
     this.#client = client; this.#epoch = client.epoch;
     this.#unsubscribe = client.subscribe(() => {
       if (this.#epoch !== client.epoch) {
-        this.#epoch = client.epoch; this.#access = 'allowed'; this.#run++; this.#pending = null; this.#set(initialResource());
+        this.#epoch = client.epoch; this.#access = 'allowed'; this.#confirmation = 0; this.#run++; this.#pending = null; this.#set(initialResource());
       }
     });
   }
+  get confirmation(): number { return this.#confirmation; }
   get access(): 'allowed' | 'forbidden' { return this.#access; }
   getSnapshot = (): ResourceState<Order[]> => this.#state;
   subscribe = (listener: () => void): (() => void) => { this.#listeners.add(listener); return () => { this.#listeners.delete(listener); }; };
@@ -70,7 +72,7 @@ export class OrderStore {
       // Preserve concurrent, newly confirmed receipts; do not keep stale list membership.
       const concurrent = latest.filter(order => order !== start.get(order.id) && !ids.has(order.id));
       const completed = mergeOrders(seen, latest.filter(order => ids.has(order.id)));
-      this.#access = 'allowed';
+      this.#access = 'allowed'; this.#confirmation++;
       this.#set({ snapshot: mergeOrders(completed, concurrent), freshness: 'fresh', loadStatus: 'ready', error: null, incomplete: false, lastConfirmedAt: new Date().toISOString() });
     } catch (error) {
       if (!active() || error instanceof SessionChangedError) return;

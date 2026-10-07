@@ -1,6 +1,10 @@
 # CI-only overlay. Base runtime/Dockerfiles/seed remain owned by A5.
 # Use only through ops/ci/run_mobile.py, which supplies fresh private inputs.
 services:
+  db:
+    # CI-only observer access: never a public DB bind or a demo deployment change.
+    ports:
+      - '127.0.0.1:15432:5432'
   api:
     environment:
       DALA_DOMAIN: localhost

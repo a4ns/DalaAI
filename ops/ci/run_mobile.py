@@ -17,7 +17,8 @@ import time
 import urllib.request
 from uuid import uuid4
 
-from fixtures import ORIGIN, prepare_private, prepare_tls, write_private
+from fixtures import ORIGIN, prepare_private, prepare_credentials, prepare_tls, write_private
+from c110_driver import C110Error, verify_service_inventory, verify_started_inventory, verify_source_blobs, verify_frontend_provenance, secrecy_preflight, observer_dsn, execute_core, TITLE
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
@@ -44,12 +45,12 @@ def contract_inputs() -> dict:
     contract = json.loads((HERE / "scenarios.json").read_text())
     if contract.get("accepted") is not True:
         raise GateError("C110_SCENARIOS_NOT_ACCEPTED")
-    ids = contract.get("required_test_ids", [])
-    if not ids or len(set(ids)) != len(ids) or any(not re.fullmatch(r"C-110-[A-Z0-9][A-Z0-9-]{0,40}", x) for x in ids):
-        raise GateError("C110_REQUIRED_IDS_MISSING_OR_INVALID")
-    count = contract.get("expected_test_count")
-    if type(count) is not int or count < len(ids):
-        raise GateError("C110_EXPECTED_COUNT_MISSING_OR_INVALID")
+    if contract.get("required_test_title") != TITLE or contract.get("expected_test_count") != 1:
+        raise GateError("C110_EXACT_JOURNEY_CONTRACT_REQUIRED")
+    if contract.get("config_path") != "tests/e2e/c110_playwright.config.cjs" or contract.get("project") != "c110-android-chromium":
+        raise GateError("C110_EXACT_REVIEWED_CONFIG_REQUIRED")
+    if not re.fullmatch(r"[a-f0-9]{40}", contract.get("frontend_sha", "")) or not re.fullmatch(r"[a-f0-9]{40}", contract.get("c110_source_sha", "")):
+        raise GateError("C110_ACCEPTED_SOURCE_SHAS_REQUIRED")
     inputs = [*BASE_INPUTS, *contract.get("required_source_files", []), contract["config_path"],
               f'{contract["package_dir"]}/package.json', f'{contract["package_dir"]}/package-lock.json']
     if any(not owned_source(name).exists() for name in inputs):
@@ -59,6 +60,7 @@ def contract_inputs() -> dict:
     if not re.fullmatch(r"\d+\.\d+\.\d+", dependencies.get("@playwright/test", "")):
         raise GateError("PLAYWRIGHT_VERSION_MUST_BE_EXACT")
     contract["playwright_version"] = dependencies["@playwright/test"]
+    verify_source_blobs(ROOT, contract.get("c110_source_blobs", {}))
     return contract
 
 
@@ -149,8 +151,14 @@ def run_gate(report: dict, contract: dict) -> None:
     for tool in ("docker", "node", "openssl", "certutil"):
         if not shutil.which(tool):
             raise GateError("REQUIRED_RUNNER_TOOL_MISSING")
+    if (ROOT / "mobile-ci-evidence.json").exists():
+        raise GateError("C110_PUBLIC_EVIDENCE_OUTPUT_MUST_BE_FRESH")
     report["source_sha"] = source_hash()
     report["playwright_version"] = contract["playwright_version"]
+    report["frontend_sha"] = contract["frontend_sha"]
+    report["accepted_c110_source_sha"] = contract["c110_source_sha"]
+    reference = ROOT / ".ci-c110-frontend-reference"
+    verify_frontend_provenance(ROOT, reference, contract["frontend_sha"])
     package_dir = owned_source(contract["package_dir"])
     cli = package_dir / "node_modules/@playwright/test/cli.js"
     if not cli.is_file():
@@ -164,48 +172,69 @@ def run_gate(report: dict, contract: dict) -> None:
     compose = compose_command(project)
     with tempfile.TemporaryDirectory(prefix="dalaai-mobile-ci-") as temp:
         private = Path(temp) / "private"
-        prepare_private(private)
+        prepare_private(private, credentials=False)
         prepare_tls(private)
-        public_fixture(private / "fixture.json")
         env.update(DALA_CI_PRIVATE_DIR=str(private), DALA_CI_SOURCE_DIR=str(HERE),
                    DALA_DOMAIN="localhost", DALA_ALLOWED_ORIGIN=ORIGIN,
                    DALA_BIND_ADDRESS="127.0.0.1", DALA_HTTP_PORT="18080", DALA_HTTPS_PORT="18443")
+        browser_env = dict(env)
+        browser_env.update(
+            HOME=str(private / "browser-home"),
+            XDG_CONFIG_HOME=str(private / "browser-home/.config"),
+            XDG_DATA_HOME=str(private / "browser-home/.local/share"),
+            NODE_EXTRA_CA_CERTS=str(private / "tls/root.crt"),
+            SSL_CERT_FILE=str(private / "tls/root.crt"),
+            PLAYWRIGHT_BROWSERS_PATH=env.get("PLAYWRIGHT_BROWSERS_PATH", str(original_home / ".cache/ms-playwright")),
+            DALA_C110_PLAYWRIGHT_PACKAGE=str(package_dir / "node_modules/@playwright/test"),
+            DALA_E2E_FRONTEND_SHA=contract["frontend_sha"],
+        )
+        report["stage"] = "c110_dummy_secret_preflight"
+        proof = secrecy_preflight(ROOT, browser_env, private)
+        report["secrecy_preflight"] = proof["public"]
+        # Only after the source-bound dummy-failure test has passed do we supply
+        # fixture/PIN/observer fields to the real core process.
+        prepare_credentials(private)
+        public_fixture(private / "fixture.json")
         attempted_start = False
         try:
             report["stage"] = "compose_config"
             require_success([*compose, "config", "--quiet"], env=env, code="COMPOSE_CONFIG_FAILED")
+            config = subprocess.run([*compose, "config", "--format", "json"], cwd=ROOT, env=env, capture_output=True, check=False)
+            if config.returncode:
+                raise GateError("COMPOSE_CONFIG_UNAVAILABLE")
+            report["worker_absence_service_inventory"] = verify_service_inventory(json.loads(config.stdout))
             report["stage"] = "compose_build_start"
             attempted_start = True
-            require_success([*compose, "up", "--build", "--detach", "--wait", "--wait-timeout", "180"],
+            require_success([*compose, "up", "--build", "--detach", "--wait", "--wait-timeout", "180", "api", "web"],
                             env=env, code="COMPOSE_BUILD_OR_START_FAILED", timeout=900)
+            inventory = subprocess.run([*compose, "ps", "--all", "--format", "json"], cwd=ROOT, env=env, capture_output=True, check=False)
+            if inventory.returncode:
+                raise GateError("C110_ACTUAL_COMPOSE_INVENTORY_UNAVAILABLE")
+            report["actual_service_inventory"] = verify_started_inventory(inventory.stdout)
             report["stage"] = "trusted_https_readiness"
             wait_ready(private / "tls/root.crt")
-            browser_env = dict(env)
             browser_env.update(
-                HOME=str(private / "browser-home"),
-                XDG_CONFIG_HOME=str(private / "browser-home/.config"),
-                XDG_DATA_HOME=str(private / "browser-home/.local/share"),
-                NODE_EXTRA_CA_CERTS=str(private / "tls/root.crt"),
-                SSL_CERT_FILE=str(private / "tls/root.crt"),
-                PLAYWRIGHT_BROWSERS_PATH=env.get("PLAYWRIGHT_BROWSERS_PATH", str(original_home / ".cache/ms-playwright")),
                 DALA_E2E_BASE_URL=ORIGIN,
                 DALA_E2E_FIXTURE_FILE=str(private / "fixture.json"),
                 DALA_E2E_MASTER_PIN_FILE=str(private / "master_pin"),
                 DALA_E2E_EXECUTOR_PIN_FILE=str(private / "executor_pin"),
-                DALA_E2E_CONFIG_PATH=str(owned_source(contract["config_path"])),
-                DALA_E2E_PACKAGE_DIR=str(package_dir),
-                DALA_E2E_PROJECT=contract["project"],
+                DALA_E2E_FRONTEND_SHA=contract["frontend_sha"],
+                DALA_E2E_BACKEND_SHA=report["source_sha"],
+                DALA_C110_PREFLIGHT_RECEIPT=proof["path"],
+                DALA_C110_AUTHORIZED="operator-provisioned-synthetic-only",
+                DALA_C110_WORKERS_DISABLED="ai,delivery,providers",
+                DALA_C110_OBSERVER_DATABASE_URL=observer_dsn(private),
+                DALA_C110_DATABASE_SCHEMA="dalaai_demo",
+                DALA_C110_PYTHON=sys.executable,
+                DALA_C110_RUN_ID="c110-" + uuid4().hex,
             )
             report["stage"] = "c110_android_browser"
-            code = command(["node", str(cli), "test", "--config", str(HERE / "playwright.config.cjs")],
-                           env=browser_env, timeout=600)
-            results = private / "safe-results.json"
-            if not results.is_file():
-                raise GateError("PLAYWRIGHT_DID_NOT_PRODUCE_RESULTS")
-            report.update(verify_results(json.loads(results.read_text()), contract))
-            if code:
-                raise GateError("PLAYWRIGHT_NONZERO_EXIT")
-            report["status"] = "PASS_ANDROID_EMULATION_CORE"
+            core = execute_core(ROOT, browser_env, private, cli)
+            report.update(core["summary"])
+            # Successful C-owned projection only. Never publish the raw Playwright report.
+            with (ROOT / "mobile-ci-evidence.json").open("x") as public:
+                public.write(json.dumps(core["evidence"], indent=2) + "\n")
+            report["status"] = "PASS_ANDROID_EMULATION_MANUAL_CORE"
         finally:
             if attempted_start:
                 report["cleanup"] = "pending"
@@ -227,7 +256,7 @@ def main() -> int:
         "environment": "real_compose_postgresql_mounted_app_android_chromium_emulation",
         "real_android_device": "NOT_RUN", "real_webpush_provider_delivery": "NOT_RUN",
         "synthetic_push_transport": "NOT_CLAIMED_BY_THIS_GATE",
-        "paid_model_calls": "DISABLED_NO_KEY_RULES_FALLBACK_EXPECTED",
+        "paid_model_calls": "NOT_RUN_NO_KEY", "rules_worker_execution": "NOT_RUN_MANUAL_CORE",
         "full_cycle_green": False, "deployment_performed": False,
     }
     code = 1
@@ -238,7 +267,7 @@ def main() -> int:
             return 0
         run_gate(report, contract)
         code = 0
-    except GateError as error:
+    except (GateError, C110Error) as error:
         report["reason_code"] = str(error)
         report["status"] = "FAIL" if report["stage"] != "input_contract" else "BLOCKED_NOT_RUN"
     except Exception as error:

@@ -17,19 +17,31 @@ def write_private(path: Path, value: str) -> None:
         stream.write(value)
 
 
-def prepare_private(directory: Path) -> None:
+def prepare_private(directory: Path, *, credentials: bool = True) -> None:
     if directory.exists():
         raise ValueError("Fixture directory must be new")
     directory.mkdir(mode=0o700)
     write_private(directory / ".fixture-owner", MARKER)
+    if credentials:
+        prepare_credentials(directory)
+
+
+def prepare_credentials(directory: Path) -> None:
+    """Create actual synthetic login material only after C-110 preflight passes."""
+    if (directory / ".fixture-owner").read_text() != MARKER:
+        raise ValueError("Refusing non-owned credential directory")
+    names = ("postgres_owner_password", "postgres_runtime_password", "owner_dsn", "runtime_dsn", "master_pin", "executor_pin")
+    if any((directory / name).exists() or (directory / name).is_symlink() for name in names):
+        raise ValueError("Credential fixture must be fresh; no rotation or overwrite")
     owner = secrets.token_urlsafe(32)
     runtime = secrets.token_urlsafe(32)
-    master = "".join(secrets.choice("0123456789") for _ in range(16))
-    executor = "".join(secrets.choice("0123456789") for _ in range(16))
-    while executor == master or len(set(executor)) < 3:
-        executor = "".join(secrets.choice("0123456789") for _ in range(16))
-    while len(set(master)) < 3:
-        master = "".join(secrets.choice("0123456789") for _ in range(16))
+    def pin(excluding=None):
+        while True:
+            value = "".join(secrets.choice("0123456789") for _ in range(16))
+            if len(set(value)) >= 3 and value != excluding:
+                return value
+    master = pin()
+    executor = pin(master)
     for name, value in {
         "postgres_owner_password": owner,
         "postgres_runtime_password": runtime,
