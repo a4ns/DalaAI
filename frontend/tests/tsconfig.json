@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["node", "vite/client"],
+    "noEmit": true,
+    "incremental": false
+  },
+  "include": ["./**/*.ts", "./**/*.tsx", "../playwright.config.ts"],
+  "exclude": ["./.artifacts"]
+}
