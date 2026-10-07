@@ -1,0 +1,405 @@
+{
+  "schema_version": "c3-runtime-facts/1",
+  "provenance": {
+    "synthetic": true,
+    "source_ref": "SYNTHETIC-B6-pinned-pure-projection",
+    "scope_description": "Синтетический разрешённый участок",
+    "domain_as_of": "2026-10-08T02:00:00Z",
+    "captured_at_real": "2026-10-08T03:00:00Z",
+    "coverage": "consistent_snapshot",
+    "history_complete": true
+  },
+  "period": {
+    "start": "2026-10-07T19:00:00Z",
+    "end": "2026-10-08T00:00:00Z",
+    "display_timezone": "Asia/Almaty"
+  },
+  "orders": [
+    {
+      "order": {
+        "id": "10000000-0000-4000-8000-000000000001",
+        "number": "SYNTHETIC-OLD-CLOSED",
+        "version": 4,
+        "assignment_revision": 1,
+        "scheduling_revision": 1,
+        "status": "closed",
+        "type": "unplanned",
+        "description": "<script>synthetic literal task</script>",
+        "section_id": "10000000-0000-4000-8000-000000000002",
+        "equipment_id": "10000000-0000-4000-8000-000000000003",
+        "assignment": {
+          "executor_id": "10000000-0000-4000-8000-000000000004",
+          "brigade_id": null
+        },
+        "created_by": "10000000-0000-4000-8000-000000000005",
+        "issued_at": "2026-10-01T19:00:00Z",
+        "due_at": "2026-10-07T23:00:00Z",
+        "norm_minutes": 30,
+        "priority": "normal",
+        "comment": "<img src=\"https://example.invalid/synthetic.png\">",
+        "before_photo_ids": [],
+        "current_submission_id": "10000000-0000-4000-8000-000000000006",
+        "updated_at": "2026-10-07T22:00:00Z"
+      },
+      "is_overdue": false,
+      "attempts": [
+        {
+          "submission": {
+            "id": "10000000-0000-4000-8000-000000000006",
+            "order_id": "10000000-0000-4000-8000-000000000001",
+            "assignment_revision": 1,
+            "attempt_number": 1,
+            "submitted_by": "10000000-0000-4000-8000-000000000004",
+            "submitted_at": "2026-10-06T20:00:00Z",
+            "done_late": false,
+            "payload": {
+              "work_description": "Синтетическое описание",
+              "work_code_id": "10000000-0000-4000-8000-000000000007",
+              "materials": [
+                {
+                  "material_id": "10000000-0000-4000-8000-000000000008",
+                  "quantity": "1.250"
+                }
+              ],
+              "after_photo_ids": [
+                "10000000-0000-4000-8000-000000000009"
+              ],
+              "comment": "Синтетический комментарий"
+            },
+            "completeness": "complete",
+            "missing_evidence": []
+          },
+          "review": {
+            "id": "10000000-0000-4000-8000-000000000011",
+            "submission_id": "10000000-0000-4000-8000-000000000006",
+            "reviewer_id": "10000000-0000-4000-8000-000000000005",
+            "decision": "close",
+            "reason": "<b>Literal human decision</b>",
+            "final_score": null,
+            "created_at": "2026-10-07T22:00:00Z"
+          },
+          "assessments": [
+            {
+              "id": "10000000-0000-4000-8000-000000000012",
+              "submission_id": "10000000-0000-4000-8000-000000000006",
+              "assignment_revision": 1,
+              "schema_version": "1",
+              "mode": "rules_fallback",
+              "model": null,
+              "model_version": null,
+              "duration_ms": 1,
+              "recommendation": "needs_master_review",
+              "score": 99,
+              "reasons": [
+                "Синтетическая рекомендация, не оценка мастера"
+              ],
+              "evidence_ids": [
+                "10000000-0000-4000-8000-000000000009"
+              ],
+              "fallback_reason": "synthetic_test",
+              "stale": false,
+              "created_at": "2026-10-06T20:01:00Z"
+            }
+          ],
+          "assessment_status": "recorded"
+        }
+      ]
+    },
+    {
+      "order": {
+        "id": "10000000-0000-4000-8000-000000000010",
+        "number": "SYNTHETIC-ACTIVE",
+        "version": 2,
+        "assignment_revision": 1,
+        "scheduling_revision": 1,
+        "status": "in_progress",
+        "type": "unplanned",
+        "description": "<script>synthetic literal task</script>",
+        "section_id": "10000000-0000-4000-8000-000000000002",
+        "equipment_id": "10000000-0000-4000-8000-000000000003",
+        "assignment": {
+          "executor_id": "10000000-0000-4000-8000-000000000004",
+          "brigade_id": null
+        },
+        "created_by": "10000000-0000-4000-8000-000000000005",
+        "issued_at": "2026-10-07T20:00:00Z",
+        "due_at": "2026-10-08T01:00:00Z",
+        "norm_minutes": 30,
+        "priority": "normal",
+        "comment": "<img src=\"https://example.invalid/synthetic.png\">",
+        "before_photo_ids": [],
+        "current_submission_id": null,
+        "updated_at": "2026-10-07T22:00:00Z"
+      },
+      "is_overdue": true,
+      "attempts": []
+    }
+  ],
+  "metrics": [
+    {
+      "name": "issued_orders",
+      "source_table": "orders",
+      "status": "ok",
+      "numerator": "1",
+      "denominator": null,
+      "eligible": 1,
+      "missing": 0,
+      "excluded": 0,
+      "value": "1",
+      "source_ids": [
+        "10000000-0000-4000-8000-000000000010"
+      ],
+      "missing_source_ids": [],
+      "excluded_source_ids": [],
+      "small_sample": false
+    },
+    {
+      "name": "submitted_orders",
+      "source_table": "orders",
+      "status": "ok",
+      "numerator": "0",
+      "denominator": null,
+      "eligible": 0,
+      "missing": 0,
+      "excluded": 0,
+      "value": "0",
+      "source_ids": [],
+      "missing_source_ids": [],
+      "excluded_source_ids": [],
+      "small_sample": false
+    },
+    {
+      "name": "submission_attempts",
+      "source_table": "submissions",
+      "status": "ok",
+      "numerator": "0",
+      "denominator": null,
+      "eligible": 0,
+      "missing": 0,
+      "excluded": 0,
+      "value": "0",
+      "source_ids": [],
+      "missing_source_ids": [],
+      "excluded_source_ids": [],
+      "small_sample": false
+    },
+    {
+      "name": "closed_orders",
+      "source_table": "orders",
+      "status": "ok",
+      "numerator": "1",
+      "denominator": null,
+      "eligible": 1,
+      "missing": 0,
+      "excluded": 0,
+      "value": "1",
+      "source_ids": [
+        "10000000-0000-4000-8000-000000000001"
+      ],
+      "missing_source_ids": [],
+      "excluded_source_ids": [],
+      "small_sample": false
+    },
+    {
+      "name": "rework_decisions",
+      "source_table": "reviews",
+      "status": "ok",
+      "numerator": "0",
+      "denominator": null,
+      "eligible": 0,
+      "missing": 0,
+      "excluded": 0,
+      "value": "0",
+      "source_ids": [],
+      "missing_source_ids": [],
+      "excluded_source_ids": [],
+      "small_sample": false
+    },
+    {
+      "name": "awaiting_review",
+      "source_table": "orders",
+      "status": "ok",
+      "numerator": "0",
+      "denominator": null,
+      "eligible": 0,
+      "missing": 0,
+      "excluded": 0,
+      "value": "0",
+      "source_ids": [],
+      "missing_source_ids": [],
+      "excluded_source_ids": [],
+      "small_sample": false
+    },
+    {
+      "name": "overdue_active",
+      "source_table": "orders",
+      "status": "ok",
+      "numerator": "1",
+      "denominator": null,
+      "eligible": 1,
+      "missing": 0,
+      "excluded": 0,
+      "value": "1",
+      "source_ids": [
+        "10000000-0000-4000-8000-000000000010"
+      ],
+      "missing_source_ids": [],
+      "excluded_source_ids": [],
+      "small_sample": false
+    },
+    {
+      "name": "human_score",
+      "source_table": "reviews",
+      "status": "missing",
+      "numerator": null,
+      "denominator": 0,
+      "eligible": 1,
+      "missing": 1,
+      "excluded": 0,
+      "value": null,
+      "source_ids": [
+        "10000000-0000-4000-8000-000000000011"
+      ],
+      "missing_source_ids": [
+        "10000000-0000-4000-8000-000000000011"
+      ],
+      "excluded_source_ids": [],
+      "small_sample": false
+    },
+    {
+      "name": "closed_on_time",
+      "source_table": "submissions",
+      "status": "ok",
+      "numerator": "1",
+      "denominator": 1,
+      "eligible": 1,
+      "missing": 0,
+      "excluded": 0,
+      "value": "1.000000000000",
+      "source_ids": [
+        "10000000-0000-4000-8000-000000000006"
+      ],
+      "missing_source_ids": [],
+      "excluded_source_ids": [],
+      "small_sample": true
+    },
+    {
+      "name": "closed_with_rework",
+      "source_table": "orders",
+      "status": "ok",
+      "numerator": "0",
+      "denominator": 1,
+      "eligible": 1,
+      "missing": 0,
+      "excluded": 0,
+      "value": "0.000000000000",
+      "source_ids": [
+        "10000000-0000-4000-8000-000000000001"
+      ],
+      "missing_source_ids": [],
+      "excluded_source_ids": [],
+      "small_sample": true
+    },
+    {
+      "name": "attempt_on_time",
+      "source_table": "submissions",
+      "status": "no_cohort",
+      "numerator": null,
+      "denominator": 0,
+      "eligible": 0,
+      "missing": 0,
+      "excluded": 0,
+      "value": null,
+      "source_ids": [],
+      "missing_source_ids": [],
+      "excluded_source_ids": [],
+      "small_sample": false
+    }
+  ],
+  "ratings": [
+    {
+      "executor_id": "10000000-0000-4000-8000-000000000004",
+      "human_score": {
+        "name": "human_score",
+        "source_table": "reviews",
+        "status": "missing",
+        "numerator": null,
+        "denominator": 0,
+        "eligible": 1,
+        "missing": 1,
+        "excluded": 0,
+        "value": null,
+        "source_ids": [
+          "10000000-0000-4000-8000-000000000011"
+        ],
+        "missing_source_ids": [
+          "10000000-0000-4000-8000-000000000011"
+        ],
+        "excluded_source_ids": [],
+        "small_sample": false
+      },
+      "closed_on_time": {
+        "name": "closed_on_time",
+        "source_table": "submissions",
+        "status": "ok",
+        "numerator": "1",
+        "denominator": 1,
+        "eligible": 1,
+        "missing": 0,
+        "excluded": 0,
+        "value": "1.000000000000",
+        "source_ids": [
+          "10000000-0000-4000-8000-000000000006"
+        ],
+        "missing_source_ids": [],
+        "excluded_source_ids": [],
+        "small_sample": true
+      },
+      "closed_with_rework": {
+        "name": "closed_with_rework",
+        "source_table": "orders",
+        "status": "ok",
+        "numerator": "0",
+        "denominator": 1,
+        "eligible": 1,
+        "missing": 0,
+        "excluded": 0,
+        "value": "0.000000000000",
+        "source_ids": [
+          "10000000-0000-4000-8000-000000000001"
+        ],
+        "missing_source_ids": [],
+        "excluded_source_ids": [],
+        "small_sample": true
+      },
+      "composite_score": null,
+      "composite_status": "unsupported_inputs"
+    }
+  ],
+  "closed_materials": [
+    {
+      "material_id": "10000000-0000-4000-8000-000000000008",
+      "label": "<img src=x onerror=alert(1)>",
+      "unit": "кг",
+      "quantity": "1.250",
+      "order_ids": [
+        "10000000-0000-4000-8000-000000000001"
+      ],
+      "submission_ids": [
+        "10000000-0000-4000-8000-000000000006"
+      ],
+      "review_ids": [
+        "10000000-0000-4000-8000-000000000011"
+      ]
+    }
+  ],
+  "unavailable_reasons": [
+    "composite_rating:unsupported_inputs",
+    "downtime:unsupported_inputs",
+    "repeat_fault_7d:unsupported_inputs",
+    "brigade_rating:unsupported_history",
+    "order_event_log:not_supplied",
+    "ai_job_state:not_supplied"
+  ],
+  "totals_available": true
+}
