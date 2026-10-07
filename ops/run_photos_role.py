@@ -19,6 +19,8 @@ class RuntimeFixtureView:
 class RestrictedPhotoTests(author.PhotoPostgresTests):
     @classmethod
     def setUpClass(cls):
+        # One unchanged author probe reads driver types on the base fixture.
+        author.fixtures.PostgresCommandTests.setUpClass()
         ApplicationRoleTests.setUpClass()
         cls.addClassCleanup(ApplicationRoleTests.doClassCleanups)
     def setUp(self):
