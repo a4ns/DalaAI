@@ -1,0 +1,90 @@
+{
+  "task": "C-110",
+  "generation": 1,
+  "implementation_sha": "4673a1b144456673892be6d71890a78c781b1636",
+  "base_sha": "e435ec9a290279ab49b8cb63237b872955c79938",
+  "frontend_source_sha": "2beb2244c4639c09004e4cdb5a7598d447ad68f6",
+  "observed_at": "2026-10-07T21:19:32Z",
+  "evidence_level": "source, pure parser checks and pinned Playwright configuration/list-only checks; no browser/API/PostgreSQL execution",
+  "checks": [
+    {
+      "command": "node --test tests/e2e/c110_contract.test.cjs tests/e2e/c110_preflight.test.cjs",
+      "result": "PASS",
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "command": "python -B tests/e2e/c110_observe_test.py",
+      "result": "PASS",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "command": "node --check on every tests/e2e/c110_*.cjs",
+      "result": "PASS"
+    },
+    {
+      "command": "Python ast.parse on every tests/e2e/c110_*.py",
+      "result": "PASS"
+    },
+    {
+      "command": "Compare all three Playwright lock entries with exact B source lock",
+      "result": "PASS"
+    },
+    {
+      "command": "Observer with empty environment and synthetic UUID",
+      "result": "PASS",
+      "expected_outcome": "BLOCKED / C110_DB_OBSERVATION_UNAVAILABLE / exit 2 before database connection"
+    },
+    {
+      "command": "node tests/e2e/c110_gate.cjs /dev/null /dev/null",
+      "result": "PASS",
+      "expected_outcome": "BLOCKED_OR_FAIL / REPORT_OR_EVIDENCE_UNAVAILABLE / exit 2"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "Isolated npm ci --ignore-scripts --no-audit --no-fund using exact scoped lock and empty npm configuration",
+      "result": "PASS",
+      "note": "3 existing official pinned packages; no browser download/launch"
+    },
+    {
+      "command": "Pinned Playwright 1.63.0 preflight config --list",
+      "result": "PASS",
+      "mandatory_dummy_tests": 1
+    },
+    {
+      "command": "Pinned 1.63.0 configLoader normalization and effective-runner guard",
+      "result": "PASS",
+      "note": "Default list/JSON/options accepted; reporter and worker overrides refused. CLI repeatEach is applied after initial config loading; its rejection is covered by the pure guard test, not falsely claimed from initial loader."
+    },
+    {
+      "command": "Pinned Playwright 1.63.0 core --list without secrecy proof",
+      "result": "PASS",
+      "expected_outcome": "exit 1 before fixture/credential read; missing proof is a hard blocker"
+    }
+  ],
+  "runtime_gates": {
+    "composed_browser_journey": "NOT_RUN",
+    "actual_api_and_postgresql": "NOT_RUN",
+    "android_emulation": "NOT_RUN",
+    "physical_android": "NOT_RUN",
+    "native_camera": "NOT_RUN",
+    "real_push_delivery": "NOT_RUN",
+    "provider_model_or_rules_worker": "NOT_RUN",
+    "throttled_mobile_photo_sla": "NOT_RUN",
+    "report_export": "NOT_RUN",
+    "failure_output_browser_preflight": "NOT_RUN"
+  },
+  "blocker": "A5 must first execute the separate dummy-failure preflight in its authorized disposable pinned browser environment and obtain a source-bound receipt. Only then may it run the core suite with provisioned synthetic fixture/PIN/DB inputs. C0 performed no browser launch, private PIN-file read or live login.",
+  "notes": [
+    "The positive gate parser fixture is synthetic structure validation, never runtime acceptance evidence.",
+    "The missing-input/empty-report checks pass because the tools refuse success, not because the browser journey passed.",
+    "This evidence file is a later documentation-only addition; it does not change the tested implementation SHA.",
+    "Independent C6 review is pending at evidence creation.",
+    "The earlier operator-boolean guard has been superseded by an executable, source-bound receipt gate. No fake preflight receipt was written for config/list checks."
+  ]
+}
