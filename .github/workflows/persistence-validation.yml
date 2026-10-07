@@ -1,0 +1,54 @@
+name: PostgreSQL persistence validation
+'on':
+  push:
+    branches: ['pod-a/A-009-persistence-runtime']
+permissions:
+  contents: read
+concurrency:
+  group: persistence-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17.11-bookworm
+        env:
+          POSTGRES_DB: dalaai_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ephemeral-ci-only
+        ports:
+          - '127.0.0.1:5432:5432'
+        options: >-
+          --health-cmd "pg_isready -U postgres -d dalaai_test"
+          --health-interval 5s --health-timeout 3s --health-retries 12
+    env:
+      # Disposable CI service only, never a production credential/database.
+      DALA_TEST_DATABASE_URL: postgresql://postgres:ephemeral-ci-only@127.0.0.1:5432/dalaai_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.15'
+          cache: pip
+          cache-dependency-path: backend/requirements*.lock
+      - name: Install pinned dependencies
+        run: python -m pip install -r backend/requirements-dev.lock && python -m pip check
+      - name: Mandatory frozen real-PostgreSQL gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          scripts/run_postgres_tests.sh 2>&1 | tee postgres-gate.log
+          python - <<'PY'
+          import pathlib, re
+          log = pathlib.Path('postgres-gate.log').read_text()
+          count = re.search(r'Ran (\d+) tests? in', log)
+          assert count and int(count.group(1)) == 24, 'Expected all 24 real PostgreSQL cases'
+          assert not re.search(r'\bskipped\b', log), 'Skipped tests cannot satisfy acceptance'
+          print('PASS: 24 real PostgreSQL tests, zero skips')
+          PY
+      - name: Aggregate with real PostgreSQL configured
+        run: make check
