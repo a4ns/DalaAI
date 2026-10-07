@@ -117,6 +117,7 @@ function harness(initialProps) {
     useRef(initial) { const index = cursor++; if (!(index in slots)) slots[index] = { current: initial }; return slots[index]; },
     useEffect(effect, dependencies) { const index = cursor++; const previous = slots[index]; if (!previous || dependencies.some((item, offset) => item !== previous.dependencies[offset])) { pendingEffects.push(() => { previous?.cleanup?.(); slots[index] = { dependencies, cleanup: effect() }; }); } },
   };
+  hookRuntime.useLayoutEffect = hookRuntime.useEffect;
   const Component = loader(hookRuntime)('ExecutorScreen.tsx').ExecutorScreen;
   let tree;
   function render(next = currentProps) { currentProps = next; cursor = 0; pendingEffects = []; const wrapper = Component(currentProps); tree = wrapper.type(wrapper.props); elements(tree).forEach((node) => {
@@ -125,7 +126,7 @@ function harness(initialProps) {
       scrollIntoView: (options) => focusEvents.push({ kind: 'scroll', id: node.props.id, options }),
     };
   }); pendingEffects.forEach((effect) => effect()); return tree; }
-  function elements(node, result = []) { if (!node || typeof node !== 'object') return result; if (Array.isArray(node)) { node.forEach((item) => elements(item, result)); return result; } result.push(node); elements(node.props?.children, result); return result; }
+  function elements(node, result = []) { if (node && typeof node === 'object' && typeof node.type === 'function') return elements(node.type(node.props), result); if (!node || typeof node !== 'object') return result; if (Array.isArray(node)) { node.forEach((item) => elements(item, result)); return result; } result.push(node); elements(node.props?.children, result); return result; }
   function text(node) { if (node === null || node === undefined || typeof node === 'boolean') return ''; if (typeof node === 'string' || typeof node === 'number') return String(node); if (Array.isArray(node)) return node.map(text).join(''); return text(node.props?.children); }
   render();
   return { render, focusEvents, element: (predicate) => elements(tree).find(predicate), button: (label) => elements(tree).find((node) => node.type === 'button' && text(node) === label), form: () => elements(tree).find((node) => node.type === 'form'), unmount() { for (const slot of slots) slot?.cleanup?.(); }, text: () => text(tree) };
@@ -156,6 +157,7 @@ test('409 requires a new confirmed snapshot and explicit resolution, preserving 
   const h = harness(base); h.form().props.onSubmit({ preventDefault() {} }); await settle(); h.render();
   assert.equal(h.button('Состояние проверено, продолжить').props.disabled, true);
   assert.equal(base.drafts['order-1'], draft);
+  h.button('Загрузить актуальное состояние').props.onClick();
   h.render({ ...base, orders: { ...ready([order('in_progress', { version: 4 })]), lastConfirmedAt: '2026-10-07T19:01:00Z' } });
   assert.equal(h.button('Состояние проверено, продолжить').props.disabled, false);
   h.button('Состояние проверено, продолжить').props.onClick(); assert.equal(resolved, 1);
@@ -249,4 +251,24 @@ test('settled photo activity re-enables a valid result but never clears unknown 
   h.render({ ...base, photoBusy: false, mutation: { status: 'unknown_result', error: 'Ответ команды потерян' } });
   assert.equal(h.button('Отправить неполный результат на проверку').props.disabled, true);
   assert.equal(h.button('Повторить исходное действие').props.disabled, false);
+});
+
+test('superseded local feedback never resurfaces after parent mutation state cycles', async () => {
+  const base = props({ onIntent: async () => ({ kind: 'unknown', message: 'Старый неизвестный результат' }) });
+  const h = harness(base); h.button('Принять').props.onClick(); await settle(); h.render();
+  assert.match(h.text(), /Старый неизвестный результат/);
+  h.render({ ...base, mutation: { status: 'confirmed', error: null }, orders: ready([order('accepted', { version: 4 })]) });
+  assert.doesNotMatch(h.text(), /Старый неизвестный результат/);
+  h.render(base); h.render(base);
+  assert.doesNotMatch(h.text(), /Старый неизвестный результат/);
+});
+test('background polling cannot satisfy a conflict review without explicit refresh request', () => {
+  const base = props({ mutation: { status: 'conflict', error: '409' } });
+  const h = harness(base);
+  const refreshed = { ...base, orders: { ...ready([order('issued', { version: 4 })]), lastConfirmedAt: '2026-10-07T19:01:00Z' } };
+  h.render(refreshed);
+  assert.equal(h.button('Состояние проверено, продолжить').props.disabled, true);
+  h.button('Загрузить актуальное состояние').props.onClick();
+  h.render({ ...refreshed, orders: { ...refreshed.orders, lastConfirmedAt: '2026-10-07T19:02:00Z' } });
+  assert.equal(h.button('Состояние проверено, продолжить').props.disabled, false);
 });
