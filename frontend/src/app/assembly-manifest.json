@@ -35,7 +35,7 @@
     },
     {
       "lane": "B-106",
-      "sha": "7ab9c9f11a80ff003a4e77bdc9fdd8e6b38f7fd4",
+      "sha": "26eaf8bce730686be3dfd092dbb4fea62fd0f985",
       "paths": [
         "frontend/tests",
         "frontend/playwright.config.ts"
