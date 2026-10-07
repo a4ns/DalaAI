@@ -35,7 +35,7 @@
     },
     {
       "lane": "B-106",
-      "sha": "9f37c2951cbffb88db8a254beff033f7e31ed6d9",
+      "sha": "76d9f611d35b087250f060243645e41a8067117b",
       "paths": [
         "frontend/tests",
         "frontend/playwright.config.ts"
@@ -46,6 +46,14 @@
       "sha": "95bd59cf1c8766197a96307ce5c49b200db7f46c",
       "paths": [
         "frontend/src/mobile/master"
+      ]
+    },
+    {
+      "lane": "B-107",
+      "sha": "242f04e44a2a33ef0bb1039903f796ee4bf3e76e",
+      "paths": [
+        "frontend/src/pwa/push",
+        "frontend/public/sw.js"
       ]
     }
   ],
@@ -70,6 +78,10 @@
     "frontend/src/app/executorController.ts: per-order/assignment unresolved effect quarantine and private draft retention",
     "frontend/src/app/executorController.test.cjs: synthetic controller privacy/concurrency probes",
     "frontend/src/app/Workspace.tsx: bind executor feedback/photos/drafts to selected authorized operation scope",
-    "frontend/src/shared/api/orderStore.ts: successful sweep generation for late-receipt visibility fences"
+    "frontend/src/shared/api/orderStore.ts: successful sweep generation for late-receipt visibility fences",
+    "frontend/src/shared/api/pushProtocol.ts: exact additive A0-0031 validation without changing generated core wire",
+    "frontend/src/shared/api/client.ts: same-origin additive push requests and bounded safe error codes",
+    "frontend/src/app/pushSession.ts: explicit-action backend bridge with logout/epoch/expiry fences",
+    "frontend/src/app/PushPreferences.tsx: inert per-session push settings mount"
   ]
 }

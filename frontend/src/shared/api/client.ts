@@ -1,5 +1,8 @@
 import type { CommandResult, CreateOrder, CreatePayload, Dictionaries, EventPage, Login, Order, OrderCommand, OrderPage, Problem, Session, StagedPhoto, Status, Submission } from './wire';
 import { assertWire, isWire } from './validation';
+import { isPushConfig, isPushConfirmation, validPushEndpoint, validPushRegistration } from './pushProtocol';
+import type { PushApiConfig } from './pushProtocol';
+type ApiProblem = Omit<Problem, 'code'> & { code: Problem['code'] | 'SUBSCRIPTION_CONFLICT' | 'PUSH_DISABLED' };
 
 const BASE = '/api/v1';
 type SchemaName = 'Session' | 'Order' | 'Dictionaries' | 'OrderPage' | 'EventPage' | 'Submission' | 'StagedPhoto' | 'CommandResult';
@@ -16,11 +19,11 @@ export class SessionChangedError extends Error {
 }
 export class ApiError extends Error {
   readonly status: number;
-  readonly problem: Problem | null;
+  readonly problem: ApiProblem | null;
   readonly outcomeUnknown: boolean;
   readonly retryAfterSeconds: number | null;
   readonly transportInterrupted: boolean;
-  constructor(message: string, status = 0, problem: Problem | null = null, outcomeUnknown = false, retryAfterSeconds: number | null = null, transportInterrupted = false) {
+  constructor(message: string, status = 0, problem: ApiProblem | null = null, outcomeUnknown = false, retryAfterSeconds: number | null = null, transportInterrupted = false) {
     super(message); this.name = 'ApiError'; this.status = status; this.problem = problem; this.outcomeUnknown = outcomeUnknown; this.retryAfterSeconds = retryAfterSeconds; this.transportInterrupted = transportInterrupted;
   }
 }
@@ -90,7 +93,7 @@ export class ApiClient {
   subscribe(listener: () => void): () => void { this.#listeners.add(listener); return () => { this.#listeners.delete(listener); }; }
   clearIdentity(): void { this.#epoch += 1; this.#session = null; this.#listeners.forEach(listener => listener()); }
   #assertEpoch(epoch: number): void { if (epoch !== this.#epoch) throw new SessionChangedError(); }
-  async #request<T>(path: string, options: { method?: 'GET' | 'POST'; body?: string | Blob; contentType?: string; schema?: SchemaName; successStatus?: number; epoch?: number; auth?: boolean; mutation?: boolean; signal?: AbortSignal; image?: boolean } = {}): Promise<T> {
+  async #request<T>(path: string, options: { method?: 'GET' | 'POST'; body?: string | Blob; contentType?: string; schema?: SchemaName; successStatus?: number; epoch?: number; auth?: boolean; mutation?: boolean; signal?: AbortSignal; image?: boolean; validate?: (data: unknown) => boolean; push?: boolean; emptyBody?: boolean } = {}): Promise<T> {
     const epoch = options.epoch ?? this.#epoch;
     this.#assertEpoch(epoch);
     if (!this.#online()) throw new ApiError('Нет сети. Изменения не отправлены.');
@@ -120,13 +123,17 @@ export class ApiClient {
         let data: unknown = null;
         try { data = await response.json(); } catch { /* A proxy may return non-JSON. Never render its body. */ }
         this.#assertEpoch(epoch);
-        const problem = isWire<Problem>('Problem', data) ? data : null;
+        let problem: ApiProblem | null = isWire<Problem>('Problem', data) ? data : null;
+        if (options.push && data && typeof data === 'object' && 'code' in data && (data.code === 'SUBSCRIPTION_CONFLICT' || data.code === 'PUSH_DISABLED') && isWire<Problem>('Problem', { ...data, code: 'TEMPORARILY_UNAVAILABLE' })) problem = data as ApiProblem;
         const delay = retryDelay(response.headers.get('Retry-After'));
         if ((response.status === 429 || response.status === 503) && delay !== null) this.#cooldowns.set(routeKey, { until: Date.now() + delay * 1000, status: response.status });
         throw new ApiError('Сервер отклонил запрос. Повторите позже.', response.status, problem, Boolean(options.mutation && response.status >= 500), delay);
       }
       if (response.status !== (options.successStatus ?? 200)) throw new ApiError('Получен неожиданный ответ сервера.', response.status, null, Boolean(options.mutation));
-      if (response.status === 204) return undefined as T;
+      if (response.status === 204) {
+        if (options.emptyBody && (await response.text()) !== '') throw new ApiError('Ответ отключения не соответствует контракту.', response.status, null, Boolean(options.mutation));
+        this.#assertEpoch(epoch); return undefined as T;
+      }
       if (options.image) {
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(response.headers.get('Content-Type')?.split(';')[0] ?? '')) throw new ApiError('Сервер вернул неподдерживаемое изображение.', response.status);
         const blob = await response.blob(); this.#assertEpoch(epoch); return blob as T;
@@ -134,8 +141,8 @@ export class ApiClient {
       let data: unknown;
       try { data = await response.json(); } catch { throw new ApiError('Сервер вернул неподдерживаемый ответ.', response.status, null, Boolean(options.mutation)); }
       this.#assertEpoch(epoch);
-      if (!options.schema || !isWire<T>(options.schema, data)) throw new ApiError('Ответ сервера не соответствует согласованному контракту.', response.status, null, Boolean(options.mutation));
-      return data;
+      if (options.validate ? !options.validate(data) : !options.schema || !isWire<T>(options.schema, data)) throw new ApiError('Ответ сервера не соответствует согласованному контракту.', response.status, null, Boolean(options.mutation));
+      return data as T;
     } catch (error) {
       if (error instanceof ApiError || error instanceof SessionChangedError) throw error;
       this.#assertEpoch(epoch);
@@ -167,6 +174,24 @@ export class ApiClient {
     const epoch = this.#epoch;
     try { await this.#request<void>('/auth/logout', { method: 'POST', successStatus: 204, mutation: true }); }
     finally { if (this.#epoch === epoch) this.clearIdentity(); }
+  }
+  #assertPushSession(): void {
+    if (!this.#session?.principal.active || !(Date.parse(this.#session.expires_at) > Date.now())) throw new ApiError('Сессия завершена. Войдите снова.', 401);
+  }
+  getPushConfig(): Promise<PushApiConfig> {
+    this.#assertPushSession();
+    return this.#request('/push/config', { validate: isPushConfig, push: true });
+  }
+  async registerPushSubscription(body: string): Promise<void> {
+    this.#assertPushSession();
+    if (!validPushRegistration(body)) throw new ApiError('Некорректная подписка. Запрос не отправлен.');
+    await this.#request('/push/subscriptions', { method: 'POST', body, contentType: 'application/json', validate: isPushConfirmation, mutation: true, push: true });
+  }
+  async removePushSubscription(endpoint: string): Promise<void> {
+    this.#assertPushSession();
+    const body = JSON.stringify({ endpoint });
+    if (!validPushEndpoint(endpoint) || new TextEncoder().encode(body).length > 4096) throw new ApiError('Некорректная подписка. Запрос не отправлен.');
+    await this.#request('/push/subscriptions/remove', { method: 'POST', body, contentType: 'application/json', successStatus: 204, emptyBody: true, mutation: true, push: true });
   }
   getDictionaries(signal?: AbortSignal): Promise<Dictionaries> { return this.#request('/dicts', { schema: 'Dictionaries', signal }); }
   getPhoto(photoId: string, signal?: AbortSignal): Promise<Blob> { return this.#request(`/photos/${id(photoId)}`, { image: true, signal }); }

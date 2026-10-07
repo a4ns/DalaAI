@@ -1,0 +1,50 @@
+// Synthetic transport/browser ports only. No permission, native registration or provider call.
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const ts = require('typescript');
+require.extensions['.ts'] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, filename);
+const { ApiClient } = require('../shared/api/client.ts');
+const { PushSession, createPushBackend, isCurrentPushContext } = require('./pushSession.ts');
+const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
+const principal = { user_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', active: true, employee_code: 'SYNTHETIC', role: 'executor', section_ids: [], on_shift: true };
+const session = { principal, csrf_token: 'synthetic-csrf', expires_at: '2099-01-01T00:00:00Z' };
+const key = Buffer.concat([Buffer.from([4]), Buffer.alloc(64, 1)]).toString('base64url');
+const config = { enabled: true, application_server_key: key, delivery_semantics: 'provider_acceptance_is_not_device_delivery', device_policy: 'latest_registration_per_user' };
+const subscription = { toJSON: () => ({ endpoint: 'https://push.example.invalid/synthetic', keys: { p256dh: 'synthetic', auth: 'synthetic' }, expirationTime: null }) };
+const tick = () => new Promise(resolve => setImmediate(resolve));
+(async () => {
+  const requests = []; let registrationSends = 0; let ready = true; let native = 0;
+  const client = new ApiClient({ online: () => true, fetch: async (url, init) => {
+    if (String(url).endsWith('/auth/login')) return json(session);
+    requests.push({ url, init });
+    if (String(url).endsWith('/config')) return json(config);
+    registrationSends++;
+    if (registrationSends === 1) throw new TypeError('Synthetic interrupted response');
+    return json({ enabled: true });
+  } });
+  await client.login({ employee_code: 'SYNTHETIC', pin: '0000' });
+  const browser = () => ({ supported: () => true, permission: () => 'default', prepare: async () => null, subscribe: async () => { native++; return subscription; }, unsubscribe: async () => true });
+  const bridge = new PushSession(client, () => ready, browser);
+  const cleanup1 = bridge.attach(); cleanup1(); const cleanup2 = bridge.attach();
+  assert.equal(requests.length, 0); assert.equal(native, 0);
+  bridge.prepare(); await tick(); assert.equal(bridge.getSnapshot().phase, 'ready');
+  bridge.enable(); assert.equal(native, 1); await tick(); assert.equal(bridge.getSnapshot().phase, 'unknown');
+  bridge.retry(); await tick(); assert.equal(bridge.getSnapshot().phase, 'connected');
+  assert.equal(requests[1].init.body, requests[2].init.body);
+  assert.equal(requests[1].init.headers.get('X-CSRF-Token'), session.csrf_token);
+  assert.equal(requests[1].init.credentials, 'same-origin'); assert.equal(requests[1].init.mode, 'same-origin');
+  assert.equal(requests[1].init.redirect, 'error'); assert.equal(requests[1].init.cache, 'no-store');
+  bridge.retry(); await tick(); assert.equal(registrationSends, 2); cleanup2();
+  console.log('PASS synthetic push: inert StrictMode replay, explicit synchronous subscribe, exact-body retry and separate backend confirmation');
+
+  let release; const pending = new Promise(resolve => { release = resolve; });
+  const delayedBrowser = () => ({ ...browser(), subscribe: () => pending });
+  const delayed = new PushSession(client, () => ready, delayedBrowser); const cleanup = delayed.attach();
+  delayed.prepare(); await tick(); delayed.enable(); ready = false;
+  assert.equal(isCurrentPushContext(client, client.epoch, principal.user_id, () => ready), false);
+  release(subscription); await tick(); assert.equal(registrationSends, 2);
+  const backend = createPushBackend(client, () => false);
+  await assert.rejects(() => backend.register(JSON.stringify(subscription.toJSON())), { name: 'SessionChangedError' });
+  assert.equal(registrationSends, 2); cleanup();
+  console.log('PASS synthetic push: synchronous logout latch blocks delayed subscription binding and stale backend calls');
+})().catch(error => { console.error(error); process.exitCode = 1; });

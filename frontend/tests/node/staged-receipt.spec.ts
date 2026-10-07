@@ -106,3 +106,30 @@ test('stage receipt: PhotoStore unknown context mismatch recovers by resending o
   expect(store.confirmedIds(context)).toEqual([ids.event]);
   expect(bodies[1]).toBe(bodies[0]);
 });
+
+test('stage receipt: UUID letter case cannot split client confirmation from PhotoStore attachment', async () => {
+  const { PhotoStore } = sourceModule<typeof import('../../src/app/photoStore')>('src/app/photoStore.ts');
+  const owner = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const section = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  const orderId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  const principal = session(owner); principal.principal.section_ids = [section];
+  const photo = { ...validPhoto(), owner_id: owner.toUpperCase(), section_id: section.toUpperCase(), order_id: orderId.toUpperCase() };
+  expect(isWire('StagedPhoto', photo)).toBe(true);
+  let sends = 0;
+  const client = new ApiClient({ online: () => true, fetch: async url => {
+    if (String(url).endsWith('/auth/login')) return json(principal);
+    sends += 1; return json(photo, 201);
+  } });
+  await client.login(login);
+  const store = new PhotoStore(client);
+  const context = { key: 'synthetic-case-equivalent-context', phase: 'after' as const, sectionId: section, orderId, assignmentRevision: 1 };
+  const local = { id: 'synthetic-case-local', file: file(), originalName: 'synthetic.jpg', originalBytes: 29, width: 1, height: 1, preparedAt: '2026-10-07T19:00:00Z' };
+  store.select(context, [local]);
+  await expect.poll(() => store.get(context).jobs[local.id]?.status).not.toBe('pending');
+  store.retry(context, local);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(sends, 'The bound equivalent receipt needs no additional network operation.').toBe(1);
+  expect(store.get(context).jobs[local.id]?.status).toBe('confirmed');
+  expect(store.confirmedIds(context)).toEqual([photo.id]);
+  expect(store.transportLocked(context)).toBe(false);
+});
