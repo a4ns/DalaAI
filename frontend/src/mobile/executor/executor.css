@@ -20,6 +20,8 @@
 .executor-caption { color: #49616e; font-size: .875rem; }
 .executor-urgent { color: #a52520; font-weight: 750; }
 .executor-detail, .executor-empty { background: #fff; border: 1px solid #d7e1e5; border-radius: 16px; padding: 22px; min-width: 0; }
+.executor-detail-title { scroll-margin-block-start: 20px; }
+.executor-detail-title:focus { outline: 3px solid #cf6500; outline-offset: 4px; border-radius: 2px; }
 .executor-detail-equipment { font-size: 1.1rem; font-weight: 600; }
 .executor-preserve-lines { white-space: pre-wrap; }
 .executor-notice { padding: 14px 16px; border: 1px solid #d4bd7b; border-left: 4px solid #9b6500; border-radius: 8px; background: #fff7e4; color: #60420c; }

@@ -110,7 +110,7 @@ test('server review status does not invent model progress or automatic acceptanc
 
 /** Minimal hook simulator for event-boundary assertions, explicitly not a DOM/browser test. */
 function harness(initialProps) {
-  const slots = []; let cursor = 0; let pendingEffects = []; let currentProps = initialProps;
+  const slots = []; const focusEvents = []; let cursor = 0; let pendingEffects = []; let currentProps = initialProps;
   const hookRuntime = {
     useId: () => ':test:',
     useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = typeof initial === 'function' ? initial() : initial; return [slots[index], (value) => { slots[index] = typeof value === 'function' ? value(slots[index]) : value; }]; },
@@ -119,11 +119,16 @@ function harness(initialProps) {
   };
   const Component = loader(hookRuntime)('ExecutorScreen.tsx').ExecutorScreen;
   let tree;
-  function render(next = currentProps) { currentProps = next; cursor = 0; pendingEffects = []; const wrapper = Component(currentProps); tree = wrapper.type(wrapper.props); pendingEffects.forEach((effect) => effect()); return tree; }
+  function render(next = currentProps) { currentProps = next; cursor = 0; pendingEffects = []; const wrapper = Component(currentProps); tree = wrapper.type(wrapper.props); elements(tree).forEach((node) => {
+    if (node.props?.ref && typeof node.props.ref === 'object') node.props.ref.current = {
+      focus: (options) => focusEvents.push({ kind: 'focus', id: node.props.id, options }),
+      scrollIntoView: (options) => focusEvents.push({ kind: 'scroll', id: node.props.id, options }),
+    };
+  }); pendingEffects.forEach((effect) => effect()); return tree; }
   function elements(node, result = []) { if (!node || typeof node !== 'object') return result; if (Array.isArray(node)) { node.forEach((item) => elements(item, result)); return result; } result.push(node); elements(node.props?.children, result); return result; }
   function text(node) { if (node === null || node === undefined || typeof node === 'boolean') return ''; if (typeof node === 'string' || typeof node === 'number') return String(node); if (Array.isArray(node)) return node.map(text).join(''); return text(node.props?.children); }
   render();
-  return { render, button: (label) => elements(tree).find((node) => node.type === 'button' && text(node) === label), form: () => elements(tree).find((node) => node.type === 'form'), unmount() { for (const slot of slots) slot?.cleanup?.(); }, text: () => text(tree) };
+  return { render, focusEvents, element: (predicate) => elements(tree).find(predicate), button: (label) => elements(tree).find((node) => node.type === 'button' && text(node) === label), form: () => elements(tree).find((node) => node.type === 'form'), unmount() { for (const slot of slots) slot?.cleanup?.(); }, text: () => text(tree) };
 }
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 test('synchronous double click reserves only one intent; unknown retry uses separate callback', async () => {
@@ -195,4 +200,53 @@ test('late photo from prior assignment cannot attach to a new assignment', () =>
   oldCallback(['photo-old']); assert.equal(changes.length, 0);
   h.render({ ...base, orders: ready([order('in_progress', { sectionId: 'section-2' })]) });
   oldCallback(['photo-old']); assert.equal(changes.length, 0);
+});
+
+
+test('deliberate card selection focuses its detail heading after controlled selection commits', () => {
+  const selections = []; let intents = 0;
+  const base = props({ orders: ready([order(), order('issued', { id: 'order-2', number: 'Н-002' })]), onSelectOrder: (id) => selections.push(id), onIntent: async () => { intents++; return { kind: 'confirmed' }; } });
+  const h = harness(base);
+  assert.equal(h.focusEvents.length, 0, 'initial selection must not steal focus');
+  const card = h.element((node) => node.type === 'button' && node.props.className?.includes('executor-order-card') && node.props['aria-pressed'] === false);
+  assert.equal(card.props.type, 'button', 'selection never submits a surrounding form');
+  card.props.onClick();
+  assert.deepEqual(selections, ['order-2']); assert.equal(h.focusEvents.length, 0, 'do not focus old details before controlled update');
+  h.render({ ...base, selectedOrderId: 'order-2' });
+  assert.deepEqual(h.focusEvents.map((event) => event.kind), ['focus', 'scroll']);
+  assert.deepEqual(h.focusEvents[0].options, { preventScroll: true });
+  assert.equal(h.element((node) => node.type === 'h2' && node.props.id === ':test:-order-title').props.tabIndex, -1);
+  assert.equal(intents, 0);
+});
+test('background refresh and unrelated draft changes never steal detail focus', () => {
+  const base = props(); const h = harness(base);
+  h.render({ ...base, orders: { ...ready([order('accepted', { version: 4 })]), lastConfirmedAt: '2026-10-07T19:02:00Z' } });
+  h.render({ ...base, drafts: { 'order-1': { ...model.emptyExecutorDraft(), reason: 'Черновик' } } });
+  assert.deepEqual(h.focusEvents, []);
+});
+test('reselecting the same card brings existing detail into view without a mutation', () => {
+  let selections = 0; const h = harness(props({ onSelectOrder: () => { selections++; } }));
+  const card = h.element((node) => node.type === 'button' && node.props.className?.includes('executor-order-card'));
+  card.props.onClick();
+  assert.equal(selections, 0); assert.deepEqual(h.focusEvents.map((event) => event.kind), ['focus', 'scroll']);
+});
+
+
+test('unresolved photo work disables submit and cannot create a command through form handler', () => {
+  let intents = 0; const reason = 'Загрузка фото не подтверждена: проверьте исходную попытку.';
+  const h = harness(props({ orders: ready([order('in_progress')]), drafts: { 'order-1': { ...model.emptyExecutorDraft(), workDescription: 'Заменена прокладка' } }, photoBusy: true, photoBusyReason: reason, onIntent: async () => { intents++; return { kind: 'confirmed' }; } }));
+  assert.equal(h.button('Отправить неполный результат на проверку').props.disabled, true);
+  assert.match(h.text(), /Загрузка фото не подтверждена/);
+  h.form().props.onSubmit({ preventDefault() {} }); assert.equal(intents, 0);
+  h.render(); assert.match(h.text(), /Загрузка фото не подтверждена/);
+  assert.doesNotMatch(h.text(), /Отправляем действие|Действие подтверждено сервером/);
+});
+test('settled photo activity re-enables a valid result but never clears unknown command lock', () => {
+  const base = props({ orders: ready([order('in_progress')]), drafts: { 'order-1': { ...model.emptyExecutorDraft(), workDescription: 'Заменена прокладка' } }, photoBusy: true });
+  const h = harness(base);
+  h.render({ ...base, photoBusy: false });
+  assert.equal(h.button('Отправить неполный результат на проверку').props.disabled, false);
+  h.render({ ...base, photoBusy: false, mutation: { status: 'unknown_result', error: 'Ответ команды потерян' } });
+  assert.equal(h.button('Отправить неполный результат на проверку').props.disabled, true);
+  assert.equal(h.button('Повторить исходное действие').props.disabled, false);
 });

@@ -39,6 +39,8 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   const inFlight = useRef(false);
   const mounted = useRef(true);
   const draftLocked = useRef(false);
+  const detailHeading = useRef<HTMLHeadingElement | null>(null);
+  const requestedDetailFocus = useRef<string | null>(null);
   const latestDrafts = useRef(props.drafts);
   const latestOrders = useRef(props.orders.snapshot);
   latestDrafts.current = props.drafts;
@@ -62,6 +64,8 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
     (!fresh || Boolean(actedOrder && actedOrder.version <= activeIntent.expectedVersion));
   const canCommand = fresh && !frozen && !awaitingSnapshot;
   const missing = selected ? incompleteEvidence(selected, draft) : [];
+  const photoBlocked = props.photoBusy === true;
+  const photoBlockedReason = props.photoBusyReason || 'Результат подготовки или загрузки фото ещё не подтверждён. Завершите действие с фото перед отправкой результата.';
   const visibleOrders = orders.filter((order) => filter === 'all' || !['closed', 'cancelled', 'rejected'].includes(order.status));
   const activeCount = orders.filter((order) => !['closed', 'cancelled', 'rejected'].includes(order.status)).length;
 
@@ -69,6 +73,13 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   // A parent's new state (e.g. session reset) supersedes local callback feedback.
   useEffect(() => setLocalMutation(null), [props.mutation.status, props.mutation.error]);
   useEffect(() => { setMode('result'); setErrors({}); }, [props.selectedOrderId]);
+  useEffect(() => {
+    // Only a deliberate card selection requests focus. Polls and initial selection never do.
+    if (requestedDetailFocus.current !== props.selectedOrderId) return;
+    requestedDetailFocus.current = null;
+    detailHeading.current?.focus({ preventScroll: true });
+    detailHeading.current?.scrollIntoView({ block: 'start', inline: 'nearest' });
+  }, [props.selectedOrderId]);
   useEffect(() => {
     if (mutation.status === 'conflict' && priorStatus.current !== 'conflict') conflictRefresh.current = props.orders.lastConfirmedAt;
     priorStatus.current = mutation.status;
@@ -78,6 +89,18 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
     if (!selected || !mounted.current || draftLocked.current) return;
     props.onDraftChange(selected.id, { ...(latestDrafts.current[selected.id] ?? emptyExecutorDraft()), ...patch });
   };
+
+  function selectOrder(orderId: string) {
+    if (!mounted.current || draftLocked.current || inFlight.current) return;
+    if (orderId === props.selectedOrderId) {
+      requestedDetailFocus.current = null;
+      detailHeading.current?.focus({ preventScroll: true });
+      detailHeading.current?.scrollIntoView({ block: 'start', inline: 'nearest' });
+      return;
+    }
+    requestedDetailFocus.current = orderId;
+    props.onSelectOrder(orderId);
+  }
 
   async function perform(intent?: ExecutorIntent) {
     // Synchronous latch closes the gap before React renders a disabled button.
@@ -105,6 +128,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
     if (action === 'submit') {
       const nextErrors = validateExecutorDraft(draft, props.dictionaries.snapshot);
       if (!dictionariesFresh) nextErrors.dictionaries = 'Обновите справочники перед отправкой результата.';
+      if (photoBlocked) nextErrors.photoActivity = photoBlockedReason;
       setErrors(nextErrors);
       if (Object.keys(nextErrors).length) return;
       void perform({ ...base, action, payload: toSubmitPayload(draft) });
@@ -142,7 +166,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
     {orders.length > 0 && visibleOrders.length === 0 && <p>В полученном списке нет активных нарядов. Выберите «Все», чтобы увидеть остальные.</p>}
     <div className="executor-layout">
       <nav aria-label="Назначенные наряды" className="executor-order-list">
-        {visibleOrders.map((order) => <button key={order.id} type="button" disabled={frozen} className={`executor-order-card${selected?.id === order.id ? ' executor-order-card--selected' : ''}`} aria-pressed={selected?.id === order.id} onClick={() => props.onSelectOrder(order.id)}>
+        {visibleOrders.map((order) => <button key={order.id} type="button" disabled={frozen} className={`executor-order-card${selected?.id === order.id ? ' executor-order-card--selected' : ''}`} aria-pressed={selected?.id === order.id} onClick={() => selectOrder(order.id)}>
           <span className="executor-order-top"><strong>Наряд {order.number}</strong><span className="executor-status">{STATUS_LABELS[order.status]}</span></span>
           <span>{order.equipmentLabel}</span><span className="executor-card-description">{order.description}</span>
           <span className="executor-caption">До {formatExecutorTime(order.dueAt)}</span>
@@ -152,7 +176,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
         </button>)}
       </nav>
       {selected ? <article className="executor-detail" aria-labelledby={`${id}-order-title`}>
-        <header><p className="executor-eyebrow">{selected.sectionLabel} · Версия {selected.version}</p><h2 id={`${id}-order-title`}>Наряд {selected.number}</h2><p className="executor-detail-equipment">{selected.equipmentLabel}</p><p><span className="executor-status">{STATUS_LABELS[selected.status]}</span> · {selected.type === 'unplanned' ? 'Внеплановая работа' : 'Плановая работа'}</p></header>
+        <header><p className="executor-eyebrow">{selected.sectionLabel} · Версия {selected.version}</p><h2 ref={detailHeading} tabIndex={-1} className="executor-detail-title" id={`${id}-order-title`}>Наряд {selected.number}</h2><p className="executor-detail-equipment">{selected.equipmentLabel}</p><p><span className="executor-status">{STATUS_LABELS[selected.status]}</span> · {selected.type === 'unplanned' ? 'Внеплановая работа' : 'Плановая работа'}</p></header>
         <p className="executor-preserve-lines">{selected.description}</p>
         {selected.comment && <p className="executor-preserve-lines"><strong>Комментарий мастера: </strong>{selected.comment}</p>}
         <p>Срок: <time dateTime={selected.dueAt}>{formatExecutorTime(selected.dueAt)}</time>{selected.isOverdue && <strong className="executor-urgent"> · Просрочен</strong>}</p>
@@ -180,7 +204,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
             })}
             <button className="executor-button executor-button--secondary" type="button" disabled={!dictionariesFresh || draft.materials.length >= 40 || props.dictionaries.snapshot?.materials.length === 0} onClick={() => { rows.current += 1; patchDraft({ materials: [...draft.materials, { rowId: `${id}-${rows.current}`, materialId: '', quantity: '' }] }); }}>Добавить материал</button>{fieldError('materials')}
           </fieldset>
-          <fieldset disabled={frozen}><legend>Фото после выполнения</legend>{props.renderPhotoPicker ? props.renderPhotoPicker({ orderId: selected.id, sectionId: selected.sectionId, assignmentRevision: selected.assignmentRevision, disabled: frozen, confirmedPhotoIds: draft.afterPhotoIds, onConfirmedPhotoIdsChange: (ids) => {
+          <fieldset disabled={frozen}><legend>Фото после выполнения</legend>{photoBlocked && <p className="executor-notice" role="status">{photoBlockedReason}</p>}{props.renderPhotoPicker ? props.renderPhotoPicker({ orderId: selected.id, sectionId: selected.sectionId, assignmentRevision: selected.assignmentRevision, disabled: frozen, confirmedPhotoIds: draft.afterPhotoIds, onConfirmedPhotoIdsChange: (ids) => {
             const currentOrder = latestOrders.current?.find((order) => order.id === selected.id);
             if (!currentOrder || currentOrder.assignmentRevision !== selected.assignmentRevision || currentOrder.sectionId !== selected.sectionId) return;
             patchDraft({ afterPhotoIds: [...ids] });
@@ -188,7 +212,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
           <label htmlFor={`${id}-comment`}>Комментарий к результату</label><textarea id={`${id}-comment`} value={draft.comment} disabled={frozen} onChange={(event) => patchDraft({ comment: event.target.value })} maxLength={2000} rows={3} aria-invalid={Boolean(errors.comment)} aria-describedby={describedBy('comment')} />{fieldError('comment')}
           {missing.length > 0 && <p className="executor-notice">Не хватает: {missing.join(', ')}. Можно отправить неполный результат на проверку. Закрытие наряда будет недоступно, пока обязательные доказательства не добавлены.</p>}
           {Object.keys(errors).length > 0 && <div className="executor-notice executor-notice--error" role="alert"><strong>Проверьте форму:</strong><ul>{Object.entries(errors).map(([key, message]) => <li key={key}>{message}</li>)}</ul></div>}
-          <button className="executor-button executor-button--submit" type="submit" disabled={!canCommand || !dictionariesFresh}>{missing.length ? 'Отправить неполный результат на проверку' : 'Отправить на проверку'}</button>
+          <button className="executor-button executor-button--submit" type="submit" disabled={!canCommand || !dictionariesFresh || photoBlocked}>{missing.length ? 'Отправить неполный результат на проверку' : 'Отправить на проверку'}</button>
           <p className="executor-caption">Отправка результата не означает приёмку. Решение принимает мастер.</p>
         </form>}
         {selected.status === 'ai_review' && <p className="executor-notice">Результат на проверке. Окончательное решение принимает мастер. Статус работы ИИ здесь не подтверждён.</p>}

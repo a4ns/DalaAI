@@ -11,7 +11,12 @@
 - Keep `mutation` and `pendingIntent` across feature navigation. Unknown results freeze draft editing and new commands. Only a confirmed response unlocks the command result. `onResolveConflict` discards/resets the failed intent only after the user has refreshed and explicitly reviewed current state. It never sends a replacement command.
 - `onIntent`/`onRetry` return the actual `MutationOutcome`, not optimistic confirmation. An uncaught adapter exception is treated as unknown. A confirmed command still needs a fresh order snapshot with a newer version before the next command.
 - Map submit payload fields to `work_description`, `work_code_id`, `materials[].material_id`, `after_photo_ids`, and `comment`. Empty work/invalid quantities/unknown or duplicate materials are rejected. Missing work code and missing unplanned after-photo remain explicitly incomplete, reviewable submissions.
+- Set selected-order `photoBusy` while preparation/staging is in progress or its outcome is unknown; optional `photoBusyReason` explains the exact blocking step. This disables result submission without inventing a pending order command. Scope the flag to session/order/assignment and enforce the same guard inside the adapter before transport. Retain staging results independently until they can be safely reflected in the draft.
 - `renderPhotoPicker` is an optional adapter-owned hook. Its callback must contain only IDs from confirmed stage responses; local B5 `PreparedPhoto` files do not count as uploaded evidence. Carry order ID, section ID and assignment revision in the staging adapter. No upload implementation is claimed by this feature.
+
+## Selection accessibility
+
+Assignment cards are native `type="button"` controls. Deliberate pointer or keyboard activation focuses the selected detail heading and brings it into view, including below long mobile lists. The heading has `tabIndex=-1` and a visible focus outline. Initial selection, polling and draft updates do not request focus. Focus dispatch is covered by synthetic hook tests; actual browser scrolling and Android assistive technology remain unverified.
 
 ## Checks
 

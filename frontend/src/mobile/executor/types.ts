@@ -87,5 +87,8 @@ export interface ExecutorScreenProps {
   onRefresh: () => void;
   /** Called only after explicit conflict review; must not submit any command. */
   onResolveConflict: () => void;
+  /** Selected-order preparation/staging/unresolved upload blocks result submission only. */
+  photoBusy?: boolean;
+  photoBusyReason?: string;
   renderPhotoPicker?: (context: ExecutorPhotoContext) => ReactNode;
 }
