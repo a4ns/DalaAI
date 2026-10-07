@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "evidence_level": "frontend_build_and_local_process_only",
+  "frontend_sha": "633beec6de954b45160361c2ea2bc41c1e99fae6",
+  "checked_at": "2026-10-07T19:31:02Z",
+  "artifact": "shell-633beec.md",
+  "artifact_sha256": "09f9ef6366c1c34cb6ec480e27501aa5d3b7b7d10e95cf7eec080be9ec0e0eaf",
+  "checks": {
+    "locked_install": "PASS",
+    "lint_typecheck_build": "PASS",
+    "source_bytes_unchanged": "PASS",
+    "same_invocation_http": "PASS",
+    "cloud_browser_local_origin": "BLOCKED",
+    "ru_render": "NOT_RUN",
+    "fatal_console": "NOT_RUN",
+    "overflow_390px": "NOT_RUN",
+    "keyboard_focus": "NOT_RUN",
+    "disabled_action_no_fake_mutation": "NOT_RUN"
+  },
+  "browser_error": "net::ERR_BLOCKED_BY_CLIENT",
+  "api_auth_device_readiness": "NOT_RUN",
+  "limitation": "No application page rendered; process/build checks cannot substitute for browser gates"
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-10-07T19:11:00Z",
+  "inspected_base_sha": "f3b3ffd00d8bb59e55d539e2321196bf18c30d7d",
+  "overall_product_status": "NOT_RUN",
+  "harness_scope": "Manual assembled-browser plan and evidence validation only; no browser execution",
+  "gaps": [
+    {
+      "id": "ASSEMBLED_TARGET",
+      "status": "BLOCKED",
+      "owner": "A5/B0/B4",
+      "observation": "No frontend tree at inspected base; backend/app/main.py mounts health only. Persistence router exists but is opt-in and partial.",
+      "source_paths": ["backend/app/main.py", "backend/app/persistence/http.py"],
+      "unblock": "Provide explicit isolated assembled HTTPS origin, exact frontend/backend SHAs, real persistence and mounted accepted business/auth/upload routes"
+    },
+    {
+      "id": "PROVISIONED_ROLES",
+      "status": "BLOCKED",
+      "owner": "A2/A6",
+      "observation": "No approved provisioned synthetic browser sessions or target were supplied to C-105; illustrative fixtures are not credentials.",
+      "unblock": "Provide nonsecret role UUID/scope provisioning evidence and operator login path; never share PINs or session storage with harness"
+    },
+    {
+      "id": "LOST_COMMITTED_RESPONSE",
+      "status": "BLOCKED",
+      "owner": "A0/A2/A6",
+      "observation": "No authorized real-backend commit-then-drop seam or one-effect DB evidence was supplied.",
+      "unblock": "Authorize isolated fault injection and reference real commit/receipt evidence; offline-before-send cannot substitute"
+    },
+    {
+      "id": "LIVE_REPORT_CONTRACT",
+      "status": "BLOCKED",
+      "owner": "A0/A6/C4/B0",
+      "observation": "Accepted proposal.2 has no report route; no invented /reports endpoint will be probed.",
+      "source_paths": ["coord/proposals/a6-contract-v1/CONTRACT.md", "coord/proposals/a6-contract-v1/contracts/openapi.yaml"],
+      "unblock": "Accept follow-on report contract and assembled role-scoped view; offline synthetic report is a distinct evidence level"
+    },
+    {
+      "id": "PHYSICAL_ANDROID",
+      "status": "NOT_RUN",
+      "owner": "Human device operator/B6",
+      "observation": "No physical Android or native camera/notification permission result observed; no mobile timings measured.",
+      "unblock": "Human-operated approved synthetic device run with model/OS/browser/network, permissions and raw timing evidence"
+    },
+    {
+      "id": "ACTUAL_NOTIFICATION",
+      "status": "NOT_RUN",
+      "owner": "A3/A5 and human device operator",
+      "observation": "No authorized real notification channel/recipient or observed phone delivery supplied. Planner/provider state is not delivery.",
+      "unblock": "Explicit authorized channel and synthetic recipients, then physical locked/background phone receipt and permission-denial evidence"
+    }
+  ],
+  "case_statuses": {
+    "C5-B01": "NOT_RUN", "C5-B02": "NOT_RUN", "C5-B03": "NOT_RUN",
+    "C5-B04": "NOT_RUN", "C5-B05": "NOT_RUN", "C5-B06": "NOT_RUN",
+    "C5-B07": "NOT_RUN", "C5-B08": "NOT_RUN", "C5-D01": "NOT_RUN",
+    "C5-D02": "NOT_RUN", "C5-D03": "NOT_RUN", "C5-D04": "NOT_RUN"
+  }
+}

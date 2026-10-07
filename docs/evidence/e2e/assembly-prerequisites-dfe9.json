@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "evidence_level": "source_inspection_only",
+  "observed_at": "2026-10-07T20:19:29Z",
+  "backend_sha": "dfe9d8f7772b1a1c44f5a506c03e26c55fb5e1ca",
+  "frontend_inspected_sha": "b51d6577b0e3b0a10dd063f1a1c946e804633c07",
+  "frontend_state": "render-only WIP per B0; not an accepted integration candidate",
+  "contract_sha256": "b8b5b855eb8fffd4607473a4e878a3c64820030820cabb1b0c92d70928730f97",
+  "mounted_domain_routes": [
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "source": "backend/app/sessions/http.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/me",
+      "source": "backend/app/sessions/http.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/logout",
+      "source": "backend/app/sessions/http.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "source": "backend/app/persistence/http.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/orders/{order_id}/commands",
+      "source": "backend/app/persistence/http.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/{order_id}",
+      "source": "backend/app/persistence/http.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/{order_id}/submissions/{submission_id}",
+      "source": "backend/app/persistence/http.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "source": "backend/app/discovery/http.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dicts",
+      "source": "backend/app/discovery/http.py"
+    }
+  ],
+  "missing_core_routes": [
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/{order_id}/events"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/photos/stage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/photos/{photo_id}"
+    }
+  ],
+  "required_packets": {
+    "same_origin_https_serving": "A0/A5/B4",
+    "isolated_synthetic_roles_and_fixtures": "A0/A2/A6",
+    "supported_browser_contexts_and_fault_controls": "A0/A5/B6"
+  },
+  "browser_execution": "NOT_RUN",
+  "product_journeys": "NOT_RUN",
+  "prior_browser_blocker": "net::ERR_BLOCKED_BY_CLIENT on local origin; not retried",
+  "approved_hosted_endpoint_supplied": false,
+  "application_defect_claim": false,
+  "artifact": "assembly-prerequisites-dfe9.md",
+  "artifact_sha256": "4c8495d0d73e80fc7fdbbb8f44e013dddcff9c3c5e736708bff9fac6a5f52a23",
+  "source_checks_at": "2026-10-07T20:23:48.850365+00:00"
+}

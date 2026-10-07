@@ -1,0 +1,638 @@
+{
+  "schema_version": 1,
+  "suite_id": "C5-ASSEMBLED-BROWSER-V1",
+  "contract_sha256": "b8b5b855eb8fffd4607473a4e878a3c64820030820cabb1b0c92d70928730f97",
+  "sources": {
+    "core": {
+      "path": "coord/proposals/a6-contract-v1/CONTRACT.md",
+      "url": "https://github.com/a4ns/DalaAI/blob/f3b3ffd00d8bb59e55d539e2321196bf18c30d7d/coord/proposals/a6-contract-v1/CONTRACT.md",
+      "note": "Read proposal status wording alongside current RUN_OPEN/GRANT acceptance; no expansion to reports/WS."
+    },
+    "wire": {
+      "path": "coord/proposals/a6-contract-v1/contracts/openapi.yaml",
+      "url": "https://github.com/a4ns/DalaAI/blob/f3b3ffd00d8bb59e55d539e2321196bf18c30d7d/coord/proposals/a6-contract-v1/contracts/openapi.yaml",
+      "note": "Accepted content digest pinned; 12 domain operations, no report or WS wire surface."
+    },
+    "agents": {
+      "path": "AGENTS.md",
+      "url": "https://github.com/a4ns/DalaAI/blob/f3b3ffd00d8bb59e55d539e2321196bf18c30d7d/AGENTS.md",
+      "sections": [
+        "2",
+        "7",
+        "8",
+        "11",
+        "12"
+      ],
+      "note": "Repository case-requirement mapping; physical targets are not measured results."
+    },
+    "journal_semantics": {
+      "url": "https://github.com/a4ns/DalaAI/issues/2",
+      "event_ids": [
+        "A0-0004",
+        "A0-0006"
+      ],
+      "note": "Current accepted clarifications supplied in C-105 GRANT brief: moving scoped keyset pages; representative lowest-number active order; queued-only counts; scoped roles; absent assessment and null human score."
+    }
+  },
+  "cases": [
+    {
+      "id": "C5-B01",
+      "title": "Two-session assembled lifecycle",
+      "roles": [
+        "master",
+        "executor"
+      ],
+      "sources": [
+        "core",
+        "wire",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "Operator signs into separate browser contexts using provisioned synthetic master/executor accounts; inspect /me without retaining its CSRF value. Record verified user_id, role and section only.",
+        "Master issues an unplanned synthetic order through the Russian UI with a genuinely future domain deadline. Do not replay historical seed through live create.",
+        "Executor receives the same order, accepts, starts, pauses with a reason, resumes, stages actual sanitized synthetic after-photo bytes and submits a complete result through the UI.",
+        "Master inspects immutable attempt, clearly labeled AI mode/recommendation or absence, then makes a reasoned human close decision. Reload both contexts and inspect persisted current state/history.",
+        "Record order/submission/event IDs and versions in sanitized evidence; obtain A0 isolated-DB evidence reference for actual persistence. Do not restart/reset services in this suite."
+      ],
+      "checks": [
+        {
+          "id": "identity",
+          "expectation": "Two distinct verified sessions with correct scopes; no mock/service-worker canned responses",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "issue",
+          "expectation": "Real create response and same order ID appear in executor UI; future due_at preserved",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "progress",
+          "expectation": "Accept/start/pause/resume each reach real backend; reason/history survive reload",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "submit",
+          "expectation": "Real photo stage and immutable submission; committed snapshot is ai_review, not externally persistent done",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "human_decision",
+          "expectation": "Only master closes current complete attempt with reason; AI does not auto-close; null final_score remains unscored",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "persistence",
+          "expectation": "Reload matches current authorized backend snapshot/history; A0 references real isolated DB durability evidence for candidate SHA",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "backend_reference"
+          ]
+        }
+      ],
+      "dependencies": [
+        "Assembled frontend and mounted business routes",
+        "Provisioned synthetic roles and photo fixture"
+      ]
+    },
+    {
+      "id": "C5-B02",
+      "title": "Incomplete result and rework remain distinct from AI score",
+      "roles": [
+        "master",
+        "executor"
+      ],
+      "sources": [
+        "core",
+        "wire"
+      ],
+      "physical_android": false,
+      "steps": [
+        "On a separate unplanned order, submit nonblank work with missing after-photo and/or null work_code_id. A deliberately incomplete attempt is allowed on the accepted contract.",
+        "Inspect missing_evidence. Attempt close through the actual UI, or record the real server denial reached from that browser under A0-approved negative-test procedure. Hidden close button alone does not prove the backend guard.",
+        "Master returns with reason; executor starts rework, adds required evidence and submits a new attempt; inspect both immutable attempts.",
+        "Inspect absence of assessment separately from model/rules/manual mode. Do not infer pending or failed solely from assessments=[]."
+      ],
+      "checks": [
+        {
+          "id": "incomplete",
+          "expectation": "Explicit incomplete attempt and safe missing-evidence UI; transport success does not mean complete work",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "close_guard",
+          "expectation": "Real backend denies incomplete close with 409 INCOMPLETE_SUBMISSION regardless of score; no false closed UI",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "new_attempt",
+          "expectation": "New attempt ID after rework, old attempt retained, no silent in-place mutation",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "no_invented_score",
+          "expectation": "Empty assessments are absent; null human final_score is neither AI score nor zero",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        }
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "C5-B03",
+      "title": "Browser permissions and identity switch",
+      "roles": [
+        "master",
+        "executor",
+        "other_executor",
+        "foreign_master",
+        "manager",
+        "admin"
+      ],
+      "sources": [
+        "core",
+        "wire",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "Use only provisioned synthetic test objects: own order/photo, other-executor order and foreign-section order. Capture authorized baseline in the correct actor context.",
+        "Open actual assembled UI deep links in other executor/foreign master/manager/admin contexts. Reuse real observed URL shapes; invent no route.",
+        "Observe unauthorized object/photo denial from real backend; verify no protected object fields or previous authorized cached screen are shown. A missing button by itself is insufficient.",
+        "For manager/admin writes, attach A0 real-server boundary evidence plus assembled UI denial. This suite does not duplicate API fuzzing or DB acceptance.",
+        "With a pending draft/unknown command, logout and sign in as another provisioned user in the same device/profile. Observe explicit isolation and no old outbox replay under new identity; do not silently discard prior pending work."
+      ],
+      "checks": [
+        {
+          "id": "foreign_objects",
+          "expectation": "Known forbidden order/photo reads return 403 without protected content; no cached object flash",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "role_writes",
+          "expectation": "Manager is read-only; admin gains no implicit production order read/write; attach A0 backend evidence for this candidate",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "backend_reference"
+          ]
+        },
+        {
+          "id": "switch_user",
+          "expectation": "Identity loss clears/isolate previous read cache and pending work; no second-user transmission of prior commands/photos",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        }
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "C5-B04",
+      "title": "Committed response lost before browser receipt",
+      "roles": [
+        "master",
+        "executor"
+      ],
+      "sources": [
+        "core",
+        "wire",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "Use a disposable synthetic order and an explicitly authorized isolated fault-injection seam. Begin observation before the UI mutation.",
+        "Allow a real request to reach the real backend and commit. Drop only its response before the application receives it. Preserve sanitized route, action, operation_id, expected_version, body digest and committed original response/version/event IDs.",
+        "If the seam cannot prove commit-before-drop, mark BLOCKED. Going offline before send or fabricating a success response does not exercise this failure.",
+        "Check UI says outcome unknown and preserves intent. Invoke its retry without editing. Observe identical operation_id, route, expected_version and canonical payload digest; compare original receipt body/status/event IDs.",
+        "Reconcile latest authorized snapshot after replay; old receipt snapshot is not necessarily current. Inspect A0 isolated-DB evidence for one effect; this harness never queries/resets DB."
+      ],
+      "checks": [
+        {
+          "id": "real_loss",
+          "expectation": "Actual committed response was suppressed; evidence identifies authorized seam and A0 commit proof, with secrets removed",
+          "evidence_kinds": [
+            "browser_network",
+            "backend_reference"
+          ]
+        },
+        {
+          "id": "unknown_ui",
+          "expectation": "No success before confirmation; form/pending intent retained; distinguish known-not-sent from unknown outcome",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "identical_retry",
+          "expectation": "Real UI retry reuses operation and canonical request; original response status/body/version/event IDs returned",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "one_effect",
+          "expectation": "A0 evidence proves one committed effect; UI reconciles current authorized snapshot without duplicate history",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "backend_reference"
+          ]
+        }
+      ],
+      "dependencies": [
+        "Explicit approved commit-then-drop seam and A0 real-DB inspection; not supplied by this harness"
+      ]
+    },
+    {
+      "id": "C5-B05",
+      "title": "Reconnect and status convergence",
+      "roles": [
+        "master",
+        "executor"
+      ],
+      "sources": [
+        "core",
+        "wire",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "Keep master viewing a real assigned order and executor in a separate context. Record real monotonic timing, not accelerated domain time.",
+        "Disconnect only master browser network; executor makes an allowed real transition. UI must display disconnected/stale state, not empty data or sent success.",
+        "Reconnect master. Drain real event pages using has_more/next_after_sequence and reconcile authorized snapshot. Repeated events may be delivered but not rendered twice.",
+        "Measure a separate online executor-commit-to-master-visible transition against <=5s. Record reconnect-to-reconciled duration separately; the contract specifies reconciliation, not a separate numerical reconnect SLA.",
+        "If using polling, record observed requests and cadence. No accepted WS wire contract exists; do not substitute a fabricated WS server."
+      ],
+      "checks": [
+        {
+          "id": "offline_state",
+          "expectation": "Disconnected state honest; no data loss or fake empty list",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "reconcile",
+          "expectation": "After reconnect event sequence and current snapshot converge without duplicate UI history",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "latency",
+          "expectation": "Measured online committed change to visible master UI includes sample size, timing boundary and network conditions",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ],
+          "maximums": {
+            "online_visible_ms": 5000
+          }
+        }
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "C5-B06",
+      "title": "Stale version preserves the user intent",
+      "roles": [
+        "master",
+        "executor"
+      ],
+      "sources": [
+        "core",
+        "wire",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "Load the same authorized order in two separate master contexts, or advance it via executor while master retains an old version.",
+        "Submit an allowed stale-version UI action. A nonstale AI assessment can also legitimately advance aggregate version; do not confuse it with event sequence.",
+        "Inspect real 409 and current authorized state. Preserve entered reason/form values and offer explicit user resolution; never silently overwrite or automatically switch operation ID.",
+        "Only after operator resolves a new intent may a new operation ID and current expected_version be used. Record real request/response pairing."
+      ],
+      "checks": [
+        {
+          "id": "conflict",
+          "expectation": "Real VERSION_CONFLICT or accepted conflict mapping is visible with retained input and current authorized state",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "resolution",
+          "expectation": "New operation ID appears only for explicitly resolved new intent; original conflict is not hidden as success",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        }
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "C5-B07",
+      "title": "Scoped catalogues, moving pages and honest nulls",
+      "roles": [
+        "master",
+        "executor",
+        "manager",
+        "admin"
+      ],
+      "sources": [
+        "wire",
+        "journal_semantics",
+        "core"
+      ],
+      "physical_android": false,
+      "steps": [
+        "Use C1/A6-provisioned synthetic fixtures with multiple in_progress/paused orders for one executor, queued orders, and null/absent scores; do not create a second importer.",
+        "Compare actual scoped dictionary/list responses with assembled UI for master/manager, executor self and admin.",
+        "Browse more than one scoped keyset page while another permitted session changes an order. Check no cross-page total/snapshot promise is inferred; obtain known fixture expectations from A0.",
+        "Check active_order_id is lowest-number representative among visible in_progress/paused, multiple active orders are allowed; queue_count counts queued only and zero does not establish free capacity."
+      ],
+      "checks": [
+        {
+          "id": "scope",
+          "expectation": "Master/manager catalogues scoped, executor self-only, admin no workload rows",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "workload",
+          "expectation": "Representative active order and queued-only count retain their distinct meanings; no false free badge",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "moving_pages",
+          "expectation": "No stable total or cross-page snapshot claim from moving scoped keyset pages",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "nulls",
+          "expectation": "Absent assessments remain absent; null human score remains unscored in assembled displays",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        }
+      ],
+      "dependencies": [
+        "C1/A6 matching isolated fixture/import mapping"
+      ]
+    },
+    {
+      "id": "C5-B08",
+      "title": "Report continuation gap",
+      "roles": [
+        "master",
+        "executor"
+      ],
+      "sources": [
+        "core",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "Accepted proposal.2 has no report endpoint. Obtain accepted report contract, assembled route and authorization before executing; invent no /reports URL.",
+        "After real human decision, open the actual report UI through verified navigation in each authorized role; compare order/attempt/review facts to real backend and explicit source IDs.",
+        "Clearly distinguish live report, historical/offline synthetic rendering and null human score. Inspect unauthorized read denial under the accepted follow-on contract."
+      ],
+      "checks": [
+        {
+          "id": "report",
+          "expectation": "Actual assembled role-scoped report reconciles to current authorized backend and immutable human decision",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "backend_reference"
+          ]
+        }
+      ],
+      "dependencies": [
+        "Accepted report API and assembled view absent from core; C4 offline output does not close live report gate"
+      ]
+    },
+    {
+      "id": "C5-D01",
+      "title": "Physical Android create timing",
+      "roles": [
+        "master",
+        "executor"
+      ],
+      "sources": [
+        "agents"
+      ],
+      "physical_android": true,
+      "steps": [
+        "On physical Android in Russian, record model/OS/browser/viewport/network and whether PWA installed. Keep synthetic-data watermark visible.",
+        "Freeze timing/tap protocol before trial: start when opening a fresh create form, stop at confirmed issuance; count discrete UI taps, record typing/keyboard interactions separately and disclose all prefilled values.",
+        "Run a real issue into the other synthetic session. Record sample count, each duration/tap count, failures and whether camera/typing were included. One run is a demonstration, not a population estimate."
+      ],
+      "checks": [
+        {
+          "id": "android_create",
+          "expectation": "Physical Android issue measured with explicit prefill/text/camera method; <=60 seconds and <=6 UI taps",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "device"
+          ],
+          "maximums": {
+            "create_ms": 60000,
+            "ui_taps": 6
+          }
+        }
+      ],
+      "dependencies": [
+        "Human-operated physical Android; emulated viewport is insufficient"
+      ]
+    },
+    {
+      "id": "C5-D02",
+      "title": "Physical camera and real mobile upload",
+      "roles": [
+        "executor"
+      ],
+      "sources": [
+        "core",
+        "wire",
+        "agents"
+      ],
+      "physical_android": true,
+      "steps": [
+        "Operator handles Android camera permission and captures only authorized synthetic scene; never real staff/documents. Record both granted and denied permission behavior.",
+        "Upload real compressed/sanitized bytes through assembled app on a specified mobile network. Measure selection/compression/upload and total time separately; record original/sent byte counts and media type.",
+        "Verify actual stage/attachment and protected authorized image display. A0 validates stored byte sanitization/EXIF policy; source photo filename or browser preview alone proves neither upload nor privacy."
+      ],
+      "checks": [
+        {
+          "id": "camera",
+          "expectation": "Physical camera allow/deny behavior is usable and does not fabricate captured/uploaded state",
+          "evidence_kinds": [
+            "ui",
+            "device"
+          ]
+        },
+        {
+          "id": "upload",
+          "expectation": "Actual mobile photo upload completes <=10 seconds under fully described network/timing conditions",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "device"
+          ],
+          "maximums": {
+            "upload_ms": 10000
+          }
+        },
+        {
+          "id": "protected_photo",
+          "expectation": "Real attached private image and A0 sanitized-storage evidence for exact candidate",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "backend_reference"
+          ]
+        }
+      ],
+      "dependencies": [
+        "Device operator and camera permission; explicit synthetic photo consent"
+      ]
+    },
+    {
+      "id": "C5-D03",
+      "title": "Actual notification delivery and permission denial",
+      "roles": [
+        "master",
+        "executor"
+      ],
+      "sources": [
+        "core",
+        "agents"
+      ],
+      "physical_android": true,
+      "steps": [
+        "Obtain explicit approved channel and synthetic test phone recipients; no real employee messages, new provider spend or notification subscription implied by this suite.",
+        "Operator grants/denies native notification permissions. Trigger approved new-order and overdue notification to intended role with visible domain-time mode.",
+        "Observe delivery on physical locked/backgrounded Android; record actual receive time and sound/vibration conditions separately from provider accepted/sent.",
+        "When permission is denied or channel unavailable, assembled UI explains limitation; live polling/banner is not claimed as phone push."
+      ],
+      "checks": [
+        {
+          "id": "delivery",
+          "expectation": "Actual approved new-order/overdue phone receipt for intended roles; provider receipt alone insufficient",
+          "evidence_kinds": [
+            "device",
+            "backend_reference"
+          ]
+        },
+        {
+          "id": "sound",
+          "expectation": "Observed sound/vibration explicitly conditioned on device permissions/mute/DND; no universal bypass claim",
+          "evidence_kinds": [
+            "device"
+          ]
+        },
+        {
+          "id": "denied",
+          "expectation": "Denied permissions/channel failure have honest UI and no fabricated delivered badge",
+          "evidence_kinds": [
+            "ui",
+            "device"
+          ]
+        }
+      ],
+      "dependencies": [
+        "Approved channel/recipients and physical phone; no real dispatch performed in C-105"
+      ]
+    },
+    {
+      "id": "C5-D04",
+      "title": "Physical Android background/reconnect/account boundary",
+      "roles": [
+        "master",
+        "executor",
+        "other_executor"
+      ],
+      "sources": [
+        "core",
+        "agents"
+      ],
+      "physical_android": true,
+      "steps": [
+        "On actual Android with real app origin, background or lock during a pending command, lose network, then resume. Record whether the browser sent anything before disconnection.",
+        "Reconcile same-intent unknown outcome using accepted replay behavior. A separate not-sent case must say not sent; neither becomes fictitious completion.",
+        "With pending work, change to the other provisioned identity via real logout/login. Inspect installed PWA/cache behavior and confirm no old-user content or replay reaches new session."
+      ],
+      "checks": [
+        {
+          "id": "resume",
+          "expectation": "Physical background/network/resume converges honestly with no duplicate visible effect",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "device"
+          ]
+        },
+        {
+          "id": "account_boundary",
+          "expectation": "Installed/mobile cache and pending work remain account isolated after real session change",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "device"
+          ]
+        }
+      ],
+      "dependencies": [
+        "Physical Android and provisioning; device lifecycle cannot be concluded from desktop unit tests"
+      ]
+    }
+  ]
+}

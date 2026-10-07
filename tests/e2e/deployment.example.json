@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "base_url": null,
+  "frontend_sha": null,
+  "backend_sha": null,
+  "deployment_evidence": null,
+  "provisioning_evidence": null,
+  "test_namespace": null,
+  "synthetic_only": true,
+  "isolated_test_target": true,
+  "backend_mode": "real_persistent_backend",
+  "authentication": "operator_browser_login",
+  "notifications": "disabled_or_explicitly_authorized_test_recipients",
+  "external_model_calls": "disabled_or_separately_authorized",
+  "browser_name": null,
+  "browser_version": null,
+  "network_conditions": null,
+  "domain_clock": null,
+  "physical_android": false,
+  "roles": {
+    "master": {
+      "role": "master", "user_id": null, "section_ids": [],
+      "browser_context": "master-isolated-profile", "provisioned": false
+    },
+    "executor": {
+      "role": "executor", "user_id": null, "section_ids": [],
+      "browser_context": "executor-isolated-profile", "provisioned": false
+    }
+  }
+}
