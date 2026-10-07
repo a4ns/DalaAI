@@ -1,0 +1,16 @@
+{
+  "candidate_archive_sha256": "b4ee042f17782d071752d8e1354e7895a3982767806f735c6d4b2365a49139ce",
+  "review_manifest_sha256": "f7c3c5f3b749a382e922040448306869237e7e3cefd6acec9f8e3f7bb1f6efd4",
+  "source_hashes": {
+    "backend/app/discovery/__init__.py": "e6e7f83d0c3ee1ecc6270540534c9432030d5c02dbc28d49b4eb9e7745ed39ff",
+    "backend/app/discovery/cursor.py": "c815478924681a98c6947877c076a7c90eab12617ba79721d7d75b02ba75d07d",
+    "backend/app/discovery/http.py": "f6183e1e5ac178eb231a06c0ce10e08036f48506e551705c9b02b537e05f9464",
+    "backend/app/discovery/postgres.py": "240887ab84ec73b2179c14a32066cf4032af682e31dc538a29af678a289c0cc1",
+    "backend/app/discovery/service.py": "1ae396ab52d0993a8d2292464897bb02ce911c7e3e887ee044106cf59dd5174d",
+    "backend/app/discovery/workload.py": "b9fd4f93eaba0064df434f43222e207724413eaec9564a918933aa94c05863e2"
+  },
+  "probe_hashes": {
+    "run_postgres_gate.sh": "a6796e1cb699d48edcd5311242c4a4b3ead5c7e0f053a0ca5bacf78ab360f81d",
+    "probes/test_independent_discovery_postgres.py": "3d6c2e743404d41f59aa4daff47712dd4dfdf13ee0ba7efee73daca72814718d"
+  }
+}

@@ -1,7 +1,7 @@
 name: PostgreSQL persistence validation
 'on':
   push:
-    branches: ['main', 'pod-a/A-009-persistence-runtime', 'pod-a/A-010-reference-key-hardening']
+    branches: ['main', 'pod-a/A-009-persistence-runtime', 'pod-a/A-010-reference-key-hardening', 'pod-a/A-011-discovery-runtime']
 permissions:
   contents: read
 concurrency:
@@ -65,5 +65,11 @@ jobs:
           assert not re.search(r'\bskipped\b', log), 'Skipped role tests cannot satisfy acceptance'
           print('PASS: 33 application-role cases, zero skips')
           PYCODE
+      - name: Discovery author PostgreSQL gate
+        run: scripts/run_discovery_postgres_tests.sh
+      - name: Independent discovery PostgreSQL gate
+        run: python ops/run_discovery_review.py
+      - name: Restricted-login discovery PostgreSQL gate
+        run: python ops/run_discovery_role.py
       - name: Aggregate with real PostgreSQL configured
         run: make check
