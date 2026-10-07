@@ -6,8 +6,9 @@ C4 renders the single internal C3 `app.analytics.c3_types.AnalyticsFacts`
 DTO, serialized by `app.analytics.c3_facts.facts_to_dict`. It does not accept
 ORM rows, browser payloads, offline C4 fixture dictionaries,
 or a second report-input contract. This is presentation code, not an HTTP API.
-The required C3 source checkpoint is
-`b3bf7ef5ed5dae0f2e39ef5037c304e709fea0fb`, including the coverage-policy
+The required published C3 dependency is
+`711e2fbd69598d06f43da9ff47de60d2c569634c` (reviewed local source
+`b3bf7ef5ed5dae0f2e39ef5037c304e709fea0fb` has identical bytes), including the coverage-policy
 hardening of `AnalyticsFacts.totals_available` and serialization.
 A5 owns protected endpoint integration. The caller must authenticate, authorize and
 load only the current caller's permitted facts before calling C4.
