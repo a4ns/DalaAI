@@ -1,0 +1,27 @@
+C-106 source inspection only
+checked_at=2026-10-07T20:24:21.427966Z
+backend_source_sha=dfe9d8f7772b1a1c44f5a506c03e26c55fb5e1ca
+C6 own runtime/database/browser/model/device execution=NOT_RUN
+PASS static source checks: health default; explicit demo mounts session/command/discovery; startup DB gate; unavailable photo references; Compose lacks demo mode
+Mounted domain routes from decorator AST (no app import/execution):
+GET /api/v1/dicts
+GET /api/v1/me
+GET /api/v1/orders
+GET /api/v1/orders/{order_id}
+GET /api/v1/orders/{order_id}/submissions/{submission_id}
+POST /api/v1/auth/login
+POST /api/v1/auth/logout
+POST /api/v1/orders
+POST /api/v1/orders/{order_id}/commands
+Per-source SHA-256; reproduce with git show SOURCE_SHA:PATH | sha256sum:
+40e4c0e31a3df904c60615d334e30b1dac0b51288ce00438d9830a89f2b840a7  backend/app/main.py
+766890a02cc983f270fe1e6ac6b71ce03830087d205aa8152de2099fd10de5ce  backend/app/runtime.py
+60dbef66354f04600a23409652eb060c962d607d965abcc1398ae6f33a49e5fc  backend/app/sessions/http.py
+6eea48ac2e2491e7d45d3e0bac6e56f480b2e1bf89e8cd38d7de6cc546c4118e  backend/app/persistence/http.py
+f6183e1e5ac178eb231a06c0ce10e08036f48506e551705c9b02b537e05f9464  backend/app/discovery/http.py
+1597b6f83bc66ea022722065923d72afbf95e508f052b50941102b5bfdee760b  backend/app/core/auth_boundary.py
+40183e12bbcbdf88a5c52c0feb31fe963c97abaa0765bb9e94a1571fa02eba72  Makefile
+07d01a24e1738d941677e0d51a840113956fa87cf67715ce15ff7a9f67319e0c  ops/compose.yaml
+ac475ce16aa7215c1fecbff9afc62ef0402b9cd3174f029a76641b91d32bb02d  ops/MOUNTED_RUNTIME.md
+reviewer_followup_checked_at=2026-10-07T20:26:49.069532Z
+PASS safe launch flags matched ops/MOUNTED_RUNTIME.md; no command executed

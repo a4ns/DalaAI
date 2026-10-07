@@ -1,0 +1,35 @@
+C-106 implementation checks
+started_at=2026-10-07T19:24:05.621900Z
+source_sha=f3b3ffd00d8bb59e55d539e2321196bf18c30d7d
+tested_checkout_sha=283149e694faabfe2ec3fba5f77a9b43ce32f31e
+worktree_clean_before_run=true
+docs_only_diff_from_source=true
+application_source_changes=0
+environment=isolated Linux loopback, Python 3.12.14; no browser, no device, no database
+DATABASE_URL explicitly removed for process test; no credentials inspected
+package fastapi=0.141.1
+package uvicorn=0.52.1
+package httpx=0.28.1
+package psycopg=NOT_INSTALLED
+command docker=NOT_AVAILABLE
+command psql=NOT_AVAILABLE
+command=python3 docs/evidence/run/validate_ledger.py
+exit_code=0
+PASS: documentation ledger structure, source paths, contract hash and artifact hashes
+{"BLOCKED": 0, "FAIL": 0, "NOT_RUN": 11, "PASS": 0}
+Scope: documentation validation only; no product or device acceptance
+command=git diff --check
+exit_code=0
+server_command=env -u DATABASE_URL PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend python3 -m uvicorn app.main:app --host 127.0.0.1 --port 18606 --no-access-log
+command=make smoke-unready PYTHON=python3 BASE_URL=http://127.0.0.1:18606
+exit_code=0
+python3 ops/smoke.py --base-url http://127.0.0.1:18606 --unready
+PASS: real HTTP liveness and expected readiness state
+observed /healthz 200 {"status": "ok"}
+observed /readyz 503 {"status": "not_ready"}
+observed /api/v1/orders 404 {"detail": "Not Found"}
+result=PASS process_http negative-readiness check only
+database_acceptance=BLOCKED: docker and psql unavailable; psycopg not installed; no authorized isolated DB provisioned
+product_browser_model_device_push=NOT_RUN
+our_server_stopped=true
+finished_at=2026-10-07T19:24:06.540321Z

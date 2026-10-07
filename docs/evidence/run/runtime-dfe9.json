@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "kind": "attributed_runtime_source_addendum",
+  "checked_at": "2026-10-07T20:24:21.427966Z",
+  "selected_backend_sha": "dfe9d8f7772b1a1c44f5a506c03e26c55fb5e1ca",
+  "latest_main_claim": false,
+  "historical_c6_artifact_sha": "3708866f48b5e885db586f2e8c213be45ef0dad4",
+  "historical_c6_source_sha": "f3b3ffd00d8bb59e55d539e2321196bf18c30d7d",
+  "c6_checks": [
+    {
+      "id": "SOURCE-DFE9",
+      "layer": "source_inspection",
+      "result": "PASS",
+      "executed_at": "2026-10-07T20:24:21.427966Z",
+      "procedure": "Read exact git objects, parse route decorators and verify source invariants without importing application code",
+      "source_sha": "dfe9d8f7772b1a1c44f5a506c03e26c55fb5e1ca",
+      "artifact": "docs/evidence/run/runtime-dfe9-source-checks.txt",
+      "artifact_sha256": "9c86e8fb9b485dd79047b883e68194ca0ad4772c787c586312b770e57333a775",
+      "limitation": "No runtime, SQL, HTTP, browser, CI, model or device test was executed by C6 on this source"
+    }
+  ],
+  "external_reports": [
+    {
+      "id": "A0-FACTORY",
+      "reporter": "A0/a4ns",
+      "reference": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6045765569",
+      "reported_result": "PASS",
+      "reported_scope": "Corrected actual application factory lifecycle and 275 aggregate; branch CI 37677929971",
+      "reported_accepted_factory_sha": "dfe9d8f7772b1a1c44f5a506c03e26c55fb5e1ca",
+      "ci_tested_head_verified_by_c6": false,
+      "limitations": "C6 did not rerun the gate or independently verify CI head; fresh main CI was pending in the source message"
+    },
+    {
+      "id": "C2-RULES",
+      "reporter": "C0/Erzhan-mul",
+      "reference": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6045230484",
+      "reported_result": "PASS",
+      "published_sha": "936e4327337b1aa3683021d3fd12dc9c987363ee",
+      "historical_measured_sha": "10c8e4d859190c3ad6b6241388aace7e00b69884",
+      "reported_exact_published_rerun": {
+        "unit_tests": 22,
+        "synthetic_episodes": 48,
+        "dev": 24,
+        "holdout": 24,
+        "mandatory_matches_each_split": "24/24",
+        "critical_false_permits_each_split": "0/18",
+        "semantic_abstentions_each_split": "24/24"
+      },
+      "limitations": "Synthetic mandatory-rule conformance only; no semantic AI accuracy, industrial generalization, database or photo proof; real model NOT_RUN and cost null"
+    },
+    {
+      "id": "C5-SHELL",
+      "reporter": "C5; metadata independently reviewed by C6",
+      "reference": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6045950835",
+      "c5_artifact_sha": "a9a8ee59e26c20e271277ff446889ccee5b45665",
+      "frontend_source_sha": "633beec6de954b45160361c2ea2bc41c1e99fae6",
+      "reported_result": "PASS build/source-byte comparison and local process HTTP only",
+      "browser_result": "BLOCKED",
+      "browser_error": "net::ERR_BLOCKED_BY_CLIENT",
+      "unexecuted": [
+        "Russian render",
+        "fatal console",
+        "390px layout",
+        "focus",
+        "no fake mutation",
+        "physical Android"
+      ],
+      "limitations": "No alternate origin, tunnel, security bypass or browser-render claim; cannot transfer to newer assembly"
+    }
+  ],
+  "own_execution_on_selected_backend": {
+    "process_http": "NOT_RUN",
+    "real_database": "NOT_RUN",
+    "browser_assembled": "NOT_RUN",
+    "real_model": "NOT_RUN",
+    "physical_device": "NOT_RUN",
+    "push_delivery": "NOT_RUN",
+    "timed_rehearsal": "NOT_RUN"
+  },
+  "latest_plan_reference": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6045948478",
+  "plan_limits": "No overnight deployment; WebPush primary direction, Telegram disabled; team A plan is not permission for C to spend, inspect secrets or send notifications",
+  "owner_hard_stop": "2026-10-08T04:00:00Z",
+  "no_public_origin_or_accounts_supplied": true
+}
