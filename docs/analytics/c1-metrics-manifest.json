@@ -1,0 +1,817 @@
+{
+  "manifest_version": "c3-c1-metrics/1",
+  "evidence_level": "offline_synthetic_calculation",
+  "watermark": "Синтетические данные — не история предприятия",
+  "source_commit": "5775d6f6aa8e1bbf8796e7ba36c9ada6f1edd6e7",
+  "source_path": "data/synthetic/v1/history.json",
+  "history_sha256": "7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1",
+  "source_commit_role": "historical provenance only; no Git object required at runtime",
+  "generator_source_commit": "8af3897f03aa2f41f0af07ec74ec2c807a4a535a",
+  "default_generated_path": "data/synthetic/generated/v1/history.json",
+  "source_schema_version": "1.0.0",
+  "definition_commit": "2a65c80b94d92bd15112dd95d9498998431eb00c",
+  "definition_path": "docs/analytics/metric-definitions.md",
+  "display_timezone": "Asia/Almaty",
+  "display_offset": "+05:00",
+  "scope": {
+    "kind": "entire_frozen_synthetic_export_not_a_user_authorization",
+    "section_ids": [
+      "0b98c23e-26c0-5b24-92b9-bbeb62eaa14b",
+      "1e860089-d211-5ad2-bcfc-7ad5f45a0798",
+      "cede5c80-487d-5f05-88f5-a8cc39b50a36",
+      "f8b5d3bf-8c2b-5a03-9abc-f9d0e219d1d9"
+    ]
+  },
+  "counts": {
+    "orders": 540,
+    "submissions": 568,
+    "reviews": 568,
+    "order_events": 3510,
+    "ai_assessments": 0
+  },
+  "periods": [
+    {
+      "period_id": "full",
+      "start_inclusive": "2026-06-30T19:00:00Z",
+      "end_exclusive": "2026-09-30T19:00:00Z",
+      "metrics": {
+        "issued_orders": {
+          "count": 540,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 540,
+          "denominator": null,
+          "eligible": 540,
+          "missing": 0,
+          "trace_id": "full/issued_orders",
+          "source_ids_count": 540,
+          "source_ids_sha256": "f3822af0bdf0a86b891d9e1602db0c3244e3e5b0c55111298f34064a208c3c58",
+          "source_ids_sample": [
+            "0062a6cb-ee41-5cff-8add-2be6c75df7b1",
+            "00675340-f037-5ab6-829c-f2865c51952a"
+          ],
+          "source_table": "orders"
+        },
+        "submitted_orders": {
+          "count": 540,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 540,
+          "denominator": null,
+          "eligible": 540,
+          "missing": 0,
+          "trace_id": "full/submitted_orders",
+          "source_ids_count": 540,
+          "source_ids_sha256": "f3822af0bdf0a86b891d9e1602db0c3244e3e5b0c55111298f34064a208c3c58",
+          "source_ids_sample": [
+            "0062a6cb-ee41-5cff-8add-2be6c75df7b1",
+            "00675340-f037-5ab6-829c-f2865c51952a"
+          ],
+          "source_table": "orders"
+        },
+        "submission_attempts": {
+          "count": 568,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 568,
+          "denominator": null,
+          "eligible": 568,
+          "missing": 0,
+          "trace_id": "full/submission_attempts",
+          "source_ids_count": 568,
+          "source_ids_sha256": "5493dfe32914040f32d8fb20ec2dba656e15346b9f9151d252eb926ba87110ba",
+          "source_ids_sample": [
+            "0009db78-9c20-5e7c-b7f2-58f6f9e5c637",
+            "00327e81-f748-53bb-9358-fc41c46d1602"
+          ],
+          "source_table": "submissions"
+        },
+        "closed_orders": {
+          "count": 540,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 540,
+          "denominator": null,
+          "eligible": 540,
+          "missing": 0,
+          "trace_id": "full/closed_orders",
+          "source_ids_count": 540,
+          "source_ids_sha256": "f3822af0bdf0a86b891d9e1602db0c3244e3e5b0c55111298f34064a208c3c58",
+          "source_ids_sample": [
+            "0062a6cb-ee41-5cff-8add-2be6c75df7b1",
+            "00675340-f037-5ab6-829c-f2865c51952a"
+          ],
+          "source_table": "orders"
+        },
+        "rework_decisions": {
+          "count": 28,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 28,
+          "denominator": null,
+          "eligible": 28,
+          "missing": 0,
+          "trace_id": "full/rework_decisions",
+          "source_ids_count": 28,
+          "source_ids_sha256": "0d10ea08d5a326c8c7a94b7f009d55ccade70662de374dd843041cf1c28607a1",
+          "source_ids_sample": [
+            "192cf88a-9aa0-53c7-8387-305ac73704f7",
+            "23b152f7-536a-5d10-8a86-34e5fdfa4a20"
+          ],
+          "source_table": "reviews"
+        },
+        "human_score": {
+          "numerator": 41859,
+          "denominator": 486,
+          "eligible": 540,
+          "missing": 54,
+          "status": "partial",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "86.129629629630",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "full/human_score",
+          "source_ids_count": 540,
+          "source_ids_sha256": "2c3a909dfe5beebe71e7757f9d1c6fc92c93e9b5930e64b19fe560ef4bbcedf4",
+          "source_ids_sample": [
+            "0164fb9b-84cd-5de4-8680-b3999cc0a2a8",
+            "021b85dc-d5aa-5465-8642-d4b557d5ac22"
+          ],
+          "source_table": "reviews"
+        },
+        "closed_on_time": {
+          "numerator": 492,
+          "denominator": 540,
+          "eligible": 540,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "0.911111111111",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "full/closed_on_time",
+          "source_ids_count": 540,
+          "source_ids_sha256": "583f05e8c41f1d848635bd8d04df89930c4e0f44bd49ccd657909c89eead4219",
+          "source_ids_sample": [
+            "0009db78-9c20-5e7c-b7f2-58f6f9e5c637",
+            "00327e81-f748-53bb-9358-fc41c46d1602"
+          ],
+          "source_table": "submissions"
+        },
+        "closed_with_rework": {
+          "numerator": 28,
+          "denominator": 540,
+          "eligible": 540,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "0.051851851852",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "full/closed_with_rework",
+          "source_ids_count": 540,
+          "source_ids_sha256": "f3822af0bdf0a86b891d9e1602db0c3244e3e5b0c55111298f34064a208c3c58",
+          "source_ids_sample": [
+            "0062a6cb-ee41-5cff-8add-2be6c75df7b1",
+            "00675340-f037-5ab6-829c-f2865c51952a"
+          ],
+          "source_table": "orders"
+        },
+        "attempt_on_time": {
+          "numerator": 520,
+          "denominator": 568,
+          "eligible": 568,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "0.915492957746",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "full/attempt_on_time",
+          "source_ids_count": 568,
+          "source_ids_sha256": "5493dfe32914040f32d8fb20ec2dba656e15346b9f9151d252eb926ba87110ba",
+          "source_ids_sample": [
+            "0009db78-9c20-5e7c-b7f2-58f6f9e5c637",
+            "00327e81-f748-53bb-9358-fc41c46d1602"
+          ],
+          "source_table": "submissions"
+        }
+      }
+    },
+    {
+      "period_id": "2026-07",
+      "start_inclusive": "2026-06-30T19:00:00Z",
+      "end_exclusive": "2026-07-31T19:00:00Z",
+      "metrics": {
+        "issued_orders": {
+          "count": 182,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 182,
+          "denominator": null,
+          "eligible": 182,
+          "missing": 0,
+          "trace_id": "2026-07/issued_orders",
+          "source_ids_count": 182,
+          "source_ids_sha256": "f3656d2ec86df8ea5cd66ce5d61264d9757d7178051c608a97fd470db496a527",
+          "source_ids_sample": [
+            "014ba443-e4a7-5ecf-af9e-6e217665f69e",
+            "021dc8fe-2449-5c53-9cf0-da19aab5b0f4"
+          ],
+          "source_table": "orders"
+        },
+        "submitted_orders": {
+          "count": 182,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 182,
+          "denominator": null,
+          "eligible": 182,
+          "missing": 0,
+          "trace_id": "2026-07/submitted_orders",
+          "source_ids_count": 182,
+          "source_ids_sha256": "f3656d2ec86df8ea5cd66ce5d61264d9757d7178051c608a97fd470db496a527",
+          "source_ids_sample": [
+            "014ba443-e4a7-5ecf-af9e-6e217665f69e",
+            "021dc8fe-2449-5c53-9cf0-da19aab5b0f4"
+          ],
+          "source_table": "orders"
+        },
+        "submission_attempts": {
+          "count": 192,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 192,
+          "denominator": null,
+          "eligible": 192,
+          "missing": 0,
+          "trace_id": "2026-07/submission_attempts",
+          "source_ids_count": 192,
+          "source_ids_sha256": "366cecd5c986fbdfd2616a2b5dbe3700742a2bbd7aede6cbb8b5bd9473619ecf",
+          "source_ids_sample": [
+            "00a93671-9df8-5675-9bbf-b64eab344085",
+            "00bb413a-6768-5aef-b3c2-974864ff31fa"
+          ],
+          "source_table": "submissions"
+        },
+        "closed_orders": {
+          "count": 182,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 182,
+          "denominator": null,
+          "eligible": 182,
+          "missing": 0,
+          "trace_id": "2026-07/closed_orders",
+          "source_ids_count": 182,
+          "source_ids_sha256": "f3656d2ec86df8ea5cd66ce5d61264d9757d7178051c608a97fd470db496a527",
+          "source_ids_sample": [
+            "014ba443-e4a7-5ecf-af9e-6e217665f69e",
+            "021dc8fe-2449-5c53-9cf0-da19aab5b0f4"
+          ],
+          "source_table": "orders"
+        },
+        "rework_decisions": {
+          "count": 10,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 10,
+          "denominator": null,
+          "eligible": 10,
+          "missing": 0,
+          "trace_id": "2026-07/rework_decisions",
+          "source_ids_count": 10,
+          "source_ids_sha256": "6338f794a6250612e257c9294540e697b9d8119366dadb870433b97da9707e0d",
+          "source_ids_sample": [
+            "39ef69b5-8af0-5209-86d9-270cad35e7da",
+            "4131febb-30c3-5109-8681-406c9b2e2063"
+          ],
+          "source_table": "reviews"
+        },
+        "human_score": {
+          "numerator": 14141,
+          "denominator": 163,
+          "eligible": 182,
+          "missing": 19,
+          "status": "partial",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "86.754601226994",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-07/human_score",
+          "source_ids_count": 182,
+          "source_ids_sha256": "fe2fd441d99e3010e7ac1edbc34664c1fba0f80da92d5820db62d4a3a8693abb",
+          "source_ids_sample": [
+            "02470266-212d-5b58-ae1b-8a985810c916",
+            "02b47389-5aa1-528a-9494-fe88ca4e9343"
+          ],
+          "source_table": "reviews"
+        },
+        "closed_on_time": {
+          "numerator": 182,
+          "denominator": 182,
+          "eligible": 182,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "1.000000000000",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-07/closed_on_time",
+          "source_ids_count": 182,
+          "source_ids_sha256": "1e9627d1b488f5554148423802c5775719cdb4c67af3c1f2db3ce87479ed3143",
+          "source_ids_sample": [
+            "00a93671-9df8-5675-9bbf-b64eab344085",
+            "00bb413a-6768-5aef-b3c2-974864ff31fa"
+          ],
+          "source_table": "submissions"
+        },
+        "closed_with_rework": {
+          "numerator": 10,
+          "denominator": 182,
+          "eligible": 182,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "0.054945054945",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-07/closed_with_rework",
+          "source_ids_count": 182,
+          "source_ids_sha256": "f3656d2ec86df8ea5cd66ce5d61264d9757d7178051c608a97fd470db496a527",
+          "source_ids_sample": [
+            "014ba443-e4a7-5ecf-af9e-6e217665f69e",
+            "021dc8fe-2449-5c53-9cf0-da19aab5b0f4"
+          ],
+          "source_table": "orders"
+        },
+        "attempt_on_time": {
+          "numerator": 192,
+          "denominator": 192,
+          "eligible": 192,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "1.000000000000",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-07/attempt_on_time",
+          "source_ids_count": 192,
+          "source_ids_sha256": "366cecd5c986fbdfd2616a2b5dbe3700742a2bbd7aede6cbb8b5bd9473619ecf",
+          "source_ids_sample": [
+            "00a93671-9df8-5675-9bbf-b64eab344085",
+            "00bb413a-6768-5aef-b3c2-974864ff31fa"
+          ],
+          "source_table": "submissions"
+        }
+      }
+    },
+    {
+      "period_id": "2026-08",
+      "start_inclusive": "2026-07-31T19:00:00Z",
+      "end_exclusive": "2026-08-31T19:00:00Z",
+      "metrics": {
+        "issued_orders": {
+          "count": 182,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 182,
+          "denominator": null,
+          "eligible": 182,
+          "missing": 0,
+          "trace_id": "2026-08/issued_orders",
+          "source_ids_count": 182,
+          "source_ids_sha256": "f68778f6514b4eaac79252269187f2132763fb1dc0231c024178ff4b0d633eaf",
+          "source_ids_sample": [
+            "02e93cf7-2fab-59ca-bd58-7eef523b1269",
+            "04269ef7-218c-57c9-987c-fa24b2b9368f"
+          ],
+          "source_table": "orders"
+        },
+        "submitted_orders": {
+          "count": 182,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 182,
+          "denominator": null,
+          "eligible": 182,
+          "missing": 0,
+          "trace_id": "2026-08/submitted_orders",
+          "source_ids_count": 182,
+          "source_ids_sha256": "f68778f6514b4eaac79252269187f2132763fb1dc0231c024178ff4b0d633eaf",
+          "source_ids_sample": [
+            "02e93cf7-2fab-59ca-bd58-7eef523b1269",
+            "04269ef7-218c-57c9-987c-fa24b2b9368f"
+          ],
+          "source_table": "orders"
+        },
+        "submission_attempts": {
+          "count": 191,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 191,
+          "denominator": null,
+          "eligible": 191,
+          "missing": 0,
+          "trace_id": "2026-08/submission_attempts",
+          "source_ids_count": 191,
+          "source_ids_sha256": "2a14600253b66a62bfd3f74088e05ae2cbda9f6c53c6b31361338411e114375a",
+          "source_ids_sample": [
+            "00a08430-cbd0-5066-a443-5ecc167dfff4",
+            "013fadfe-dc1d-5bf3-aec2-5094abbaee64"
+          ],
+          "source_table": "submissions"
+        },
+        "closed_orders": {
+          "count": 182,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 182,
+          "denominator": null,
+          "eligible": 182,
+          "missing": 0,
+          "trace_id": "2026-08/closed_orders",
+          "source_ids_count": 182,
+          "source_ids_sha256": "f68778f6514b4eaac79252269187f2132763fb1dc0231c024178ff4b0d633eaf",
+          "source_ids_sample": [
+            "02e93cf7-2fab-59ca-bd58-7eef523b1269",
+            "04269ef7-218c-57c9-987c-fa24b2b9368f"
+          ],
+          "source_table": "orders"
+        },
+        "rework_decisions": {
+          "count": 9,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 9,
+          "denominator": null,
+          "eligible": 9,
+          "missing": 0,
+          "trace_id": "2026-08/rework_decisions",
+          "source_ids_count": 9,
+          "source_ids_sha256": "8764867f9e978de52f980f553e65152a7a11c0c996a892b6b7217cbb7ee755ce",
+          "source_ids_sample": [
+            "260bc55b-1d52-5a2d-b087-621b728298f5",
+            "4840b7f6-cc42-51db-9940-dbb9a185f103"
+          ],
+          "source_table": "reviews"
+        },
+        "human_score": {
+          "numerator": 14138,
+          "denominator": 164,
+          "eligible": 182,
+          "missing": 18,
+          "status": "partial",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "86.207317073171",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-08/human_score",
+          "source_ids_count": 182,
+          "source_ids_sha256": "eee32fbd6afa0ca6ed5dcf4205600e8123e3f9fa6c84666019e05fc8ff0cbe94",
+          "source_ids_sample": [
+            "0164fb9b-84cd-5de4-8680-b3999cc0a2a8",
+            "021b85dc-d5aa-5465-8642-d4b557d5ac22"
+          ],
+          "source_table": "reviews"
+        },
+        "closed_on_time": {
+          "numerator": 182,
+          "denominator": 182,
+          "eligible": 182,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "1.000000000000",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-08/closed_on_time",
+          "source_ids_count": 182,
+          "source_ids_sha256": "066eee7fdfa494210b37c2a72d79a36ad92cba98a0dfb27dce05a35873089976",
+          "source_ids_sample": [
+            "00a08430-cbd0-5066-a443-5ecc167dfff4",
+            "013fadfe-dc1d-5bf3-aec2-5094abbaee64"
+          ],
+          "source_table": "submissions"
+        },
+        "closed_with_rework": {
+          "numerator": 9,
+          "denominator": 182,
+          "eligible": 182,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "0.049450549451",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-08/closed_with_rework",
+          "source_ids_count": 182,
+          "source_ids_sha256": "f68778f6514b4eaac79252269187f2132763fb1dc0231c024178ff4b0d633eaf",
+          "source_ids_sample": [
+            "02e93cf7-2fab-59ca-bd58-7eef523b1269",
+            "04269ef7-218c-57c9-987c-fa24b2b9368f"
+          ],
+          "source_table": "orders"
+        },
+        "attempt_on_time": {
+          "numerator": 191,
+          "denominator": 191,
+          "eligible": 191,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "1.000000000000",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-08/attempt_on_time",
+          "source_ids_count": 191,
+          "source_ids_sha256": "2a14600253b66a62bfd3f74088e05ae2cbda9f6c53c6b31361338411e114375a",
+          "source_ids_sample": [
+            "00a08430-cbd0-5066-a443-5ecc167dfff4",
+            "013fadfe-dc1d-5bf3-aec2-5094abbaee64"
+          ],
+          "source_table": "submissions"
+        }
+      }
+    },
+    {
+      "period_id": "2026-09",
+      "start_inclusive": "2026-08-31T19:00:00Z",
+      "end_exclusive": "2026-09-30T19:00:00Z",
+      "metrics": {
+        "issued_orders": {
+          "count": 176,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 176,
+          "denominator": null,
+          "eligible": 176,
+          "missing": 0,
+          "trace_id": "2026-09/issued_orders",
+          "source_ids_count": 176,
+          "source_ids_sha256": "9a89a2baad223b7e60a64693a5628c3c86cf39e9f66bf38e3c2291a2779c3f1e",
+          "source_ids_sample": [
+            "0062a6cb-ee41-5cff-8add-2be6c75df7b1",
+            "00675340-f037-5ab6-829c-f2865c51952a"
+          ],
+          "source_table": "orders"
+        },
+        "submitted_orders": {
+          "count": 176,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 176,
+          "denominator": null,
+          "eligible": 176,
+          "missing": 0,
+          "trace_id": "2026-09/submitted_orders",
+          "source_ids_count": 176,
+          "source_ids_sha256": "9a89a2baad223b7e60a64693a5628c3c86cf39e9f66bf38e3c2291a2779c3f1e",
+          "source_ids_sample": [
+            "0062a6cb-ee41-5cff-8add-2be6c75df7b1",
+            "00675340-f037-5ab6-829c-f2865c51952a"
+          ],
+          "source_table": "orders"
+        },
+        "submission_attempts": {
+          "count": 185,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 185,
+          "denominator": null,
+          "eligible": 185,
+          "missing": 0,
+          "trace_id": "2026-09/submission_attempts",
+          "source_ids_count": 185,
+          "source_ids_sha256": "3c68d5a30404f1ae296dc1b07a2936cefd73fd7bc85ad1df6a579bf968fd4782",
+          "source_ids_sample": [
+            "0009db78-9c20-5e7c-b7f2-58f6f9e5c637",
+            "00327e81-f748-53bb-9358-fc41c46d1602"
+          ],
+          "source_table": "submissions"
+        },
+        "closed_orders": {
+          "count": 176,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 176,
+          "denominator": null,
+          "eligible": 176,
+          "missing": 0,
+          "trace_id": "2026-09/closed_orders",
+          "source_ids_count": 176,
+          "source_ids_sha256": "9a89a2baad223b7e60a64693a5628c3c86cf39e9f66bf38e3c2291a2779c3f1e",
+          "source_ids_sample": [
+            "0062a6cb-ee41-5cff-8add-2be6c75df7b1",
+            "00675340-f037-5ab6-829c-f2865c51952a"
+          ],
+          "source_table": "orders"
+        },
+        "rework_decisions": {
+          "count": 9,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "status": "ok",
+          "numerator": 9,
+          "denominator": null,
+          "eligible": 9,
+          "missing": 0,
+          "trace_id": "2026-09/rework_decisions",
+          "source_ids_count": 9,
+          "source_ids_sha256": "f387949463e09a0d2acb4fba10e1b6f28bd95238897dcfbe17c0cbb2b476831b",
+          "source_ids_sample": [
+            "192cf88a-9aa0-53c7-8387-305ac73704f7",
+            "23b152f7-536a-5d10-8a86-34e5fdfa4a20"
+          ],
+          "source_table": "reviews"
+        },
+        "human_score": {
+          "numerator": 13580,
+          "denominator": 159,
+          "eligible": 176,
+          "missing": 17,
+          "status": "partial",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "85.408805031447",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-09/human_score",
+          "source_ids_count": 176,
+          "source_ids_sha256": "a133d081fb9ef6ae3b5c64a7cbec29cee3b56293e0e00439f9155c9f0e86618e",
+          "source_ids_sample": [
+            "04e08cc9-3896-5c51-822c-c9368f0d7e99",
+            "06c621d6-8858-5de6-8d80-a614fab64632"
+          ],
+          "source_table": "reviews"
+        },
+        "closed_on_time": {
+          "numerator": 128,
+          "denominator": 176,
+          "eligible": 176,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "0.727272727273",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-09/closed_on_time",
+          "source_ids_count": 176,
+          "source_ids_sha256": "e95b546f4f9ea096dffb3994c7bb93b02e13da233c85f48bad68dd0b1f5fbb89",
+          "source_ids_sample": [
+            "0009db78-9c20-5e7c-b7f2-58f6f9e5c637",
+            "00327e81-f748-53bb-9358-fc41c46d1602"
+          ],
+          "source_table": "submissions"
+        },
+        "closed_with_rework": {
+          "numerator": 9,
+          "denominator": 176,
+          "eligible": 176,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "0.051136363636",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-09/closed_with_rework",
+          "source_ids_count": 176,
+          "source_ids_sha256": "9a89a2baad223b7e60a64693a5628c3c86cf39e9f66bf38e3c2291a2779c3f1e",
+          "source_ids_sample": [
+            "0062a6cb-ee41-5cff-8add-2be6c75df7b1",
+            "00675340-f037-5ab6-829c-f2865c51952a"
+          ],
+          "source_table": "orders"
+        },
+        "attempt_on_time": {
+          "numerator": 137,
+          "denominator": 185,
+          "eligible": 185,
+          "missing": 0,
+          "status": "ok",
+          "small_sample": false,
+          "excluded_from_eligible": 0,
+          "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+          "value_decimal_12_places": "0.740540540541",
+          "value_policy": "exact numerator/denominator authoritative; decimal rounded half-even to 12 places",
+          "trace_id": "2026-09/attempt_on_time",
+          "source_ids_count": 185,
+          "source_ids_sha256": "3c68d5a30404f1ae296dc1b07a2936cefd73fd7bc85ad1df6a579bf968fd4782",
+          "source_ids_sample": [
+            "0009db78-9c20-5e7c-b7f2-58f6f9e5c637",
+            "00327e81-f748-53bb-9358-fc41c46d1602"
+          ],
+          "source_table": "submissions"
+        }
+      }
+    }
+  ],
+  "snapshot": {
+    "domain_as_of": "2026-09-30T19:00:00Z",
+    "metrics": {
+      "awaiting_review": {
+        "count": 0,
+        "excluded_from_eligible": 0,
+        "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+        "status": "ok",
+        "numerator": 0,
+        "denominator": null,
+        "eligible": 0,
+        "missing": 0,
+        "trace_id": "as_of/awaiting_review",
+        "source_ids_count": 0,
+        "source_ids_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "source_ids_sample": [],
+        "source_table": "orders"
+      },
+      "overdue_active": {
+        "count": 0,
+        "excluded_from_eligible": 0,
+        "exclusion_policy": "eligible cohort only; missing values counted separately, outside-cohort records not silently dropped",
+        "status": "ok",
+        "numerator": 0,
+        "denominator": null,
+        "eligible": 0,
+        "missing": 0,
+        "trace_id": "as_of/overdue_active",
+        "source_ids_count": 0,
+        "source_ids_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "source_ids_sample": [],
+        "source_table": "orders"
+      }
+    }
+  },
+  "trace": {
+    "canonicalization": "UTF-8 sorted-key compact JSON plus final LF",
+    "full_trace_sha256": "4c1f641492f1a7de028b800ca63968cd735e6391f0b720a888b7b88913610913",
+    "reproduce": "python3 docs/analytics/c1_metrics.py --trace all",
+    "selection": "--trace <trace_id> returns full eligible sorted UUID membership; human_score includes unscored IDs, filter final_score!=null for observed denominator; count denominator null means not a rate"
+  },
+  "unsupported": {
+    "downtime": {
+      "value": null,
+      "status": "unsupported_inputs",
+      "reason": "No authoritative downtime intervals"
+    },
+    "repeat_fault_7d": {
+      "value": null,
+      "status": "unsupported_inputs",
+      "reason": "No validated repair/failure episodes and continuous seven-day follow-up"
+    },
+    "composite_rating": {
+      "value": null,
+      "status": "unsupported_inputs",
+      "reason": "No accepted complete component/cohort policy, difficulty/exposure or refusal adjudication"
+    },
+    "ai_quality": {
+      "value": null,
+      "status": "no_assessment",
+      "reason": "ai_assessments is empty; AI job state unknown"
+    },
+    "historical_month_end_stocks": {
+      "value": null,
+      "status": "not_reconstructed",
+      "reason": "Only export as_of snapshot used; month flows do not claim month-end stocks"
+    }
+  },
+  "limits": [
+    "All scores and work facts are synthetic; no industrial, employee or model-quality claim",
+    "Source IDs reproduce from pinned history; evaluator construction labels are never read",
+    "No DB/API, live authorization, actual upload, deployment or phone test",
+    "Missing input counts apply to this pinned complete profile, not arbitrary exports",
+    "Human score partial means unscored closes are excluded from observed mean and counted"
+  ]
+}

@@ -88,8 +88,9 @@ Checker никогда их не перегенерирует. Ни один р�
   difficulty/exposure, unjustified-refusal adjudication и repeat-fault facts
 - **BLOCKED для downtime/recurrence из ядра:** нужных авторитетных фактов нет;
   два маленьких расчёта проверяют лишь предлагаемую арифметику
-- **NOT_RUN:** совместимость с полным export C1. Настоящий C1 input не загружается;
-  отдельный adapter после фиксированного schema/SHA и grant
+- **Первичный checkpoint:** полный export C1 не загружался в исходные 15 тестов.
+  Последующий [отдельный hash-pinned расчёт C1](c1-metrics.md) проверяет офлайн
+  агрегаты и trace IDs; это не DB/import/API acceptance
 - **Не обещается:** восстановление произвольного исторического snapshot из
   сегодняшней строки, bitemporal knowledge history, общий total предприятия,
   confidence interval/industrial accuracy или финальное мнение мастера из AI
