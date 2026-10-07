@@ -6,7 +6,7 @@ Authored against source baseline supplied by A0: `1a73343342ed98ed55f7df8f37408c
 
 ## Initial boundary for approval
 
-1. One origin and `/api/v1`; OpenAPI 3.1.0; proposed contract version `1.0.0-proposal.1`. A0+B0+C0 approval is required before freezing or generated-client work.
+1. One origin and `/api/v1`; OpenAPI 3.1.0; proposed contract version `1.0.0-proposal.2`. A0+B0+C0 approval is required before freezing or generated-client work.
 2. Secure HttpOnly `__Host-naryadai_session` cookie; same-origin mutation checks plus a session-bound `X-CSRF-Token`. No bearer token in a URL. Demo employee-code/PIN sign-in is isolated and rate limited, never production authentication.
 3. Every order write has client UUID `operation_id`, integer `expected_version`, `action`, and typed `payload`. Create uses expected_version=0; updates use the last server version. Receipt scope is actor+operation_id, including canonical route/action/payload. Replay returns the original committed snapshot after CURRENT object authorization. It is not automatically the newest snapshot.
 4. P0 path: create issued v1 → accept v2 → start v3 → submit result v4 (done + ai_review events in one transaction) → human close/rework v5. AI may complete asynchronously and increment version first; callers use returned/current version. Model failure does not block human review.
@@ -28,3 +28,5 @@ Authored against source baseline supplied by A0: `1a73343342ed98ed55f7df8f37408c
 No shared checkout changes, pushes, merges, installed services, live network tests, paid calls or real personal data are part of this preparation.
 
 A0 subsequently reported the accepted bootstrap merge SHA as `cca50de1094feb4c6571f8255ebc154f111b45dc` at 2026-10-07 17:20 UTC. This does not approve this proposal. No local Git metadata exists here to independently resolve either SHA.
+
+Proposal.2 adds required, persisted staged-photo section binding after A1/A2 independent review. The HTTP error boundary remains 403 for cross-scope attempts and 422 for malformed/missing section input. A0 accepted the new-issue future-deadline product rule; historical seed deadlines are preserved. Other approvals remain pending; see DECISIONS_PROPOSAL.md.

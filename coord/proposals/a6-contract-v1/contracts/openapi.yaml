@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: НарядAI thin vertical slice PROPOSAL
-  version: 1.0.0-proposal.1
+  version: 1.0.0-proposal.2
   description: Not frozen or implemented. Acceptance owner A0/human A pending; B0 and C0 handshake pending.
     See CONTRACT.md. No production or device performance claim.
 servers:
@@ -427,10 +427,12 @@ paths:
                 $ref: '#/components/schemas/Problem'
       parameters:
       - *id002
-      description: Before requires neither order_id nor assignment_revision; after requires both and current
-        assigned executor. Max 8 MiB and 20 megapixels, decode-and-reencode, strip EXIF/GPS, safe generated
-        storage key. TTL 24 real hours; limits are proposal choices. Hash includes raw file SHA-256 and form
-        metadata. Replay does not extend TTL. No remote URL upload.
+      description: section_id is required and verified against current authorized scope; after also matches
+        the DB-loaded order section. Before requires neither order_id nor assignment_revision; after requires
+        both and current assigned executor. Wrong-section staging or attachment returns 403 FORBIDDEN. Max
+        8 MiB and 20 megapixels, decode-and-reencode, strip EXIF/GPS, safe generated storage key. TTL 24 real
+        hours; limits are proposal choices. Hash includes raw file SHA-256 and form metadata. Replay does not
+        extend TTL. No remote URL upload.
       requestBody:
         required: true
         content:
@@ -1145,6 +1147,7 @@ components:
       additionalProperties: false
       properties:
         id: *id001
+        section_id: *id001
         purpose:
           type: string
           enum:
@@ -1178,6 +1181,7 @@ components:
           type: boolean
       required:
       - id
+      - section_id
       - purpose
       - owner_id
       - order_id
@@ -1192,6 +1196,7 @@ components:
       type: object
       additionalProperties: false
       properties:
+        section_id: *id001
         operation_id: *id001
         expected_version:
           type: integer
@@ -1207,6 +1212,7 @@ components:
           type: string
           format: binary
       required:
+      - section_id
       - operation_id
       - expected_version
       - purpose

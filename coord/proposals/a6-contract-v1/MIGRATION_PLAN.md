@@ -9,7 +9,7 @@ PROPOSAL: A6 authors; A0/human A approves migration; B0/C0 approve affected cont
 - HTTP Principal.user_id maps to employees.id; active and section memberships are checked on every protected request
 - HTTP assignment.executor_id and brigade_id map to order columns; brigade membership and section/specialty eligibility are service checks
 - `current_submission_id` references the same order AND assignment revision; old attempts remain immutable after reassignment
-- Photo references in JSON are derived from bound rows; an after-photo belongs to exactly one submission and assignment revision
+- Each staged photo stores a verified non-null section_id, including before-photos without an order. Attached photos use a composite order/section foreign key; service checks ownership and destination section before binding. Photo references in JSON are derived from bound rows; an after-photo belongs to exactly one submission and assignment revision
 - `domain_now` and `is_overdue` are computed, not saved booleans that can go stale
 - Domain times: issued_at, due_at, submitted_at, occurred_at, notification due_at, order updated_at. Real times: auth/photo expiry, job lease/retry/sent timestamps, event recorded_at, receipt times, AI latency
 - Missing-evidence evaluation, valid transitions, role/assignment constraints and current delivery eligibility are enforced by the service under a locked/CAS aggregate. DDL alone cannot prove them
@@ -41,6 +41,7 @@ Required executed tests:
 - Two masters cannot both close/rework one attempt; missing evidence is checked again under lock
 - Stale AI completion stores historical assessment but cannot change active attempt/order or send current-result notification
 - Scheduler restart/expired worker lease does not create duplicate logical jobs; cancellation/reassignment invalidates obsolete deliveries
+- Wrong-section attachment rejected even if uploader has both section scopes; missing stage section rejected; after-stage section must match DB-loaded order
 - Foreign/expired stage rejected; failed create leaves recoverable owned stage; attached photo cannot be garbage collected by staged cleanup
 - Append-only UPDATE/DELETE rejected using the real non-owner app DB role; session/secret values excluded from logs
 - Migration application on clean and seeded DB; forward recovery preserves audit/receipts

@@ -1,6 +1,6 @@
 {
   "synthetic": true,
-  "contract_version": "1.0.0-proposal.1",
+  "contract_version": "1.0.0-proposal.2",
   "fixtures": [
     {
       "file": "01-create.request.json",
@@ -96,6 +96,33 @@
       "file": "negative-unzoned-timestamp.json",
       "schema": "CreateOrder",
       "valid": false
+    },
+    {
+      "file": "13-before-stage.request.json",
+      "schema": "StagePhotoRequest",
+      "valid": true
+    },
+    {
+      "file": "14-before-stage.response.json",
+      "schema": "StagedPhoto",
+      "valid": true
+    },
+    {
+      "file": "15-after-stage.request.json",
+      "schema": "StagePhotoRequest",
+      "valid": true
+    },
+    {
+      "file": "negative-missing-stage-section.json",
+      "schema": "StagePhotoRequest",
+      "valid": false
+    }
+  ],
+  "semantic_scenarios": [
+    {
+      "file": "negative-wrong-section.scenario.json",
+      "requires": "A2/A1 authorization adapter execution",
+      "expected_http_status": 403
     }
   ]
 }

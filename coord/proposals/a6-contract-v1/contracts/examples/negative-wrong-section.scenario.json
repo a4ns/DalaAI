@@ -1,0 +1,30 @@
+{
+  "description": "Valid schema; cross-object authorization must reject. Both sections are in principal scope to isolate the attachment section-equality rule. This file is not a claim of a running HTTP test.",
+  "principal": {
+    "user_id": "00000000-0000-4000-8000-000000000005",
+    "role": "master",
+    "section_ids": [
+      "00000000-0000-4000-8000-000000000001",
+      "00000000-0000-4000-8000-000000000020"
+    ],
+    "active": true
+  },
+  "staged_photo": {
+    "id": "00000000-0000-4000-8000-000000000008",
+    "section_id": "00000000-0000-4000-8000-000000000020",
+    "purpose": "before",
+    "owner_id": "00000000-0000-4000-8000-000000000005",
+    "order_id": null,
+    "assignment_revision": null,
+    "mime_type": "image/jpeg",
+    "bytes": 123,
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "uploaded_at": "2026-10-07T17:00:00Z",
+    "expires_at": "2026-10-08T17:00:00Z",
+    "exif_removed": true
+  },
+  "destination_section_id": "00000000-0000-4000-8000-000000000001",
+  "real_now": "2026-10-07T17:00:00Z",
+  "expected_http_status": 403,
+  "expected_error_code": "FORBIDDEN"
+}

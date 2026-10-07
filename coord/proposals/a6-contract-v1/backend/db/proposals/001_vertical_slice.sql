@@ -46,7 +46,7 @@ CREATE TABLE orders (
   norm_minutes integer NOT NULL CHECK (norm_minutes BETWEEN 1 AND 525600),
   priority text NOT NULL CHECK (priority IN ('normal','high','emergency')),
   comment text NOT NULL DEFAULT '', current_submission_id uuid,
-  updated_at timestamptz NOT NULL,
+  updated_at timestamptz NOT NULL, UNIQUE (id, section_id),
   FOREIGN KEY (equipment_id, section_id) REFERENCES equipment(id, section_id),
   FOREIGN KEY (brigade_id, section_id) REFERENCES brigades(id, section_id)
 );
@@ -73,6 +73,7 @@ ALTER TABLE orders ADD CONSTRAINT orders_current_submission_fk
   REFERENCES submissions(id, order_id, assignment_revision) DEFERRABLE INITIALLY DEFERRED;
 CREATE TABLE photos (
   id uuid PRIMARY KEY, owner_id uuid NOT NULL REFERENCES employees(id),
+  section_id uuid NOT NULL REFERENCES sections(id),
   purpose text NOT NULL CHECK (purpose IN ('before','after')),
   order_id uuid REFERENCES orders(id), assignment_revision integer,
   submission_id uuid, storage_key text UNIQUE NOT NULL,
@@ -81,6 +82,7 @@ CREATE TABLE photos (
   sha256 text NOT NULL CHECK (sha256 ~ '^[a-f0-9]{64}$'),
   uploaded_at timestamptz NOT NULL, expires_at timestamptz NOT NULL,
   attached_at timestamptz, exif_removed boolean NOT NULL CHECK (exif_removed),
+  FOREIGN KEY (order_id, section_id) REFERENCES orders(id, section_id),
   FOREIGN KEY (submission_id, order_id, assignment_revision)
     REFERENCES submissions(id, order_id, assignment_revision),
   CHECK (expires_at > uploaded_at),

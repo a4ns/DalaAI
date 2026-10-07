@@ -1,35 +1,58 @@
 {
   "status": "PROPOSED_NOT_FROZEN",
+  "contract_version": "1.0.0-proposal.2",
   "approval": {
-    "A0_human_A": "pending",
+    "A0_human_A": "pending_exact_bytes",
     "B0": "pending",
     "C0": "pending"
   },
   "author": "A6",
-  "created_at": "2026-10-07T17:32:48.085728+00:00",
+  "created_at": "2026-10-07T17:43:16.470088+00:00",
   "source_baseline_reported_by_A0": "1a73343342ed98ed55f7df8f37408cea492358e2",
   "accepted_bootstrap_reported_by_A0": "cca50de1094feb4c6571f8255ebc154f111b45dc",
-  "correction": "Supersedes initial package: explicit timestamp checker, 11 format probes and 3 negative timestamp fixtures added; direct validation dependencies pinned.",
+  "change": "Explicit staged-photo section binding plus A0-accepted future-deadline product decision. No new endpoints or dependency changes.",
+  "changed_from_previous_pack": [
+    "CONTRACT.md",
+    "DECISIONS_PROPOSAL.md",
+    "MIGRATION_PLAN.md",
+    "README.md",
+    "backend/db/proposals/001_vertical_slice.sql",
+    "contracts/examples/13-before-stage.request.json",
+    "contracts/examples/14-before-stage.response.json",
+    "contracts/examples/15-after-stage.request.json",
+    "contracts/examples/manifest.json",
+    "contracts/examples/negative-missing-stage-section.json",
+    "contracts/examples/negative-wrong-section.scenario.json",
+    "contracts/openapi.yaml",
+    "evidence/validation.json",
+    "scripts/build_contract.py",
+    "scripts/validate_contract.py"
+  ],
   "files": [
     {
       "path": "CONTRACT.md",
-      "sha256": "cbce901e4f20e974859d0c5428596d47b9a43c15f85a9d5e54ca85cacb3f6486",
-      "bytes": 15508
+      "sha256": "862b1dd714e35eb0681e6aa14426a414f0a62651d0362ea218bc1e2410ace0a1",
+      "bytes": 17035
+    },
+    {
+      "path": "DECISIONS_PROPOSAL.md",
+      "sha256": "3db1502fd677922f83cec84b69a01cc0c7191fa6b5b303392dd68c5d5f1f1aa7",
+      "bytes": 1893
     },
     {
       "path": "MIGRATION_PLAN.md",
-      "sha256": "7bd4351c43d3cd05baed2238662cd5ee286bbd4e283b9e71eb17e604e163d834",
-      "bytes": 5992
+      "sha256": "4d9bfe8e1fced06c8775cc93138227bb7a22a3a4ea19c53ce3ca1d04f5d8e010",
+      "bytes": 6372
     },
     {
       "path": "README.md",
-      "sha256": "7308850192c08e8c0434ffc46554d55c5f98386a513939126a97255f1d8d488c",
-      "bytes": 3616
+      "sha256": "d387562ebe9216eebcd239e041ff3cc6555fe9516d451d8e1cbbb6369df547b9",
+      "bytes": 3976
     },
     {
       "path": "backend/db/proposals/001_vertical_slice.sql",
-      "sha256": "b45c0ce5f7300eddb6d621f8286efc007e978d95baa4514bfc7a69e39a7585b9",
-      "bytes": 11314
+      "sha256": "f6d82acc75611ecdb01ac2b2d058e21eab91fa658101c9150013c44d16684fd3",
+      "bytes": 11463
     },
     {
       "path": "contracts/examples/01-create.request.json",
@@ -92,9 +115,24 @@
       "bytes": 454
     },
     {
+      "path": "contracts/examples/13-before-stage.request.json",
+      "sha256": "8eb3cf5e88844e387747046a4e58421aba4d9ab64e3ee5835c445ba74a7a5c39",
+      "bytes": 216
+    },
+    {
+      "path": "contracts/examples/14-before-stage.response.json",
+      "sha256": "ee69a69cd3afba5f0c0d047c282cec09c77d43374abf615d187742978f329886",
+      "bytes": 465
+    },
+    {
+      "path": "contracts/examples/15-after-stage.request.json",
+      "sha256": "01aa2c2a3f2d3cb3f441b396cfdd0db3582ab02afbe91ef7093519708de24ac5",
+      "bytes": 297
+    },
+    {
       "path": "contracts/examples/manifest.json",
-      "sha256": "781f8b677c7e7efe76ce90a1a10ddb30b864e93cfee9b91e9fab260040cfe295",
-      "bytes": 2168
+      "sha256": "fb128be774b09dc85e0396482a7917034cd027a0c3ee9efe150fca8db65a1448",
+      "bytes": 2824
     },
     {
       "path": "contracts/examples/negative-bad-timestamp.json",
@@ -110,6 +148,11 @@
       "path": "contracts/examples/negative-impossible-timestamp.json",
       "sha256": "43c4037fb7ef40ba6b4d730b8bf519993ae7b0ed404ed0d218fae79935e14a7b",
       "bytes": 711
+    },
+    {
+      "path": "contracts/examples/negative-missing-stage-section.json",
+      "sha256": "e7866601cb66a63c819f140c689bf18ed99302491f9868c049984aae4a9c478f",
+      "bytes": 160
     },
     {
       "path": "contracts/examples/negative-quantity.json",
@@ -132,14 +175,19 @@
       "bytes": 710
     },
     {
+      "path": "contracts/examples/negative-wrong-section.scenario.json",
+      "sha256": "7dcfa2f6cbcc6fd50dd2f46047e608d1458056ac4f5bc93d1c6fbf25eabe3aee",
+      "bytes": 1134
+    },
+    {
       "path": "contracts/openapi.yaml",
-      "sha256": "f76fccc9ec8f2641561d7591860567624b7c78814fb1d7d1eb0953321df9eb1e",
-      "bytes": 43907
+      "sha256": "b8b5b855eb8fffd4607473a4e878a3c64820030820cabb1b0c92d70928730f97",
+      "bytes": 44192
     },
     {
       "path": "evidence/validation.json",
-      "sha256": "302fd97c1c5aae9ceb549a453679065b81486163f2ab342b31ae3f9bd47741c6",
-      "bytes": 1420
+      "sha256": "dbfe57ac8a6e163e39234c02cc075e830f3b3b7af3f6fb1feb896f9c6b6686be",
+      "bytes": 1481
     },
     {
       "path": "requirements-validation.txt",
@@ -148,14 +196,14 @@
     },
     {
       "path": "scripts/build_contract.py",
-      "sha256": "e8859e76c22e50a5c4cb34bab29160cf5e44152ca810735b09cdddd164e17031",
-      "bytes": 20815
+      "sha256": "e2c3c354aec601296f87537149f5d351cb679d5c05f336047fcf703e049d4279",
+      "bytes": 22628
     },
     {
       "path": "scripts/validate_contract.py",
-      "sha256": "3a32b01289ab532f968b691a1c70ddb69ed0d46ca022a8c5f9a25b4dd620bcaa",
-      "bytes": 5450
+      "sha256": "6e9d8542f3eb122bb510c49c0f2082afb25d94bcf6a27645a8bdaa138a6b458d",
+      "bytes": 5506
     }
   ],
-  "suggested_review_only_destination": "coord/proposals/a6-contract-v1/ (copy whole self-contained directory; no accepted root contract replacement)"
+  "suggested_review_only_destination": "coord/proposals/a6-contract-v1/ (replace whole self-contained review pack; no accepted root contract replacement)"
 }
