@@ -7,7 +7,9 @@ const { createRequire } = require('node:module');
 const packageRoot = process.env.DALA_C110_PLAYWRIGHT_PACKAGE || path.dirname(require.resolve('@playwright/test/package.json'));
 const fromPlaywright = createRequire(path.join(packageRoot, 'package.json'));
 const { defineConfig } = fromPlaywright(packageRoot);
+const { selectedFrontendSha } = require('./c110_contract.cjs');
 module.exports = defineConfig({
+  metadata: { frontend_sha: selectedFrontendSha() },
   testDir: __dirname,
   testMatch: 'c110_core.spec.cjs',
   outputDir: path.join(__dirname, 'c110_artifacts', 'results'),

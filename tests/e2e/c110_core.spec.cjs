@@ -7,7 +7,7 @@ const { createRequire } = require('node:module');
 const { execFile, execFileSync } = require('node:child_process');
 const { promisify } = require('node:util');
 const { randomUUID, createHash } = require('node:crypto');
-const { check, fixtureFromEnv, readOperatorPin, validateEffectiveRunner, syntheticPng, dueLocal, FRONTEND_SHA, TITLE, UUID } = require('./c110_contract.cjs');
+const { check, fixtureFromEnv, readOperatorPin, validateEffectiveRunner, syntheticPng, dueLocal, TITLE, UUID } = require('./c110_contract.cjs');
 const packageRoot = process.env.DALA_C110_PLAYWRIGHT_PACKAGE || path.dirname(require.resolve('@playwright/test/package.json'));
 check(packageRoot && path.isAbsolute(packageRoot), 'A5 must supply B4 installed Playwright package directory');
 const fromPlaywright = createRequire(path.join(packageRoot, 'package.json'));
@@ -34,7 +34,7 @@ test.describe('C110 real browser API PostgreSQL acceptance', () => {
     check(device && device.isMobile && device.hasTouch, 'Pixel 7 emulation descriptor required');
     const report = {
       schema_version: 1, result: 'FAIL', test: TITLE, run_id: fixture.run_id,
-      harness_sha: harnessSha, frontend_sha: FRONTEND_SHA, backend_sha: fixture.backend_sha,
+      harness_sha: harnessSha, frontend_sha: fixture.frontend_sha, backend_sha: fixture.backend_sha,
       provenance: 'app source SHAs supplied by operator; C110 records actual harness HEAD',
       failure_output_protection: 'source-bound A5 dummy-failure proof verified before credential input',
       started_at: new Date().toISOString(), steps: [], commands: [],
@@ -184,7 +184,9 @@ test.describe('C110 real browser API PostgreSQL acceptance', () => {
         await executorCommand('resume', 'Продолжить работу', 'in_progress');
         // The reason form is a retained UI mode; leave it explicitly before result entry.
         const back = executor.page.getByRole('button', { name: 'Вернуться без отправки', exact: true });
-        if (await back.isVisible()) await back.click();
+        await expect(back).toBeVisible({ timeout: 10_000 });
+        await back.click();
+        await expect(executor.page.getByLabel('Что выполнено', { exact: false })).toBeVisible({ timeout: 10_000 });
       });
       await stage('incomplete result cannot close and master returns for rework', async () => {
         await executor.page.getByLabel('Что выполнено', { exact: false }).fill('Synthetic incomplete inspection; evidence intentionally missing');

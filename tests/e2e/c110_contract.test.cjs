@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const { inflateSync } = require('node:zlib');
 const { FRONTEND_SHA, TITLE, fixtureFromEnv, syntheticPng, dueLocal } = require('./c110_contract.cjs');
 const { REQUIRED_STEPS, validate } = require('./c110_gate.cjs');
+const OLD_FRONTEND_SHA = '2beb2244c4639c09004e4cdb5a7598d447ad68f6';
 // These values are input-validation data only, never accounts or a live DB.
 const uuid = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 function env() {
@@ -64,21 +65,43 @@ function evidencePair() {
     commands, business_requests: commands.map(({ action, operation_id, actor_id }) => ({ action, operation_id, actor_id })), order_id: uuid(10), database: { source: 'actual_postgresql_read_only', identity: { direct_login: true, read_only: true, isolated_schema: true },
       order: { id: uuid(10), version: 11, status: 'closed' }, receipts: commands.map(c => ({ ...c, committed: true })), events: Array(13).fill({}),
       submissions: [{ completeness: 'incomplete' }, { completeness: 'complete' }], reviews: [{ decision: 'rework' }, { decision: 'close', final_score: null }], photos: [{}], materials: [{}], assessments: [] } };
-  const report = { errors: [], stats: { expected: 1, unexpected: 0, skipped: 0, flaky: 0 }, suites: [{ specs: [{ title: TITLE, ok: true,
+  const report = { config: { metadata: { frontend_sha: FRONTEND_SHA } }, errors: [], stats: { expected: 1, unexpected: 0, skipped: 0, flaky: 0 }, suites: [{ specs: [{ title: TITLE, ok: true,
     tests: [{ expectedStatus: 'passed', status: 'expected', results: [{ status: 'passed', retry: 0, errors: [] }] }] }] }] };
   return { report, evidence };
 }
 test('gate accepts a structurally complete synthetic parser fixture, not live evidence', () => {
-  const { report, evidence } = evidencePair(); assert.equal(validate(report, evidence).status, 'passed');
+  const { report, evidence } = evidencePair(); assert.equal(validate(report, evidence, FRONTEND_SHA).status, 'passed');
 });
 test('gate rejects empty filtered skipped failed flaky expected-failed and retried reports', () => {
   const changes = [r => r.suites = [], r => r.stats.skipped = 1, r => r.stats.flaky = 1, r => r.errors.push({}),
     r => r.suites[0].specs[0].tests[0].expectedStatus = 'failed', r => r.suites[0].specs[0].tests[0].results[0].status = 'skipped',
     r => r.suites[0].specs[0].tests[0].results[0].retry = 1, r => r.suites[0].specs[0].tests[0].results.push({ status: 'passed' })];
-  for (const change of changes) { const { report, evidence } = evidencePair(); change(report); assert.throws(() => validate(report, evidence)); }
+  for (const change of changes) { const { report, evidence } = evidencePair(); change(report); assert.throws(() => validate(report, evidence, FRONTEND_SHA)); }
 });
 test('gate rejects absent DB, receipt loss, missing steps and physical-phone promotion', () => {
   for (const change of [e => e.database.source = 'mock', e => e.database.receipts.pop(), e => e.steps.pop(), e => e.separate_gates.physical_android = 'PASS', e => e.database.reviews[1].final_score = 0, e => e.business_requests.push(e.business_requests[0])]) {
-    const { report, evidence } = evidencePair(); change(evidence); assert.throws(() => validate(report, evidence));
+    const { report, evidence } = evidencePair(); change(evidence); assert.throws(() => validate(report, evidence, FRONTEND_SHA));
   }
+});
+
+test('only exact repinned ca320bf source is accepted and preserved', () => {
+  assert.equal(FRONTEND_SHA, 'ca320bf692c01d89dd79496fe18d1bc2742052df');
+  assert.equal(load().frontend_sha, FRONTEND_SHA);
+  for (const selected of [undefined, '', 'ca320bf', OLD_FRONTEND_SHA, '45a65ae2b0b23c1a717fec9baa7a30369b2dd117', 'f'.repeat(40), FRONTEND_SHA.toUpperCase()]) {
+    let reads = 0;
+    assert.throws(() => fixtureFromEnv({ ...env(), DALA_E2E_FRONTEND_SHA: selected }, () => { reads++; return '{}'; }, () => {}), /reviewed frontend/);
+    assert.equal(reads, 0);
+  }
+});
+test('gate rejects old-source relabels and mismatched or absent selected identity', () => {
+  const { report, evidence } = evidencePair();
+  assert.throws(() => validate(report, evidence), /EXPLICIT_REVIEWED_FRONTEND_REQUIRED/);
+  assert.throws(() => validate(report, evidence, OLD_FRONTEND_SHA), /EXPLICIT_REVIEWED_FRONTEND_REQUIRED/);
+  assert.throws(() => validate(report, evidence, 'f'.repeat(40)), /EXPLICIT_REVIEWED_FRONTEND_REQUIRED/);
+  evidence.frontend_sha = OLD_FRONTEND_SHA;
+  assert.throws(() => validate(report, evidence, FRONTEND_SHA), /EXACT_SOURCE_IDENTITIES_REQUIRED/);
+  evidence.frontend_sha = FRONTEND_SHA; report.config.metadata.frontend_sha = OLD_FRONTEND_SHA;
+  assert.throws(() => validate(report, evidence, FRONTEND_SHA), /EXACT_SOURCE_IDENTITIES_REQUIRED/);
+  report.config.metadata.frontend_sha = FRONTEND_SHA;
+  assert.equal(validate(report, evidence, FRONTEND_SHA).status, 'passed');
 });

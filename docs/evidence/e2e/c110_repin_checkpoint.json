@@ -1,0 +1,30 @@
+{
+  "task": "C-110",
+  "generation": 1,
+  "implementation_sha": "de023e290d105a88171407e662a9a6d7a5538fa0",
+  "previous_checkpoint_sha": "6fc841b193afe62abbc43ffba5aba7d0caed0559",
+  "frontend_source_sha": "ca320bf692c01d89dd79496fe18d1bc2742052df",
+  "observed_at": "2026-10-07T21:47:12Z",
+  "scope": "source-only resume timing correction and exact frontend repin",
+  "authority": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6047398421",
+  "finding": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6047298409",
+  "changes": [
+    "Wait unconditionally for resumed Back visibility, click, then wait for the result field; each visibility wait is bounded to 10 seconds.",
+    "Accept only exact ca320bf in fixture, both reporter metadata sets, journey evidence, expected-source gate and version-2 secrecy receipt.",
+    "Reject old 2beb, later 45a65, unknown/shortened source identities and mismatched report/evidence/receipt identities.",
+    "Require fresh secrecy preflight for the changed source; no earlier baseline or proof is relabeled."
+  ],
+  "checks": [
+    {"command": "node --test tests/e2e/c110_contract.test.cjs tests/e2e/c110_preflight.test.cjs tests/e2e/c110_resume_source.test.cjs", "result": "PASS", "passed": 19, "failed": 0, "skipped": 0},
+    {"command": "python -B tests/e2e/c110_observe_test.py", "result": "PASS", "passed": 4},
+    {"command": "JavaScript syntax, Python AST and git diff --check", "result": "PASS"},
+    {"command": "Pinned Playwright 1.63.0 preflight --list with exact ca320bf", "result": "PASS", "tests_found": 1},
+    {"command": "Pinned Playwright 1.63.0 config normalization, frontend metadata and allowed-settings guard", "result": "PASS"},
+    {"command": "Compare scoped Playwright lock closure to ca320bf frontend lock", "result": "PASS"}
+  ],
+  "browser_failure_reproduced": false,
+  "browser_fix_verified": false,
+  "actual_secrecy_preflight": "NOT_RUN",
+  "actual_browser_api_postgresql": "NOT_RUN",
+  "limitation": "The timing hazard and selector compatibility were verified from immutable UI source, not a browser failure. No browser was launched, real PIN file read, or fake secrecy receipt created. A5 must run fresh preflight and the core journey on the selected actual build. Historical 2beb checkpoint evidence remains unchanged."
+}

@@ -6,7 +6,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test:source": "node --test c110_contract.test.cjs c110_preflight.test.cjs",
+    "test:source": "node --test c110_contract.test.cjs c110_preflight.test.cjs c110_resume_source.test.cjs",
     "test:e2e": "playwright test --config=c110_playwright.config.cjs",
     "test:gate": "node c110_gate.cjs",
     "test:secrecy-preflight": "node c110_secrecy_preflight.cjs"

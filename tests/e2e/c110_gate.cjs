@@ -13,7 +13,8 @@ const REQUIRED_STEPS = [
 ];
 function requireFact(value, code) { if (!value) throw new Error(code); }
 function allSpecs(suites) { return (suites || []).flatMap(s => [...(s.specs || []), ...allSpecs(s.suites)]); }
-function validate(report, evidence) {
+function validate(report, evidence, selectedSha) {
+  requireFact(selectedSha === FRONTEND_SHA, 'EXPLICIT_REVIEWED_FRONTEND_REQUIRED');
   requireFact(report && Array.isArray(report.suites), 'REPORT_MISSING');
   requireFact(Array.isArray(report.errors) && report.errors.length === 0, 'RUNNER_ERRORS_OR_MISSING_ERRORS');
   requireFact(report.stats?.expected === 1 && report.stats.unexpected === 0 && report.stats.flaky === 0 && report.stats.skipped === 0, 'EXACT_ONE_PASS_REQUIRED');
@@ -25,7 +26,7 @@ function validate(report, evidence) {
   requireFact(test.results?.length === 1 && test.results[0].status === 'passed' && test.results[0].retry === 0, 'RETRY_SKIP_OR_NONPASS');
   requireFact(!test.results[0].errors?.length, 'TEST_ERRORS');
   requireFact(evidence?.schema_version === 1 && evidence.result === 'PASS' && evidence.test === TITLE, 'EVIDENCE_NONPASS');
-  requireFact(evidence.frontend_sha === FRONTEND_SHA && /^[0-9a-f]{40}$/.test(evidence.harness_sha || '') && /^[0-9a-f]{40}$/.test(evidence.backend_sha || ''), 'EXACT_SOURCE_IDENTITIES_REQUIRED');
+  requireFact(evidence.frontend_sha === selectedSha && report.config?.metadata?.frontend_sha === selectedSha && /^[0-9a-f]{40}$/.test(evidence.harness_sha || '') && /^[0-9a-f]{40}$/.test(evidence.backend_sha || ''), 'EXACT_SOURCE_IDENTITIES_REQUIRED');
   requireFact(evidence.steps?.length === REQUIRED_STEPS.length && evidence.steps.every((s, i) => s.name === REQUIRED_STEPS[i] && s.result === 'PASS'), 'INCOMPLETE_STEPS');
   requireFact(evidence.browser?.mode === 'ANDROID_EMULATION' && evidence.browser.contexts === 2 && evidence.browser.mobile === true && evidence.browser.touch === true && evidence.browser.playwright === '1.63.0', 'EMULATION_METADATA_REQUIRED');
   for (const gate of ['physical_android', 'native_camera', 'push_delivery', 'provider_model', 'throttled_mobile_upload_10s', 'report_export']) requireFact(evidence.separate_gates?.[gate] === 'NOT_RUN', 'UNSUPPORTED_EVIDENCE_PROMOTION');
@@ -46,12 +47,12 @@ function main(args) {
   try {
     requireFact(args.length === 2, 'USAGE_REPORT_JSON_EVIDENCE_JSON');
     const raw = fs.readFileSync(args[1]);
-    const result = validate(JSON.parse(fs.readFileSync(args[0], 'utf8')), JSON.parse(raw));
+    const result = validate(JSON.parse(fs.readFileSync(args[0], 'utf8')), JSON.parse(raw), process.env.DALA_E2E_FRONTEND_SHA);
     const attachments = (result.attachments || []).filter(a => a.name === 'c110_evidence' && a.contentType === 'application/json');
     requireFact(attachments.length === 1, 'EVIDENCE_ATTACHMENT_REQUIRED');
     const attached = attachments[0];
     requireFact(attached.body ? Buffer.from(attached.body, 'base64').equals(raw) : attached.path && fs.realpathSync(attached.path) === fs.realpathSync(args[1]), 'EVIDENCE_NOT_BOUND_TO_RUN');
-    console.log(JSON.stringify({ status: 'PASS', scope: 'real composed browser/API/PostgreSQL; Android emulation only' }));
+    console.log(JSON.stringify({ status: 'PASS', frontend_sha: process.env.DALA_E2E_FRONTEND_SHA, scope: 'real composed browser/API/PostgreSQL; Android emulation only' }));
     return 0;
   } catch (error) {
     // Avoid arbitrary file/parse errors leaking paths or raw source content.

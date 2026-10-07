@@ -1,21 +1,25 @@
 'use strict';
 // Non-secret, fail-closed integration contract. No file containing credentials is read.
 const { deflateSync } = require('node:zlib');
-const FRONTEND_SHA = '2beb2244c4639c09004e4cdb5a7598d447ad68f6';
+const FRONTEND_SHA = 'ca320bf692c01d89dd79496fe18d1bc2742052df';
 const TITLE = 'C110 real composed master executor lifecycle';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function check(ok, code) { if (!ok) throw new Error(`C110 BLOCKED: ${code}`); }
 const fs = require('node:fs');
+function selectedFrontendSha(env = process.env) {
+  check(env.DALA_E2E_FRONTEND_SHA === FRONTEND_SHA, 'explicit reviewed frontend SHA required');
+  return env.DALA_E2E_FRONTEND_SHA;
+}
 function fixtureFromEnv(env = process.env, readPublicFile = file => fs.readFileSync(file, 'utf8'), verifyProof = require('./c110_preflight_proof.cjs').requireProof) {
   check(env.DALA_C110_AUTHORIZED === 'operator-provisioned-synthetic-only', 'operator fixture authorization required');
   check(!env.DEBUG && !env.PWDEBUG && !env.NODE_OPTIONS, 'debug/preload capture must be disabled');
   verifyProof(env);
-  check(env.DALA_E2E_FRONTEND_SHA === FRONTEND_SHA, 'exact reviewed frontend SHA required');
+  const frontendSha = selectedFrontendSha(env);
   let publicFixture;
   try { publicFixture = JSON.parse(readPublicFile(env.DALA_E2E_FIXTURE_FILE)); } catch { check(false, 'public synthetic fixture JSON required'); }
   check(publicFixture?.fixture_version === 'dalaai-live-vertical-demo-v1' && publicFixture.data_classification === 'synthetic demo only', 'accepted synthetic fixture version required');
   check(Array.isArray(publicFixture.users), 'fixture users required');
-  const f = { schema_version: 1, synthetic: true, frontend_sha: FRONTEND_SHA,
+  const f = { schema_version: 1, synthetic: true, frontend_sha: frontendSha,
     backend_sha: env.DALA_E2E_BACKEND_SHA, run_id: env.DALA_C110_RUN_ID,
     origin: env.DALA_E2E_BASE_URL };
   check(/^[0-9a-f]{40}$/.test(f.backend_sha || ''), 'exact backend SHA required');
@@ -84,4 +88,4 @@ function syntheticPng() {
   return Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), chunk('IHDR', header), chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]);
 }
 function dueLocal(now = Date.now()) { return new Date(now + (2 + 5) * 3600_000).toISOString().slice(0, 16); }
-module.exports = { FRONTEND_SHA, TITLE, UUID, check, fixtureFromEnv, readOperatorPin, validateEffectiveRunner, syntheticPng, dueLocal };
+module.exports = { FRONTEND_SHA, selectedFrontendSha, TITLE, UUID, check, fixtureFromEnv, readOperatorPin, validateEffectiveRunner, syntheticPng, dueLocal };

@@ -3,8 +3,13 @@
 Status at initial handoff: **browser/API/DB NOT_RUN** in C0's environment.
 Source/parser tests are separate evidence. This is an executable Playwright
 journey, not a completed runtime result. No successful business response is
-mocked. The app must be the composed UI from frontend source
-`2beb2244c4639c09004e4cdb5a7598d447ad68f6` and an A5-recorded backend source SHA.
+mocked. For the first real C110 gate, the composed frontend is pinned **only** to
+`ca320bf692c01d89dd79496fe18d1bc2742052df`, per
+[A0-0038](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6047398421).
+
+A5 builds/binds that exact candidate and records its exact backend source SHA.
+The old `2beb2244` baseline, later push assembly, shortened SHAs and unknown
+candidates are rejected. Earlier baseline evidence is not relabeled.
 
 ## Stable A5 integration seam
 
@@ -33,7 +38,7 @@ Required inputs:
 | `DALA_E2E_FIXTURE_FILE` | Public fixture object from A0-0036, without dry-run wrapper |
 | `DALA_E2E_MASTER_PIN_FILE` | Operator-private file for the synthetic master |
 | `DALA_E2E_EXECUTOR_PIN_FILE` | Operator-private file for the synthetic executor |
-| `DALA_E2E_FRONTEND_SHA` | Exactly `2beb2244c4639c09004e4cdb5a7598d447ad68f6` |
+| `DALA_E2E_FRONTEND_SHA` | Exactly `ca320bf692c01d89dd79496fe18d1bc2742052df`, required for preflight, core and evidence gate |
 | `DALA_E2E_BACKEND_SHA` | Exact 40-hex source SHA used to build the running backend |
 | `DALA_C110_RUN_ID` | Unique non-secret lowercase identifier, 8–64 chars, digits/hyphens allowed |
 | `DALA_C110_PREFLIGHT_RECEIPT` | New absolute public receipt path written by the mandatory executable preflight below |
@@ -55,14 +60,16 @@ values, raw login bodies, PINs, DSNs, session cookies or CSRF values.
 ### Mandatory executable failure-output preflight
 
 Trace-off and a bare operator boolean are **not proof of secrecy**. In A5's
-allowed disposable runner, before exporting real fixture/PIN/observer inputs:
+allowed disposable runner, after selecting `DALA_E2E_FRONTEND_SHA` and before
+exporting real fixture/PIN/observer inputs:
 
 ```sh
 # DALA_C110_PREFLIGHT_RECEIPT is a new absolute, non-secret output path.
 node tests/e2e/c110_secrecy_preflight.cjs
 ```
 
-The wrapper refuses inherited fixture/PIN-file/observer inputs and uses pinned
+The wrapper preserves only the public frontend SHA from `DALA_E2E_*`; it
+refuses inherited fixture/PIN-file/observer inputs and uses pinned
 Playwright 1.63.0. Its separate project `c110-secrecy-preflight` contains exactly
 one intentionally failed test `C110 dummy credential failure output`. A disabled
 dummy-DOM PIN input exercises the **same 5-second fill timeout and shared generic
@@ -77,13 +84,18 @@ in its newly created private temporary directory, including base64 JSON
 attachment strings. Sentinel matches, truncated/oversized output, symlinks,
 unknown compressed/binary artifacts, missing reports or wrong counts all block
 success. Raw dummy artifacts are discarded, never echoed. Only successful
-verification writes a public receipt with source SHA, relevant file hashes,
+verification writes a public receipt with harness and selected frontend SHAs, relevant file hashes,
 pinned version, expected/observed failure count, zero matches and output digest.
 The receipt expires after 30 minutes. Core config and fixture loading verify it
 before real input files are read. There is no boolean override. Both preflight and core enforce their exact checked
 config, list/JSON reporters with step printing off, one worker/repeat, zero
 retries, and an allowlist of context options. HAR/logger/storage-state/launch/
 connect overrides and alternate configs/reporters are rejected before PIN use.
+
+Changing either the harness source or pinned frontend identity invalidates
+the receipt. The gate requires the same selected SHA in its environment,
+Playwright report metadata and journey evidence; old or mismatched source identities
+are rejected rather than relabeling an older run. A5 still owns build/source matching proof.
 
 Then A5 can supply the real synthetic fixture/PIN/observer inputs and run the
 core suite. Any source/config/helper change or missing/stale receipt requires
@@ -172,10 +184,21 @@ No restart/race/offline/idempotent retry claim is made by this happy/core journe
 ## Safe source checks (no browser, DB, private files or login)
 
 ```sh
-node --test tests/e2e/c110_contract.test.cjs tests/e2e/c110_preflight.test.cjs
+node --test tests/e2e/c110_contract.test.cjs tests/e2e/c110_preflight.test.cjs tests/e2e/c110_resume_source.test.cjs
 python -B tests/e2e/c110_observe_test.py
 node --check tests/e2e/c110_core.spec.cjs
 node --check tests/e2e/c110_playwright.config.cjs
 ```
 
 Parser fixtures are deliberately synthetic and never live acceptance results.
+
+## Source-reviewed resume sequencing correction
+
+[B0-0042](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6047298409)
+identified a race opportunity in the old baseline and exact repinned UI: pause mode persists;
+Back reappears only after resumed `in_progress` renders, and result fields appear
+only after Back is clicked. C110 now unconditionally waits for Back (10 seconds),
+clicks it, then waits for the work-result field (10 seconds). The source regression
+rejects the former instantaneous visibility probe and a missing result wait.
+This is a source-proven timing hazard, **not an observed browser failure or a
+browser-verified fix**. Actual rerun and fresh secrecy preflight remain A5 gates.

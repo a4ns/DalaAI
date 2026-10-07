@@ -1,6 +1,7 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const { FRONTEND_SHA } = require('./c110_contract.cjs');
 const { privateLoginBoundary, PRIVATE_ACTION_TIMEOUT_MS } = require('./c110_private_boundary.cjs');
 const { PROOF_VERSION, PREFLIGHT_TITLE, containsSentinel, preflightOutcome, validateProof } = require('./c110_preflight_proof.cjs');
 const sentinel = 'NONSECRET_UNIT_SENTINEL_12345';
@@ -20,7 +21,7 @@ test('scanner rejects literal and base64 attachment sentinel leaks', () => {
   assert.equal(containsSentinel(JSON.stringify(Array(200000).fill(0)), [sentinel]), true); // traversal budget fails closed
 });
 function report() {
-  return { errors: [], stats: { expected: 0, unexpected: 1, skipped: 0, flaky: 0 }, suites: [{ specs: [{ title: PREFLIGHT_TITLE,
+  return { config: { metadata: { frontend_sha: FRONTEND_SHA } }, errors: [], stats: { expected: 0, unexpected: 1, skipped: 0, flaky: 0 }, suites: [{ specs: [{ title: PREFLIGHT_TITLE,
     tests: [{ expectedStatus: 'passed', status: 'unexpected', results: [{ status: 'failed', retry: 0, errors: [{ message: 'Error: C110_DUMMY_FAILURE_EXPECTED' }] }] }] }] }] };
 }
 test('preflight requires one intentional unexpected failure and exact nonzero exit', () => {
@@ -33,17 +34,19 @@ test('preflight requires one intentional unexpected failure and exact nonzero ex
   }
 });
 function proof(now) {
-  return { version: PROOF_VERSION, result: 'PASS', playwright: '1.63.0', source_sha: 'a'.repeat(40), source_files: { helper: 'b'.repeat(64) },
+  return { version: PROOF_VERSION, result: 'PASS', playwright: '1.63.0', frontend_sha: FRONTEND_SHA, source_sha: 'a'.repeat(40), source_files: { helper: 'b'.repeat(64) },
     created_at: new Date(now).toISOString(), expected_dummy_failures: 1, observed_dummy_failures: 1, scanned_outputs: 3,
     sentinel_matches: 0, scanned_output_sha256: 'c'.repeat(64) };
 }
 test('proof is bound to exact source hashes version freshness count and zero leaks', () => {
   const now = Date.parse('2026-10-07T21:00:00Z'); const p = proof(now);
-  assert.equal(validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now), p);
-  for (const patch of [{ source_sha: 'd'.repeat(40) }, { source_files: { helper: 'd'.repeat(64) } }, { playwright: '1.62.0' },
+  assert.equal(validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now, FRONTEND_SHA), p);
+  assert.throws(() => validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now, '2beb2244c4639c09004e4cdb5a7598d447ad68f6'));
+  assert.throws(() => validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now));
+  for (const patch of [{ frontend_sha: '2beb2244c4639c09004e4cdb5a7598d447ad68f6' }, { source_sha: 'd'.repeat(40) }, { source_files: { helper: 'd'.repeat(64) } }, { playwright: '1.62.0' },
     { sentinel_matches: 1 }, { observed_dummy_failures: 0 }, { scanned_outputs: 2 }, { result: 'NOT_RUN' },
     { created_at: new Date(now - 31 * 60_000).toISOString() }, { created_at: new Date(now + 1).toISOString() }]) {
-    assert.throws(() => validateProof({ ...p, ...patch }, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now));
+    assert.throws(() => validateProof({ ...p, ...patch }, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now, FRONTEND_SHA));
   }
 });
 
