@@ -8,7 +8,7 @@
 - Provide complete resource states. `lastConfirmedAt` is the confirmation time of a successful fresh fetch, not the order's unchanged `updated_at`. Incomplete, stale, offline and failed results cannot become a confirmed empty list or unlock commands.
 - Retain drafts per order in the shell. Feature inputs do not reset on rejection, conflict or unknown outcome. The displayed copy promises only current-session retention, not reload persistence.
 - `onIntent` synchronously reserves one pending intent before starting transport. Allocate one operation ID in the shared client and freeze the complete original route/body/version. `onRetry` takes no payload and replays that stored operation exactly. Do not allocate a new ID, merge current draft values or automatically resend on reconnect.
-- Keep `mutation` and `pendingIntent` across feature navigation. Unknown results freeze draft editing and new commands. Only a confirmed response unlocks the command result. `onResolveConflict` discards/resets the failed intent only after the user has refreshed and explicitly reviewed current state. It never sends a replacement command.
+- Keep `mutation` and `pendingIntent` across feature navigation. Unknown results freeze draft editing and new commands. Only a confirmed response unlocks the command result. `onResolveConflict` discards/resets the failed intent only after the user has explicitly requested a refresh and explicitly reviewed current state. It never sends a replacement command.
 - `onIntent`/`onRetry` return the actual `MutationOutcome`, not optimistic confirmation. An uncaught adapter exception is treated as unknown. A confirmed command still needs a fresh order snapshot with a newer version before the next command.
 - Map submit payload fields to `work_description`, `work_code_id`, `materials[].material_id`, `after_photo_ids`, and `comment`. Empty work/invalid quantities/unknown or duplicate materials are rejected. Missing work code and missing unplanned after-photo remain explicitly incomplete, reviewable submissions.
 - Set selected-order `photoBusy` while preparation/staging is in progress or its outcome is unknown; optional `photoBusyReason` explains the exact blocking step. This disables result submission without inventing a pending order command. Scope the flag to session/order/assignment and enforce the same guard inside the adapter before transport. Retain staging results independently until they can be safely reflected in the draft.
@@ -24,6 +24,7 @@ After assembling shared dependencies, from `frontend`:
 
 ```sh
 node --test src/mobile/executor/executor.test.cjs
+node_modules/.bin/oxlint --config .oxlintrc.json --deny-warnings src/mobile/executor
 ```
 
 For an isolated feature checkout, set `EXECUTOR_DEPENDENCY_ROOT` to the frontend directory containing B4's installed dependencies. The test loader reads those dependencies; it does not install or edit them.

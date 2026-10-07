@@ -2,19 +2,18 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { ApiClient, ApiError, safeErrorMessage, SessionChangedError } from '../shared/api/client';
 import { OrderStore } from '../shared/api/orderStore';
-import { ru, statusLabels } from '../shared/i18n/ru';
+import { ru } from '../shared/i18n/ru';
 import type { Session } from '../shared/api/wire';
+import { Workspace } from './Workspace';
 
 const defaultClient = new ApiClient();
 const defaultOrders = new OrderStore(defaultClient);
 const roleLabels = { master: 'Мастер', executor: 'Исполнитель', manager: 'Руководитель', admin: 'Администратор' };
-const dateFormat = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Etc/GMT-5', dateStyle: 'short', timeStyle: 'short' });
 export interface AppSlots {
   renderWorkspace?: (context: { client: ApiClient; orders: OrderStore; session: Session; sessionKey: string; section: string }) => ReactNode;
 }
 export function App({ client = defaultClient, orders = defaultOrders, renderWorkspace }: AppSlots & { client?: ApiClient; orders?: OrderStore }) {
   const session = useSyncExternalStore(listener => client.subscribe(listener), () => client.session);
-  const state = useSyncExternalStore(orders.subscribe, orders.getSnapshot);
   const [section, setSection] = useState('Наряды');
   const [checking, setChecking] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -23,6 +22,8 @@ export function App({ client = defaultClient, orders = defaultOrders, renderWork
   const [pin, setPin] = useState('');
   const authPending = useRef(false);
   const sessionKey = `${client.epoch}:${session?.principal.user_id ?? 'anonymous'}`;
+  const tabs = !session ? ['Наряды', 'Исполнение', 'Проверка'] : session.principal.role === 'master' ? ['Наряды', 'Обзор смены'] : session.principal.role === 'executor' ? ['Мои наряды'] : session.principal.role === 'manager' ? ['Обзор смены'] : ['Доступ'];
+  const activeSection = tabs.includes(section) ? section : tabs[0];
   useEffect(() => {
     let active = true;
     client.getMe().catch(error => {
@@ -31,13 +32,13 @@ export function App({ client = defaultClient, orders = defaultOrders, renderWork
     return () => { active = false; };
   }, [client]);
   useEffect(() => {
-    if (!session) return;
+    if (!session || !session.principal.active || session.principal.role === 'admin') return;
     void orders.refresh();
     const timer = setInterval(() => { if (document.visibilityState === 'visible') void orders.refresh(); }, 2000);
-    const refresh = () => { if (document.visibilityState === 'visible') void orders.refresh(); };
+    const refresh = () => { if (document.visibilityState === 'visible') void client.getMe().then(() => orders.refresh()).catch(error => { if (!(error instanceof SessionChangedError)) setAuthError(safeErrorMessage(error)); }); };
     window.addEventListener('online', refresh); document.addEventListener('visibilitychange', refresh);
     return () => { clearInterval(timer); window.removeEventListener('online', refresh); document.removeEventListener('visibilitychange', refresh); };
-  }, [sessionKey, orders, session]);
+  }, [sessionKey, orders, session, client]);
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (authPending.current) return;
@@ -60,24 +61,15 @@ export function App({ client = defaultClient, orders = defaultOrders, renderWork
     <header className="app-header"><div><span className="eyebrow">DalaAI · рабочая смена</span><h1>{ru.product}</h1></div><span className="environment-tag">Прототип</span></header>
     {session && <div className="session-bar"><span>{roleLabels[session.principal.role]} · {session.principal.employee_code}</span><button className="secondary" type="button" onClick={() => void logout()} disabled={busy}>Выйти</button></div>}
     <nav className="main-nav" aria-label="Основная навигация">
-      {['Наряды', 'Исполнение', 'Проверка'].map(label => <button key={label} type="button" aria-current={section === label ? 'page' : undefined} onClick={() => setSection(label)}>{label}</button>)}
+      {tabs.map(label => <button key={label} type="button" aria-current={activeSection === label ? 'page' : undefined} onClick={() => setSection(label)}>{label}</button>)}
     </nav>
     <main id="main" tabIndex={-1}>
-      <div className="section-heading"><p className="eyebrow">Единый порядок работы</p><h2>{section}</h2><p>Выдача → исполнение → результат → решение мастера</p></div>
+      <div className="section-heading"><p className="eyebrow">Единый порядок работы</p><h2>{activeSection}</h2><p>Выдача → исполнение → результат → решение мастера</p></div>
       {authError && <p className="error" role="alert">{authError}</p>}
       {checking && !session ? <section className="card" role="status"><h3>Проверяем сессию…</h3><p>Данные нарядов пока не загружены.</p></section> : !session ?
         <section className="card" aria-labelledby="login-title"><span className="status-label">Вход в рабочую смену</span><h3 id="login-title">Войдите в систему</h3><p>Используйте выданную тестовую учётную запись. Роль и доступ определяет сервер.</p><form className="form-stack" onSubmit={event => void login(event)}><label htmlFor="employee-code">Табельный код<input id="employee-code" autoComplete="username" value={employeeCode} maxLength={40} required onChange={event => setEmployeeCode(event.target.value)} disabled={busy}/></label><label htmlFor="pin">PIN<input id="pin" type="password" inputMode="numeric" autoComplete="current-password" value={pin} minLength={4} maxLength={64} required onChange={event => setPin(event.target.value)} disabled={busy}/></label><button type="submit" disabled={busy}>{busy ? 'Входим…' : 'Войти'}</button></form><p className="hint">Вход требует работающего API на том же адресе. Тестовые пароли здесь не публикуются.</p></section> :
         <div key={sessionKey}>
-          {renderWorkspace ? renderWorkspace({ client, orders, session, sessionKey, section }) : <section className="card" aria-labelledby="orders-title">
-            <div className="row"><h3 id="orders-title">Доступные наряды</h3><button className="secondary" type="button" onClick={() => void orders.refresh()} disabled={state.loadStatus === 'loading'}>Обновить</button></div>
-            {state.loadStatus === 'loading' && <p role="status">{ru.loadingOrders}</p>}
-            {state.error && <p role="alert" className="error">{state.error}</p>}
-            {state.freshness === 'stale' && <p className="warning">{ru.stale}</p>}
-            {state.incomplete && <p className="warning">{ru.incomplete}</p>}
-            {state.loadStatus === 'ready' && !state.incomplete && state.snapshot?.length === 0 && <p>{ru.emptyOrders}</p>}
-            {state.snapshot && state.snapshot.length > 0 && <ul className="order-list">{state.snapshot.map(order => <li key={order.id}><span className="status-label">{statusLabels[order.status]}{order.is_overdue ? ' · Просрочен' : ''}</span><h3>Наряд № {order.number}</h3><p>{order.description}</p><p className="order-meta">Срок: {dateFormat.format(new Date(order.due_at))} · UTC+5 · версия {order.version}</p>{order.priority === 'emergency' && <strong className="error">Аварийный наряд</strong>}</li>)}</ul>}
-            <p className="hint">Операции создания, исполнения и проверки появятся после подключения соответствующих экранов. Изменения сейчас не отправляются.</p>
-          </section>}
+          {renderWorkspace ? renderWorkspace({ client, orders, session, sessionKey, section: activeSection }) : <Workspace client={client} orders={orders} session={session} sessionKey={sessionKey} section={activeSection}/>}
         </div>}
       <aside className="notice"><strong>Черновики</strong><p>{ru.memoryDraft}</p></aside>
     </main>

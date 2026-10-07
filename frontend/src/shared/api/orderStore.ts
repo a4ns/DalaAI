@@ -78,7 +78,9 @@ export class OrderStore {
         this.#access = 'forbidden';
         this.#set({ ...initialResource<Order[]>(), loadStatus: 'error', error: safeErrorMessage(error) }); return;
       }
-      const snapshot = seen.length ? mergeOrders(this.#state.snapshot ?? [], seen) : this.#state.snapshot;
+      // A failed sweep cannot publish partial membership, even additions from valid pages.
+      // Separately confirmed receipts already recorded during the sweep remain preserved.
+      const snapshot = this.#state.snapshot;
       this.#set({ ...this.#state, snapshot, freshness: snapshot ? 'stale' : 'never', loadStatus: typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'error', error: safeErrorMessage(error), incomplete: true });
     }
   }

@@ -25,7 +25,7 @@ const configPath = resolve(directory, 'tsconfig.json');
 writeFileSync(configPath, JSON.stringify(config, null, 2));
 const checks = [
   [process.execPath, [resolve(shared, 'node_modules/typescript/bin/tsc'), '--project', configPath]],
-  [resolve(shared, 'node_modules/.bin/oxlint'), ['--deny-warnings', lane]],
+  [resolve(shared, 'node_modules/.bin/oxlint'), ['--config', resolve(shared, '.oxlintrc.json'), '--deny-warnings', lane]],
   [process.execPath, ['--test', resolve(lane, 'masterModel.test.mjs'), resolve(lane, 'renderSmoke.test.mjs')]],
 ];
 for (const [command, args] of checks) {

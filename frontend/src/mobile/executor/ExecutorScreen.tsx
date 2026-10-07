@@ -1,11 +1,11 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { MutationOutcome, MutationState, ResourceState } from '../../shared/ui/types';
 import {
   ACTION_LABELS, STATUS_LABELS, allowedActions, emptyExecutorDraft, formatExecutorTime,
   incompleteEvidence, isConfirmedEmpty, isFreshResource, toSubmitPayload, validateExecutorDraft,
 } from './model';
 import type { DraftErrors } from './model';
-import type { ExecutorAction, ExecutorDraft, ExecutorIntent, ExecutorIntentSummary, ExecutorScreenProps } from './types';
+import type { ExecutorAction, ExecutorDraft, ExecutorIntent, ExecutorIntentSummary, ExecutorPhotoContext, ExecutorScreenProps } from './types';
 import './executor.css';
 
 export type { ExecutorScreenProps } from './types';
@@ -24,6 +24,13 @@ function outcomeState(outcome: MutationOutcome): MutationState {
   return { status: outcome.kind === 'unknown' ? 'unknown_result' : outcome.kind === 'conflict' ? 'conflict' : 'failed', error: outcome.message };
 }
 
+function PhotoPickerSlot({ render, context }: { render: NonNullable<ExecutorScreenProps['renderPhotoPicker']>; context: ExecutorPhotoContext }) {
+  return render(context);
+}
+
+type FormState = { orderId: string | null; mode: 'result' | 'pause' | 'reject'; errors: DraftErrors };
+type LocalFeedback = { value: MutationState | null; parentStatus: MutationState['status']; parentError: string | null };
+
 /** Controlled feature: snapshots and drafts live in the shell, never in storage here. */
 export function ExecutorScreen(props: ExecutorScreenProps) {
   return <ExecutorScreenContent key={props.sessionKey} {...props} />;
@@ -31,9 +38,16 @@ export function ExecutorScreen(props: ExecutorScreenProps) {
 
 function ExecutorScreenContent(props: ExecutorScreenProps) {
   const id = useId();
-  const [mode, setMode] = useState<'result' | 'pause' | 'reject'>('result');
-  const [errors, setErrors] = useState<DraftErrors>({});
-  const [localMutation, setLocalMutation] = useState<MutationState | null>(null);
+  const [form, setForm] = useState<FormState>({ orderId: props.selectedOrderId, mode: 'result', errors: {} });
+  const [localFeedback, setLocalFeedback] = useState<LocalFeedback>({ value: null, parentStatus: props.mutation.status, parentError: props.mutation.error });
+  const feedbackIsCurrent = localFeedback.parentStatus === props.mutation.status && localFeedback.parentError === props.mutation.error;
+  if (!feedbackIsCurrent) {
+    // Guarded render-time adjustment prevents old feedback resurfacing after a parent-state cycle.
+    setLocalFeedback({ value: null, parentStatus: props.mutation.status, parentError: props.mutation.error });
+  }
+  const [conflictRefresh, setConflictRefresh] = useState<{ lastConfirmedAt: string | null } | null>(null);
+  const mode = form.orderId === props.selectedOrderId ? form.mode : 'result';
+  const errors = form.orderId === props.selectedOrderId ? form.errors : {};
   const [localIntent, setLocalIntent] = useState<ExecutorIntentSummary | null>(null);
   const [filter, setFilter] = useState<'active' | 'all'>('active');
   const inFlight = useRef(false);
@@ -43,12 +57,8 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   const requestedDetailFocus = useRef<string | null>(null);
   const latestDrafts = useRef(props.drafts);
   const latestOrders = useRef(props.orders.snapshot);
-  latestDrafts.current = props.drafts;
-  latestOrders.current = props.orders.snapshot;
   const rows = useRef(0);
-  const conflictRefresh = useRef<string | null>(null);
-  const priorStatus = useRef<string>('idle');
-  const mutation = localMutation ?? props.mutation;
+  const mutation = feedbackIsCurrent && localFeedback.value ? localFeedback.value : props.mutation;
   const activeIntent = props.pendingIntent ?? localIntent;
   const orders = props.orders.snapshot ?? [];
   const selected = orders.find((order) => order.id === props.selectedOrderId) ?? null;
@@ -56,7 +66,6 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   const pending = mutation.status === 'pending';
   const unresolved = mutation.status === 'unknown_result' || mutation.status === 'conflict';
   const frozen = pending || unresolved;
-  draftLocked.current = frozen;
   const fresh = isFreshResource(props.orders);
   const dictionariesFresh = isFreshResource(props.dictionaries);
   const actedOrder = activeIntent ? orders.find((order) => order.id === activeIntent.orderId) : null;
@@ -69,10 +78,12 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   const visibleOrders = orders.filter((order) => filter === 'all' || !['closed', 'cancelled', 'rejected'].includes(order.status));
   const activeCount = orders.filter((order) => !['closed', 'cancelled', 'rejected'].includes(order.status)).length;
 
-  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
-  // A parent's new state (e.g. session reset) supersedes local callback feedback.
-  useEffect(() => setLocalMutation(null), [props.mutation.status, props.mutation.error]);
-  useEffect(() => { setMode('result'); setErrors({}); }, [props.selectedOrderId]);
+  useLayoutEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useLayoutEffect(() => {
+    latestDrafts.current = props.drafts;
+    latestOrders.current = props.orders.snapshot;
+    draftLocked.current = frozen;
+  }, [props.drafts, props.orders.snapshot, frozen]);
   useEffect(() => {
     // Only a deliberate card selection requests focus. Polls and initial selection never do.
     if (requestedDetailFocus.current !== props.selectedOrderId) return;
@@ -80,13 +91,22 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
     detailHeading.current?.focus({ preventScroll: true });
     detailHeading.current?.scrollIntoView({ block: 'start', inline: 'nearest' });
   }, [props.selectedOrderId]);
-  useEffect(() => {
-    if (mutation.status === 'conflict' && priorStatus.current !== 'conflict') conflictRefresh.current = props.orders.lastConfirmedAt;
-    priorStatus.current = mutation.status;
-  }, [mutation.status, props.orders.lastConfirmedAt]);
+  function setMode(value: FormState['mode']) {
+    setForm((previous) => ({ orderId: props.selectedOrderId, mode: value, errors: previous.orderId === props.selectedOrderId ? previous.errors : {} }));
+  }
+  function setErrors(value: DraftErrors) {
+    setForm((previous) => ({ orderId: props.selectedOrderId, mode: previous.orderId === props.selectedOrderId ? previous.mode : 'result', errors: value }));
+  }
+  function setLocalMutation(value: MutationState) {
+    setLocalFeedback({ value, parentStatus: props.mutation.status, parentError: props.mutation.error });
+  }
+  function refreshOrders() {
+    if (mutation.status === 'conflict') setConflictRefresh({ lastConfirmedAt: props.orders.lastConfirmedAt });
+    props.onRefresh();
+  }
 
   const patchDraft = (patch: Partial<ExecutorDraft>) => {
-    if (!selected || !mounted.current || draftLocked.current) return;
+    if (!selected || !mounted.current || draftLocked.current || inFlight.current) return;
     props.onDraftChange(selected.id, { ...(latestDrafts.current[selected.id] ?? emptyExecutorDraft()), ...patch });
   };
 
@@ -99,6 +119,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
       return;
     }
     requestedDetailFocus.current = orderId;
+    setForm({ orderId, mode: 'result', errors: {} });
     props.onSelectOrder(orderId);
   }
 
@@ -109,6 +130,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
     if (!intent && mutation.status !== 'unknown_result') return;
     inFlight.current = true;
     draftLocked.current = true;
+    setConflictRefresh(null);
     if (intent) setLocalIntent({ orderId: intent.orderId, expectedVersion: intent.expectedVersion, action: intent.action });
     setLocalMutation({ status: 'pending', error: null });
     try {
@@ -145,12 +167,12 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
 
   const fieldError = (key: string) => errors[key] ? <span className="executor-field-error" id={`${id}-${key.replace(':', '-')}-error`}>{errors[key]}</span> : null;
   const describedBy = (key: string) => errors[key] ? `${id}-${key.replace(':', '-')}-error` : undefined;
-  const hasConfirmedRefresh = mutation.status === 'conflict' && priorStatus.current === 'conflict' && fresh && props.orders.lastConfirmedAt !== null && props.orders.lastConfirmedAt !== conflictRefresh.current;
+  const hasConfirmedRefresh = mutation.status === 'conflict' && conflictRefresh !== null && fresh && props.orders.lastConfirmedAt !== null && props.orders.lastConfirmedAt !== conflictRefresh.lastConfirmedAt;
 
   return <section className="executor-screen" aria-labelledby={`${id}-title`}>
     <header className="executor-header">
       <div><p className="executor-eyebrow">Исполнитель · НарядAI</p><h1 id={`${id}-title`}>Мои наряды</h1><p>{fresh ? `Активных: ${activeCount}` : 'Список требует подтверждения'}</p></div>
-      <button type="button" className="executor-button executor-button--secondary" onClick={props.onRefresh} disabled={pending || props.orders.loadStatus === 'loading'}>Обновить</button>
+      <button type="button" className="executor-button executor-button--secondary" onClick={refreshOrders} disabled={pending || props.orders.loadStatus === 'loading'}>Обновить</button>
     </header>
     <ResourceNotice resource={props.orders} name="Наряды" />
     {props.orders.lastConfirmedAt && <p className="executor-caption">Последнее подтверждение: {formatExecutorTime(props.orders.lastConfirmedAt)}</p>}
@@ -158,7 +180,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
       {pending && <p role="status">Отправляем действие. Дождитесь ответа; повторное нажатие заблокировано.</p>}
       {mutation.status === 'confirmed' && <p role="status">Действие подтверждено сервером.{awaitingSnapshot ? ' Обновляемый статус ещё не получен. Нажмите «Обновить».' : ''}</p>}
       {mutation.status === 'unknown_result' && <div className="executor-notice" role="alert"><strong>Результат не подтверждён</strong><p>{mutation.error} Черновик сохранён в этом сеансе и заморожен. Повтор отправит исходное действие с тем же идентификатором; новое действие не создаётся.</p><button className="executor-button" type="button" disabled={props.orders.loadStatus === 'offline'} onClick={() => void perform()}>Повторить исходное действие</button></div>}
-      {mutation.status === 'conflict' && <div className="executor-notice" role="alert"><strong>Наряд изменился</strong><p>{mutation.error || 'Сервер отклонил действие из-за конфликта.'} Черновик сохранён. Обновите наряды, проверьте текущий статус и явно подтвердите работу с новой версией.</p><button className="executor-button executor-button--secondary" type="button" disabled={props.orders.loadStatus === 'loading'} onClick={props.onRefresh}>Загрузить актуальное состояние</button><button className="executor-button" type="button" disabled={!hasConfirmedRefresh} onClick={() => { if (!hasConfirmedRefresh) return; props.onResolveConflict(); setLocalMutation({ status: 'idle', error: null }); setLocalIntent(null); setErrors({}); }}>Состояние проверено, продолжить</button></div>}
+      {mutation.status === 'conflict' && <div className="executor-notice" role="alert"><strong>Наряд изменился</strong><p>{mutation.error || 'Сервер отклонил действие из-за конфликта.'} Черновик сохранён. Обновите наряды, проверьте текущий статус и явно подтвердите работу с новой версией.</p><button className="executor-button executor-button--secondary" type="button" disabled={props.orders.loadStatus === 'loading'} onClick={refreshOrders}>Загрузить актуальное состояние</button><button className="executor-button" type="button" disabled={!hasConfirmedRefresh} onClick={() => { if (!hasConfirmedRefresh) return; props.onResolveConflict(); setLocalMutation({ status: 'idle', error: null }); setConflictRefresh(null); setLocalIntent(null); setErrors({}); }}>Состояние проверено, продолжить</button></div>}
       {mutation.status === 'failed' && <p className="executor-notice executor-notice--error" role="alert">{mutation.error || 'Действие отклонено.'} Черновик сохранён. Исправьте причину перед новой отправкой.</p>}
     </div>
     {orders.length > 0 && <div className="executor-filters" role="group" aria-label="Какие наряды показать"><button type="button" aria-pressed={filter === 'active'} onClick={() => setFilter('active')}>Активные</button><button type="button" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>Все</button></div>}
@@ -204,11 +226,11 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
             })}
             <button className="executor-button executor-button--secondary" type="button" disabled={!dictionariesFresh || draft.materials.length >= 40 || props.dictionaries.snapshot?.materials.length === 0} onClick={() => { rows.current += 1; patchDraft({ materials: [...draft.materials, { rowId: `${id}-${rows.current}`, materialId: '', quantity: '' }] }); }}>Добавить материал</button>{fieldError('materials')}
           </fieldset>
-          <fieldset disabled={frozen}><legend>Фото после выполнения</legend>{photoBlocked && <p className="executor-notice" role="status">{photoBlockedReason}</p>}{props.renderPhotoPicker ? props.renderPhotoPicker({ orderId: selected.id, sectionId: selected.sectionId, assignmentRevision: selected.assignmentRevision, disabled: frozen, confirmedPhotoIds: draft.afterPhotoIds, onConfirmedPhotoIdsChange: (ids) => {
+          <fieldset disabled={frozen}><legend>Фото после выполнения</legend>{photoBlocked && <p className="executor-notice" role="status">{photoBlockedReason}</p>}{props.renderPhotoPicker ? <PhotoPickerSlot render={props.renderPhotoPicker} context={{ orderId: selected.id, sectionId: selected.sectionId, assignmentRevision: selected.assignmentRevision, disabled: frozen, confirmedPhotoIds: draft.afterPhotoIds, onConfirmedPhotoIdsChange: (ids) => {
             const currentOrder = latestOrders.current?.find((order) => order.id === selected.id);
             if (!currentOrder || currentOrder.assignmentRevision !== selected.assignmentRevision || currentOrder.sectionId !== selected.sectionId) return;
             patchDraft({ afterPhotoIds: [...ids] });
-          } }) : <p className="executor-caption">Загрузка фото пока недоступна. Выбранный локальный файл сам по себе не считается загруженным фото.</p>}<p>Подтверждённых фото: {draft.afterPhotoIds.length} из 5.</p>{fieldError('photos')}</fieldset>
+          } }} /> : <p className="executor-caption">Загрузка фото пока недоступна. Выбранный локальный файл сам по себе не считается загруженным фото.</p>}<p>Подтверждённых фото: {draft.afterPhotoIds.length} из 5.</p>{fieldError('photos')}</fieldset>
           <label htmlFor={`${id}-comment`}>Комментарий к результату</label><textarea id={`${id}-comment`} value={draft.comment} disabled={frozen} onChange={(event) => patchDraft({ comment: event.target.value })} maxLength={2000} rows={3} aria-invalid={Boolean(errors.comment)} aria-describedby={describedBy('comment')} />{fieldError('comment')}
           {missing.length > 0 && <p className="executor-notice">Не хватает: {missing.join(', ')}. Можно отправить неполный результат на проверку. Закрытие наряда будет недоступно, пока обязательные доказательства не добавлены.</p>}
           {Object.keys(errors).length > 0 && <div className="executor-notice executor-notice--error" role="alert"><strong>Проверьте форму:</strong><ul>{Object.entries(errors).map(([key, message]) => <li key={key}>{message}</li>)}</ul></div>}

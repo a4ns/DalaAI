@@ -79,6 +79,6 @@ export function normalizeOutcome(value: unknown): MutationOutcome {
 }
 
 /** Ignore delayed uploads from another section, earlier form generation or unmounted identity. */
-export function canApplyPhotoResult(context: { mounted: boolean; locked: boolean; expectedGeneration: number; currentGeneration: number; expectedSection: string; currentSection: string }): boolean {
+export function canApplyPhotoResult(context: { mounted: boolean; locked: boolean; expectedGeneration: unknown; currentGeneration: unknown; expectedSection: string; currentSection: string }): boolean {
   return context.mounted && !context.locked && context.expectedGeneration === context.currentGeneration && context.expectedSection === context.currentSection;
 }

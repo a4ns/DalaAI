@@ -4,7 +4,7 @@ import { assertWire, isWire } from './validation';
 const BASE = '/api/v1';
 type SchemaName = 'Session' | 'Order' | 'Dictionaries' | 'OrderPage' | 'EventPage' | 'Submission' | 'StagedPhoto' | 'CommandResult';
 export interface PreparedMutation<T> { readonly operationId: string; readonly __resultType?: T }
-type Prepared = { epoch: number; path: string; body: string | Blob; contentType: string; schema: SchemaName; successStatus: number; inFlight?: Promise<unknown>; confirmed?: unknown; retryAt?: number; retryError?: ApiError };
+type Prepared = { epoch: number; path: string; body: string | Blob; contentType: string; schema: SchemaName; successStatus: number; inFlight?: Promise<unknown>; confirmed?: unknown; retryAt?: number; retryError?: ApiError; expectedOrderId?: string };
 export type StagePhotoInput = { sectionId: string; file: File } & ({ purpose: 'before' } | { purpose: 'after'; orderId: string; assignmentRevision: number });
 type WithoutOperation<T> = T extends unknown ? Omit<T, 'operation_id'> : never;
 export type OrderCommandIntent = WithoutOperation<OrderCommand>;
@@ -146,15 +146,25 @@ export class ApiClient {
   }
   getDictionaries(signal?: AbortSignal): Promise<Dictionaries> { return this.#request('/dicts', { schema: 'Dictionaries', signal }); }
   getPhoto(photoId: string, signal?: AbortSignal): Promise<Blob> { return this.#request(`/photos/${id(photoId)}`, { image: true, signal }); }
-  getOrder(orderId: string, signal?: AbortSignal): Promise<Order> { return this.#request(`/orders/${id(orderId)}`, { schema: 'Order', signal }); }
-  getSubmission(orderId: string, submissionId: string, signal?: AbortSignal): Promise<Submission> { return this.#request(`/orders/${id(orderId)}/submissions/${id(submissionId)}`, { schema: 'Submission', signal }); }
+  async getOrder(orderId: string, signal?: AbortSignal): Promise<Order> {
+    const order = await this.#request<Order>(`/orders/${id(orderId)}`, { schema: 'Order', signal });
+    if (order.id.toLowerCase() !== orderId.toLowerCase()) throw new ApiError('Ответ содержит другой наряд.');
+    return order;
+  }
+  async getSubmission(orderId: string, submissionId: string, signal?: AbortSignal): Promise<Submission> {
+    const submission = await this.#request<Submission>(`/orders/${id(orderId)}/submissions/${id(submissionId)}`, { schema: 'Submission', signal });
+    if (submission.order_id.toLowerCase() !== orderId.toLowerCase() || submission.id.toLowerCase() !== submissionId.toLowerCase()) throw new ApiError('Ответ содержит результат другого наряда или попытки.');
+    return submission;
+  }
   listOrders(filters: OrderFilters = {}, cursor?: string, signal?: AbortSignal): Promise<OrderPage> {
     const query = new URLSearchParams({ ...filters, limit: '100' }); if (cursor) query.set('cursor', cursor);
     return this.#request(`/orders?${query}`, { schema: 'OrderPage', signal });
   }
-  listOrderEvents(orderId: string, afterSequence = 0, signal?: AbortSignal): Promise<EventPage> {
+  async listOrderEvents(orderId: string, afterSequence = 0, signal?: AbortSignal): Promise<EventPage> {
     if (!Number.isSafeInteger(afterSequence) || afterSequence < 0) return Promise.reject(new ApiError('Курсор истории не может быть безопасно представлен. Запрос не отправлен.'));
-    return this.#request(`/orders/${id(orderId)}/events?after_sequence=${afterSequence}&limit=200`, { schema: 'EventPage', signal });
+    const page = await this.#request<EventPage>(`/orders/${id(orderId)}/events?after_sequence=${afterSequence}&limit=200`, { schema: 'EventPage', signal });
+    if (page.items.some(event => event.order_id.toLowerCase() !== orderId.toLowerCase())) throw new ApiError('История содержит событие другого наряда.');
+    return page;
   }
   prepareCreate(payload: CreatePayload): PreparedMutation<CommandResult> {
     const body: CreateOrder = { operation_id: crypto.randomUUID(), expected_version: 0, action: 'create', payload };
@@ -162,12 +172,12 @@ export class ApiClient {
   }
   prepareCommand(orderId: string, command: OrderCommandIntent): PreparedMutation<CommandResult> {
     const body = { ...command, operation_id: crypto.randomUUID() };
-    assertWire('OrderCommand', body); return this.#prepare(body.operation_id, `/orders/${id(orderId)}/commands`, JSON.stringify(body), 'CommandResult', 200);
+    assertWire('OrderCommand', body); return this.#prepare(body.operation_id, `/orders/${id(orderId)}/commands`, JSON.stringify(body), 'CommandResult', 200, 'application/json', orderId);
   }
-  #prepare<T>(operationId: string, path: string, body: string | Blob, schema: SchemaName, successStatus: number, contentType = 'application/json'): PreparedMutation<T> {
+  #prepare<T>(operationId: string, path: string, body: string | Blob, schema: SchemaName, successStatus: number, contentType = 'application/json', expectedOrderId?: string): PreparedMutation<T> {
     if (!this.#session) throw new ApiError('Сначала войдите в систему.', 401);
     const token = Object.freeze({ operationId });
-    this.#prepared.set(token, { epoch: this.#epoch, path, body, contentType, schema, successStatus });
+    this.#prepared.set(token, { epoch: this.#epoch, path, body, contentType, schema, successStatus, expectedOrderId });
     return token;
   }
   async preparePhoto(input: StagePhotoInput): Promise<PreparedMutation<StagedPhoto>> {
@@ -194,7 +204,10 @@ export class ApiClient {
     if (prepared.retryAt && prepared.retryAt > Date.now()) return Promise.reject(prepared.retryError);
     if (prepared.confirmed !== undefined) return Promise.resolve(prepared.confirmed as T);
     if (prepared.inFlight) return prepared.inFlight as Promise<T>;
-    const promise = this.#request<T>(prepared.path, { ...prepared, method: 'POST', mutation: true }).then(result => { prepared.confirmed = result; return result; }).catch((error: unknown) => {
+    const promise = this.#request<T>(prepared.path, { ...prepared, method: 'POST', mutation: true }).then(result => {
+      if (prepared.expectedOrderId && (result as CommandResult).order.id.toLowerCase() !== prepared.expectedOrderId.toLowerCase()) throw new ApiError('Ответ операции относится к другому наряду. Результат не подтверждён.', 200, null, true);
+      prepared.confirmed = result; return result;
+    }).catch((error: unknown) => {
       if (error instanceof ApiError && error.retryAfterSeconds !== null) { prepared.retryAt = Date.now() + error.retryAfterSeconds * 1000; prepared.retryError = error; }
       throw error;
     }).finally(() => { prepared.inFlight = undefined; });

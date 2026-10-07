@@ -12,7 +12,7 @@ npm --prefix frontend run check
 npm --prefix frontend run dev
 ```
 
-Default development and preview address: http://127.0.0.1:4171, fixed strict port. B6 browser tests use their own port 4176; test configuration/tests arrive independently. `test:ui` must not be claimed PASS before that package exists.
+Default development and preview address: http://127.0.0.1:4172, fixed strict port. B6 browser tests use their own port 4176; test configuration/tests arrive independently. `test:ui` must not be claimed PASS before that package exists.
 
 The API is same-origin `/api/v1` only; A5 owns HTTPS/session-serving integration. A Vite page without the API must show an honest connection failure. No API proxy or second auth protocol is configured here.
 
@@ -41,3 +41,15 @@ It reads `coord/proposals/a6-contract-v1/contracts/openapi.yaml` (SHA-256 `b8b5b
 `App.renderWorkspace` is the composition slot for independently delivered feature screens; it supplies the authenticated session, sessionKey, client and order store. Feature view models remain separate from DTOs. Before handing off a shared device after an unconfirmed logout, server revocation must be checked.
 
 Read/session requests also honor `Retry-After` by method and normalized route, so polling does not bypass a server cooldown. Event sequence and aggregate version are different: event paging uses ascending sequence and the returned cursor. All decoded schema integers must pass `Number.isSafeInteger`; cursors/versions beyond JavaScript's safe integer range are rejected rather than rounded. Outgoing event cursors and photo assignment revisions have the same safe-integer guard. No lossless int64 parser is claimed.
+
+## Assembled role workspace
+
+The import ledger is `src/app/assembly-manifest.json`. Feature snapshots remain byte-identical to their reviewed source commits; app/shared adapters own transport and cross-screen state.
+
+Master sessions can prepare creation and current-submission review requests; executor sessions can queue/accept/reject/start/pause/resume/submit. Manager sessions are read-only. Panel history drains authorized event pages and then reconciles the current order. These are real same-origin callbacks, never default synthetic success. A working HTTPS API/session/upload service must still be supplied by the backend/runtime lane; no credentials or runtime success are fabricated.
+
+Photo preparation, upload pending/unknown/failed and confirmed staged IDs are separate. Selecting a file starts its staging intent; pending intent is reserved synchronously. Only confirmed, unexpired, context-matching IDs enter a command. Local preparation busy does not disable/cancel its own picker. Unknown command/upload outcomes stay unresolved even if a later retry is blocked offline or by a cooldown. Draft/photo state is memory-only and session-scoped; master tab switching preserves mounted state. A best-effort beforeunload warning is not a reload/Android recovery guarantee.
+
+Session revalidation fences a changed CSRF handle, principal, role, active state or effective section scope. Mere section ordering, shift-status or expiry refresh does not invent an identity change. Command receipts and order/submission/history reads are checked against their requested object IDs before display or confirmation.
+
+Current local evidence: aggregate lint/typecheck/build and independent synthetic source checks. Actual browser rendering, live API/database effects, Android capture, upload latency, notifications and deployment remain separately unverified. A manifest link alone does not prove installability or offline support.
