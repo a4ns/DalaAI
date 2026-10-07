@@ -16,3 +16,8 @@ starlette==1.6.0
 typing-extensions==4.16.0
 typing-inspection==0.4.3
 uvicorn==0.52.1
+# Session Argon2id closure; exact versions verified against official PyPI.
+argon2-cffi==25.1.0
+argon2-cffi-bindings==25.1.0
+cffi==2.0.0
+pycparser==2.23

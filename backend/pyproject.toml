@@ -7,5 +7,6 @@ dependencies = [
   "fastapi==0.141.1",
   "uvicorn==0.52.1",
   "psycopg[binary]==3.3.6",
+  "argon2-cffi==25.1.0",
 ]
 # Install the full exact dependency closure from requirements(-dev).lock.

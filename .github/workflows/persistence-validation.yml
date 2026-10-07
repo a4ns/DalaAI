@@ -1,7 +1,7 @@
 name: PostgreSQL persistence validation
 'on':
   push:
-    branches: ['main', 'pod-a/A-009-persistence-runtime', 'pod-a/A-010-reference-key-hardening', 'pod-a/A-011-discovery-runtime']
+    branches: ['main', 'pod-a/A-009-persistence-runtime', 'pod-a/A-010-reference-key-hardening', 'pod-a/A-011-discovery-runtime', 'pod-a/A-012-session-runtime']
 permissions:
   contents: read
 concurrency:
@@ -71,5 +71,26 @@ jobs:
         run: python ops/run_discovery_review.py
       - name: Restricted-login discovery PostgreSQL gate
         run: python ops/run_discovery_role.py
+      - name: Session author gate, 28 local and 16 real PostgreSQL cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          scripts/run_session_tests.sh 2>&1 | tee session-gate.log
+          python - <<'PYCODE'
+          import pathlib, re
+          log = pathlib.Path('session-gate.log').read_text()
+          count = re.search(r'Ran (\d+) tests? in', log)
+          assert count and int(count.group(1)) == 44, 'Expected 28 local plus 16 real PostgreSQL cases'
+          assert not re.search(r'\bskipped\b', log), 'No session skips allowed'
+          print('PASS: 44 session cases, zero skips')
+          PYCODE
+      - name: Independent four-case adversarial session PostgreSQL gate
+        run: DALA_SESSION_CANDIDATE="$PWD" bash backend/review/sessions/run_pg_adversarial.sh
+      - name: Restricted-login session PostgreSQL gate
+        run: python ops/run_session_role.py
+      - name: Frozen harness safety checks
+        run: PYTHONPATH=backend:backend/acceptance python -m unittest discover -s backend/acceptance/tests -v
+      - name: Real component HTTP lifecycle and process-restart gate
+        run: python ops/run_vertical_acceptance.py
       - name: Aggregate with real PostgreSQL configured
         run: make check

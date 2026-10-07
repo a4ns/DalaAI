@@ -1,0 +1,26 @@
+{
+  "status": "Frozen input hashes; execution evidence is exact-head CI",
+  "files": {
+    "README_SESSIONS.md": "3afd584a17af01df9f5e28ef6aa7b6e47b539d8d0325356878dafd50309611b9",
+    "backend/app/sessions/__init__.py": "540644f93835f2a4178e45d74d5307e95cd70d7133d223bdff59209a1014d096",
+    "backend/app/sessions/crypto.py": "35030efaa5d910e4fe6cfe66a2fd60f216ace6f3f7965e092648e008a34243aa",
+    "backend/app/sessions/http.py": "60dbef66354f04600a23409652eb060c962d607d965abcc1398ae6f33a49e5fc",
+    "backend/app/sessions/limiter.py": "e47dbcaf46266113c3c2bdc1515798866a3c9a92b60bedf240253aa087e8cbb7",
+    "backend/app/sessions/service.py": "934bdb5e26e7e27a152844283ab4a4423fa4b054633fe6b79c4f1264c9405fe7",
+    "backend/db/proposals/003_auth_rate_limits.sql": "aafe87eead4b7eb2cdf88c74833a0fc8313343e79804b24bfacfc4b9fdd7f5c1",
+    "backend/tests/test_sessions_http.py": "4b7b8c3561c3f21a4664a3f3173932d251fdd3b57d96da6801cd1bb5a11a0bf7",
+    "backend/tests/test_sessions_postgres.py": "16130adf860ec065b92d6a6a12773d01ec7aa25b4e7b55b6f4fc2fc0bfeb03ea",
+    "backend/tests/test_sessions_unit.py": "13d75f8bc527bb7e0e7e5ac837529d12fc7894ac23e804e4b2a056115ef7f1db",
+    "requirements-sessions-proposal.txt": "f1e86e9310186e8e1449fc798a6c0d20abcba0e8f5fa1c1f696f498a1837a1dd",
+    "scripts/run_session_tests.sh": "c02ef1cfcb2927ca3afd7971c0af617af6bfd11ee743e5b26118985d71b09569",
+    "backend/acceptance/tests/test_contract_inputs.py": "6485381065e4d899b85e16e165dd13eb7349d262915cded42a26d6a3ca46f426",
+    "backend/acceptance/tests/test_harness.py": "691fc0ed8edbde01f350914f31ad669a33f929486e11b461bffae2a54f7ddd10",
+    "backend/acceptance/vertical_acceptance/__init__.py": "358a6332b2bc5d6db0143c23fd5369620bf7e239cbae2d59b4f46724606df1ad",
+    "backend/acceptance/vertical_acceptance/fixtures.py": "9eef305175e7ed90a54d7c2fe850ddab7b29b86a735aa2a2a2906ddf2afd48fb",
+    "backend/acceptance/vertical_acceptance/run.py": "0ce72298d1e64553bf2baedf2cabc69db720fecea4bd4188824ccfd29627b10f",
+    "backend/acceptance/vertical_acceptance/scenarios.py": "70c693eeb6d0e539fe0494cd52936ed42ed99ec66bd97684efe735d1aa73d391",
+    "backend/acceptance/vertical_acceptance/support.py": "8f61d36158460cec0d77e8501d2beef748b16f5671308d6d9a6f0c0dd77ce270",
+    "backend/review/sessions/test_session_pg_adversarial.py": "0ead8dbed7771e25163ca49a4a449299b8b674b0caeebea6dc5d7cd17fe69406",
+    "backend/review/sessions/run_pg_adversarial.sh": "40a651e92b1464e3cc99c801c85e6a07c94b00ea6bbc8119ab276706769bbe26"
+  }
+}
