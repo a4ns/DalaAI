@@ -119,6 +119,18 @@ def validate_database(connect):
                 WHERE n.nspname=current_schema() AND t.tgenabled IN ('O','A')''').fetchall()
             if not REQUIRED_TRIGGERS <= {(r['relname'],r['tgname']) for r in found}:
                 raise RuntimePrerequisiteError('REQUIRED_GUARD_MISSING')
+            for table in TABLE_COLUMNS:
+                for privilege in ('DELETE','TRUNCATE','TRIGGER'):
+                    if db.execute('SELECT has_table_privilege(%s,%s) AS ok',(table,privilege)).fetchone()['ok']:
+                        raise RuntimePrerequisiteError('FORBIDDEN_GRANT')
+                if table not in INSERT_TABLES and db.execute("SELECT has_table_privilege(%s,'INSERT') AS ok",(table,)).fetchone()['ok']:
+                    raise RuntimePrerequisiteError('FORBIDDEN_GRANT')
+                if table not in ('orders','delivery_jobs'):
+                    columns = db.execute("SELECT attname FROM pg_attribute WHERE attrelid=%s::regclass AND attnum>0 AND NOT attisdropped",(table,)).fetchall()
+                    for column in columns:
+                        name = column['attname']
+                        if name not in UPDATE_COLUMNS.get(table, ()) and db.execute("SELECT has_column_privilege(%s,%s,'UPDATE') AS ok",(table,name)).fetchone()['ok']:
+                            raise RuntimePrerequisiteError('FORBIDDEN_GRANT')
             for table in INSERT_TABLES:
                 if not db.execute("SELECT has_table_privilege(%s,'INSERT') AS ok",(table,)).fetchone()['ok']:
                     raise RuntimePrerequisiteError('REQUIRED_GRANT_MISSING')

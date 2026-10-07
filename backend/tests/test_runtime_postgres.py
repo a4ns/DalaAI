@@ -69,6 +69,26 @@ class MountedRuntimeTests(unittest.TestCase):
             db.execute(f.sql.SQL('GRANT UPDATE (pin_hash) ON employees TO {}').format(f.sql.Identifier(f.runtime_role)))
         self.rejection('FORBIDDEN_GRANT')
 
+    def test_destructive_table_grants_are_rejected(self):
+        f=self.fixture
+        for privilege in ('DELETE','TRUNCATE','TRIGGER'):
+            with self.subTest(privilege=privilege), f.connect() as db:
+                db.execute(f.sql.SQL('GRANT {} ON order_events TO {}').format(f.sql.SQL(privilege),f.sql.Identifier(f.runtime_role)))
+                self.rejection('FORBIDDEN_GRANT')
+                db.execute(f.sql.SQL('REVOKE {} ON order_events FROM {}').format(f.sql.SQL(privilege),f.sql.Identifier(f.runtime_role)))
+
+    def test_extra_auth_column_grant_is_rejected(self):
+        f=self.fixture
+        with f.connect() as db:
+            db.execute(f.sql.SQL('GRANT UPDATE (employee_code) ON employees TO {}').format(f.sql.Identifier(f.runtime_role)))
+        self.rejection('FORBIDDEN_GRANT')
+
+    def test_extra_reference_insert_is_rejected(self):
+        f=self.fixture
+        with f.connect() as db:
+            db.execute(f.sql.SQL('GRANT INSERT ON employees TO {}').format(f.sql.Identifier(f.runtime_role)))
+        self.rejection('FORBIDDEN_GRANT')
+
     def test_missing_session_revoke_grant_is_rejected(self):
         f=self.fixture
         with f.connect() as db:
@@ -83,6 +103,13 @@ class MountedRuntimeTests(unittest.TestCase):
             self.assertEqual(response.status_code,503)
             self.assertEqual(response.json(),{'status':'not_ready'})
             self.assertEqual(client.get('/healthz').status_code,200)
+            self.assertEqual(client.get('/api/v1/orders').status_code,503)
+            self.owner_exec('ALTER TABLE employees ENABLE TRIGGER employees_identity_immutable')
+            self.assertEqual(client.get('/readyz').status_code,503)
+            self.assertEqual(client.get('/api/v1/me').status_code,503)
+        # Only a fresh successfully validated application instance recovers.
+        with TestClient(self.app(),base_url=data.ORIGIN) as recovered:
+            self.assertEqual(recovered.get('/readyz').status_code,200)
 
     def test_true_database_photo_flag_cannot_close_without_blob_verifier(self):
         f=self.fixture
