@@ -1,7 +1,7 @@
 name: PostgreSQL persistence validation
 'on':
   push:
-    branches: ['main', 'pod-a/A-009-persistence-runtime', 'pod-a/A-010-reference-key-hardening', 'pod-a/A-011-discovery-runtime', 'pod-a/A-012-session-runtime', 'pod-a/A-013-mounted-runtime', 'pod-a/A-014-events-runtime']
+    branches: ['main', 'pod-a/A-009-persistence-runtime', 'pod-a/A-010-reference-key-hardening', 'pod-a/A-011-discovery-runtime', 'pod-a/A-012-session-runtime', 'pod-a/A-013-mounted-runtime', 'pod-a/A-014-events-runtime', 'pod-a/A-016-photo-runtime']
 permissions:
   contents: read
 concurrency:
@@ -108,5 +108,13 @@ jobs:
         run: python ops/run_events_role.py
       - name: Events HTTP lifecycle and process restart
         run: python ops/run_events_acceptance.py
+      - name: Photo author PostgreSQL gate
+        run: scripts/run_photo_postgres_tests.sh
+      - name: Independent photo lock races
+        run: DALA_PHOTO_CANDIDATE="$PWD" bash backend/review/photos/run_pg_races.sh
+      - name: Restricted-login photo PostgreSQL gate
+        run: python ops/run_photos_role.py
+      - name: Actual mounted physical-photo closure integrity
+        run: python ops/run_photo_closure_tests.py
       - name: Aggregate with real PostgreSQL configured
         run: make check

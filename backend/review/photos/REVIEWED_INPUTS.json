@@ -1,0 +1,20 @@
+{
+  "files": {
+    "backend/app/photos/__init__.py": "782b1ffc5d5db2c04f1b81644d190e507270e0443b18ddebc2c9f51bacfb0a10",
+    "backend/app/photos/http.py": "f0689d8d476440d10f91ca52c253523c2168cce8dc6d347883b7d2b8b771f184",
+    "backend/app/photos/integrity.py": "1ddb3fb153929a4775286428ae193da1cd88cd00f08506924455aebd674eacb3",
+    "backend/app/photos/multipart.py": "4ecaad090fa29520d27e9adc82ddb8aeb29980a3da8c6ce2eb56382ae21f20a5",
+    "backend/app/photos/service.py": "f7a6c685f7f9fad4bbd45ebd3eb04843891b019a731682acbd0e51655559a7cf",
+    "backend/app/photos/storage.py": "e4da03ecdaa03d347473b7a140b84e3bd3d98058880cbf73e13e8df5d5a0eb7c",
+    "backend/app/photos/validation.py": "e6b295e469e364238287ddb9d6b3223a87947136eb7a8e18dfe205895a527a97",
+    "backend/tests/test_photos_http.py": "13931dafb84b57c6a887e537193da1d8a3c4f9060372ec95d6f3ff6e552bf2c5",
+    "backend/tests/test_photos_policy.py": "20aa0303cf4d6158a512fa0476a17ab7c6a8a432bb69759738e19280edea6144",
+    "backend/tests/test_photos_postgres.py": "1d3d0700786b37203147182a9b50ad4a6b1a86c9b3e77934a5af2913500399d5",
+    "backend/tests/test_photos_unit.py": "d5ac8c0e7e083a3e0fb75e3f29b0a8a66c6933c3cbd252169428fbe1cf8a8e75",
+    "requirements-photos-proposal.txt": "e10db4a4ace2dc4c38454b115b452c0af0368677b7d67454687629b36cdb8cb8",
+    "scripts/profile_photo_memory.py": "b2ddd0f3be025cb4b8491b5283dc60dfb4f1bcea6350537f28faa90b5a405290",
+    "scripts/run_photo_postgres_tests.sh": "d22d345a4e16ef72df84daebc577f665280f687f966b674c69e07bfb81efe1b4",
+    "backend/review/photos/test_photo_pg_races.py": "33db3aa65d7d4cc15160295b96027de8e5a38aac4e1176cf1a981043bee72832",
+    "backend/review/photos/run_pg_races.sh": "467fb4b103743dc9ad02b918e0780823ee61b3689d2b1d3de7a906691c66b5be"
+  }
+}

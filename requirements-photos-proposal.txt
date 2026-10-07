@@ -1,0 +1,7 @@
+# A5 owns merging exact dependency pins into existing lockfiles.
+# Present/imported locally; no install was performed by this candidate.
+# Official registry versions independently verified by A5:
+# https://pypi.org/project/pillow/12.3.0/
+# https://pypi.org/project/python-multipart/0.0.32/
+Pillow==12.3.0
+python-multipart==0.0.32

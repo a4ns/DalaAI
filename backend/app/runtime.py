@@ -12,8 +12,15 @@ class RuntimeSettings:
     database_url: str = field(default='', repr=False)
     allowed_origin: str = ''
     database_schema: str = 'public'
+    photo_storage_root: str = ''
+    photo_max_total_bytes: int = 1024 * 1024 * 1024
 
     def __post_init__(self):
+        from pathlib import Path
+        if not isinstance(self.photo_storage_root,str) or (self.photo_storage_root and not Path(self.photo_storage_root).is_absolute()):
+            raise ValueError('Private photo storage must be an absolute path')
+        if type(self.photo_max_total_bytes) is not int or not 8388608 <= self.photo_max_total_bytes <= 10737418240:
+            raise ValueError('Photo capacity must be bounded between 8MiB and 10GiB')
         if self.mode not in {'health', 'demo'}:
             raise ValueError('DALA_API_MODE must be health or demo')
         if not re.fullmatch(r'[a-z_][a-z0-9_]{0,62}', self.database_schema):
@@ -28,7 +35,9 @@ class RuntimeSettings:
         return cls(mode=os.environ.get('DALA_API_MODE', 'health'),
                    database_url=os.environ.get('DATABASE_URL', ''),
                    allowed_origin=os.environ.get('DALA_ALLOWED_ORIGIN', ''),
-                   database_schema=os.environ.get('DALA_DATABASE_SCHEMA', 'public'))
+                   database_schema=os.environ.get('DALA_DATABASE_SCHEMA', 'public'),
+                   photo_storage_root=os.environ.get('DALA_PHOTO_STORAGE_ROOT',''),
+                   photo_max_total_bytes=int(os.environ.get('DALA_PHOTO_MAX_TOTAL_BYTES',str(1024*1024*1024))))
 
 
 def connection_factory(settings):
@@ -92,10 +101,13 @@ class RuntimePrerequisiteError(RuntimeError):
         super().__init__('Runtime database prerequisites failed')
 
 
-def validate_database(connect):
+def validate_database(connect, *, photo_enabled=False):
     """No grants, seeds, migrations or external calls. Never include DSN in errors."""
     from psycopg import sql
     from psycopg.rows import dict_row
+    if type(photo_enabled) is not bool:
+        raise RuntimePrerequisiteError('INVALID_RUNTIME_CAPABILITY')
+    insert_tables = (*INSERT_TABLES, 'photos') if photo_enabled else INSERT_TABLES
     try:
         with connect() as db:
             if not db.autocommit:
@@ -123,7 +135,7 @@ def validate_database(connect):
                 for privilege in ('DELETE','TRUNCATE','TRIGGER'):
                     if db.execute('SELECT has_table_privilege(%s,%s) AS ok',(table,privilege)).fetchone()['ok']:
                         raise RuntimePrerequisiteError('FORBIDDEN_GRANT')
-                if table not in INSERT_TABLES and db.execute("SELECT has_table_privilege(%s,'INSERT') AS ok",(table,)).fetchone()['ok']:
+                if table not in insert_tables and db.execute("SELECT has_table_privilege(%s,'INSERT') AS ok",(table,)).fetchone()['ok']:
                     raise RuntimePrerequisiteError('FORBIDDEN_GRANT')
                 if table not in ('orders','delivery_jobs'):
                     columns = db.execute("SELECT attname FROM pg_attribute WHERE attrelid=%s::regclass AND attnum>0 AND NOT attisdropped",(table,)).fetchall()
@@ -131,7 +143,7 @@ def validate_database(connect):
                         name = column['attname']
                         if name not in UPDATE_COLUMNS.get(table, ()) and db.execute("SELECT has_column_privilege(%s,%s,'UPDATE') AS ok",(table,name)).fetchone()['ok']:
                             raise RuntimePrerequisiteError('FORBIDDEN_GRANT')
-            for table in INSERT_TABLES:
+            for table in insert_tables:
                 if not db.execute("SELECT has_table_privilege(%s,'INSERT') AS ok",(table,)).fetchone()['ok']:
                     raise RuntimePrerequisiteError('REQUIRED_GRANT_MISSING')
             for table, columns in UPDATE_COLUMNS.items():

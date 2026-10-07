@@ -14,7 +14,7 @@ from app.core.auth_boundary import AuthenticationRequired, SESSION_COOKIE_NAME
 from app.core.auth_policy import AccessDenied
 from app.orders.models import DomainError
 
-ERROR_STATUS = {"INVALID_REQUEST":400,"VALIDATION_FAILED":422,"NOT_FOUND":404,
+ERROR_STATUS = {"TEMPORARILY_UNAVAILABLE":503,"INVALID_REQUEST":400,"VALIDATION_FAILED":422,"NOT_FOUND":404,
     "FORBIDDEN":403,"PHOTO_EXPIRED":422,"UNSUPPORTED_MEDIA_TYPE":415,"VERSION_CONFLICT":409,"TRANSITION_CONFLICT":409,"STALE_ASSIGNMENT":409,
     "OPERATION_ID_REUSED":409,"INCOMPLETE_SUBMISSION":409,"PAYLOAD_TOO_LARGE":413}
 
@@ -68,10 +68,12 @@ def create_router(service):
                 code,status,message = "FORBIDDEN",403,"Access denied"
             else:
                 code,status,message = error.code,ERROR_STATUS.get(error.code,422),str(error)
-            body = {"code":code,"message":message,"request_id":str(uuid4()),"retryable":False,
+            body = {"code":code,"message":message,"request_id":str(uuid4()),"retryable":status==503,
                 "current_version":getattr(error,"current_version",None),
                 "field_errors":[{"path":f.path,"code":f.code} for f in getattr(error,"field_errors",())]}
-            return JSONResponse(body,status_code=status,headers={"Cache-Control":"private, no-store"})
+            headers = {"Cache-Control":"private, no-store"}
+            if status == 503: headers["Retry-After"] = "1"
+            return JSONResponse(body,status_code=status,headers=headers)
         except Exception as error:
             import psycopg
             if not isinstance(error,psycopg.Error):

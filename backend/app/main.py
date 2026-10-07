@@ -35,10 +35,28 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     from app.discovery.workload import POLICY_NAME, WorkloadPolicy
     connector = connect or connection_factory(settings)
     clock = SystemRealClock()
+    photo_enabled = bool(settings.photo_storage_root)
+    references_factory = UnavailablePhotoReferences
+    photo_service = None
+    if photo_enabled:
+        from functools import partial
+        from app.photos.storage import PrivateFileStore
+        from app.photos.service import PhotoService
+        from app.photos.integrity import PhotoIntegrityVerifier
+        from app.integration.photo_evidence import VerifiedPhotoReferences
+        store = PrivateFileStore(settings.photo_storage_root, max_total_bytes=settings.photo_max_total_bytes)
+        photo_service = PhotoService(connector, allowed_origin=settings.allowed_origin,
+                                     private_blob_store=store, real_clock=clock)
+        references_factory = partial(VerifiedPhotoReferences, verifier=PhotoIntegrityVerifier(store))
+
+    def check_database():
+        if photo_enabled:
+            return validate_database(connector, photo_enabled=True)
+        return validate_database(connector)
 
     @asynccontextmanager
     async def lifespan(app):
-        await asyncio.to_thread(validate_database, connector)
+        await asyncio.to_thread(check_database)
         app.state.runtime_ready = True
         try:
             yield
@@ -62,7 +80,7 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
         if not app.state.runtime_ready:
             return False
         try:
-            await asyncio.to_thread(validate_database, connector)
+            await asyncio.to_thread(check_database)
             return True
         except asyncio.CancelledError:
             app.state.runtime_ready = False
@@ -78,10 +96,13 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
                        demo_enabled=True, real_clock=clock)))
     app.include_router(command_router(CommandService(connector, allowed_origin=settings.allowed_origin,
                        delivery_channel='synthetic', domain_clock=clock, real_clock=clock,
-                       references_factory=UnavailablePhotoReferences)))
+                       references_factory=references_factory)))
     app.include_router(create_discovery_router(DiscoveryService(connector, domain_clock=clock,
                        real_clock=clock, dictionary_policy=WorkloadPolicy(POLICY_NAME))))
     app.include_router(create_order_events_router(OrderEventService(connector, real_clock=clock)))
+    if photo_service is not None:
+        from app.photos.http import create_photo_router
+        app.include_router(create_photo_router(photo_service))
     return app
 
 
