@@ -4,6 +4,7 @@ import { dueLocalToIso } from '../mobile/master/masterModel';
 import { emptyMasterCreateDraft } from '../mobile/master/types';
 import type { MasterCreateDraft, MasterReviewDraft, MasterReviewIntent } from '../mobile/master/types';
 import { ExecutorScreen } from '../mobile/executor/ExecutorScreen';
+import { ResultAnalysisDisclosure } from '../mobile/executor/ResultAnalysisDisclosure';
 import type { ExecutorDraft, ExecutorIntent } from '../mobile/executor/types';
 import { PanelScreen } from '../panel/PanelScreen';
 import type { PanelHistory } from '../panel/types';
@@ -160,7 +161,7 @@ export function Workspace({ client, orders, session, sessionKey, section }: { cl
     {notice && <p className="error" role="alert">{notice}</p>}
     {session.principal.role === 'master' && <div hidden={section === 'Обзор смены'}><MasterScreen dictionaries={mapResource(dictState, masterDictionaries)} orders={masterRows} createDraft={{ ...createDraft, beforePhotoIds: photos.confirmedIds(beforeContext) }} onCreateDraftChange={changeCreateDraft} beforePhotosBusy={photos.blocked(beforeContext)} renderBeforePhotos={context => <PhotoStages store={photos} context={beforeContext} disabled={context.disabled} canEdit={() => { const intent = pending.current.get('create'); return intent?.status !== 'pending' && !intent?.unresolved; }}/>} renderAfterPhotos={order => { const wire = rows.find(item => item.id === order.id); const result = wire ? submissionState.snapshot?.[submissionKey(wire)] : null; return result?.payload.after_photo_ids.map((photoId, index) => <ProtectedPhoto key={photoId} client={client} photoId={photoId} index={index}/>); }} reviewDrafts={reviewDrafts} onReviewDraftChange={(orderId, draft) => { const intent = pending.current.get(`review:${orderId}`); if (intent?.status === 'pending' || intent?.unresolved) return; setReviewDrafts(previous => ({ ...previous, [orderId]: draft })); }} online={online} domainNow={domainNow} onCreate={create} onReview={review} onRetryCreate={() => execute('create', null)} onRetryReview={orderId => execute(`review:${orderId}`, null)} onReload={refresh}/></div>}
     {session.principal.role === 'executor' && <>
-      <ExecutorScreen sessionKey={sessionKey} operationScopeKey={executorView.scope} quarantinedIntentCount={quarantinedScopes.length}
+      <ExecutorScreen resultAnalysisDisclosure={<ResultAnalysisDisclosure/>} sessionKey={sessionKey} operationScopeKey={executorView.scope} quarantinedIntentCount={quarantinedScopes.length}
         orders={mapResource(source, () => executorRows.map(order => executorOrder(order, dictState.snapshot)))}
         dictionaries={mapResource(dictState, executorDictionaries)} selectedOrderId={selected} drafts={visibleDrafts} photoBusy={selectedPhotosBusy}
         renderPhotoPicker={context => <PhotoStages store={photos} context={executor.photoContext({ id: context.orderId, section_id: context.sectionId, assignment_revision: context.assignmentRevision })} disabled={context.disabled} required={selectedOrder?.type === 'unplanned'} canEdit={() => executor.canEdit(context.orderId, context.assignmentRevision)}/>}

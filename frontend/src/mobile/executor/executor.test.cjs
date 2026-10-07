@@ -375,3 +375,87 @@ test('retained A mode refresh selection filter and add-row callbacks leave B fee
   assert.equal(h.text(), before); assert.match(h.text(), /Опишите выполненные работы/); assert.doesNotMatch(h.text(), /PRIVATE_CLOSED_NUMBER/);
   assert.equal(refreshes, 0); assert.deepEqual(selections, []); assert.deepEqual(edits, []);
 });
+
+const { ResultAnalysisDisclosure, resultAssessmentMessage } = load('ResultAnalysisDisclosure.tsx');
+const disclosure = (state) => renderToStaticMarkup(React.createElement(ResultAnalysisDisclosure, { state }));
+test('isolated disclosure defaults to unknown and states conditional transfer plus master decision', () => {
+  const html = disclosure();
+  assert.match(html, /Когда оператор включает OpenAI/);
+  assert.match(html, /описание выполненной работы и фотографии до и после выполнения передаются OpenAI/);
+  assert.match(html, /Настроенный режим:<\/strong> не подтверждён/);
+  assert.match(html, /Статус проверки результата не подтверждён/);
+  assert.match(html, /Окончательное решение принимает мастер/);
+  assert.doesNotMatch(html, /Проверка по правилам завершена|Результат анализа OpenAI получен|<button|<input/);
+});
+test('configured OpenAI never implies that this result was analyzed', () => {
+  const html = disclosure({ configuredMode: 'openai', assessment: { status: 'unknown', method: 'unknown' } });
+  assert.match(html, /Настроенный режим:<\/strong> OpenAI/);
+  assert.match(html, /Статус проверки результата не подтверждён/);
+  assert.doesNotMatch(html, /Результат анализа OpenAI получен|Проверка по правилам завершена/);
+});
+test('configured rules with missing assessment remains unknown instead of invented fallback completion', () => {
+  const html = disclosure({ configuredMode: 'rules_fallback', assessment: { status: 'unknown', method: 'unknown' } });
+  assert.match(html, /Настроенный режим:<\/strong> проверка по правилам/);
+  assert.match(html, /Статус проверки результата не подтверждён/);
+  assert.doesNotMatch(html, /Проверка по правилам завершена|Результат анализа OpenAI получен/);
+});
+test('actual rules fallback stays distinct from configured OpenAI and does not verify photo contents', () => {
+  const html = disclosure({ configuredMode: 'openai', assessment: { status: 'completed', method: 'rules_fallback' } });
+  assert.match(html, /Настроенный режим:<\/strong> OpenAI/);
+  assert.match(html, /Проверка по правилам завершена\. Это не подтверждает анализ содержимого фото моделью/);
+  assert.doesNotMatch(html, /Результат анализа OpenAI получен|Фото проверены|Работа безопасна|Фото не отправлялись/);
+});
+test('pending and failed OpenAI attempts never claim an analysis result was received', () => {
+  for (const status of ['pending', 'failed']) {
+    const html = disclosure({ configuredMode: 'openai', assessment: { status, method: 'openai' } });
+    assert.doesNotMatch(html, /Результат анализа OpenAI получен|Проверка по правилам завершена|Работа безопасна|Работа выполнена правильно/);
+  }
+  assert.equal(resultAssessmentMessage({ status: 'pending', method: 'openai' }), 'Проверка результата ещё не завершена.');
+  assert.equal(resultAssessmentMessage({ status: 'failed', method: 'openai' }), 'Проверку результата не удалось завершить. Подтверждённого результата анализа нет.');
+});
+test('completed outcome uses its verified method rather than the current configured mode', () => {
+  const html = disclosure({ configuredMode: 'rules_fallback', assessment: { status: 'completed', method: 'openai' } });
+  assert.match(html, /Настроенный режим:<\/strong> проверка по правилам/);
+  assert.match(html, /Результат анализа OpenAI получен/);
+  assert.equal(resultAssessmentMessage({ status: 'completed', method: 'unknown' }), 'Проверка завершена. Способ проверки не подтверждён.');
+  assert.equal(resultAssessmentMessage({ status: 'unknown', method: 'rules_fallback' }), 'Статус проверки результата не подтверждён.');
+  assert.equal(resultAssessmentMessage(undefined), 'Статус проверки результата не подтверждён.');
+});
+
+const disclosureMarker = React.createElement('aside', { 'data-testid': 'analysis-disclosure-slot' }, 'DISCLOSURE_SLOT_MARKER');
+test('optional disclosure mounts once inside selected result detail and outside forms or photo fieldsets', () => {
+  for (const status of ['in_progress', 'done', 'ai_review', 'rework', 'closed']) {
+    const html = markup({ orders: ready([order(status)]), resultAnalysisDisclosure: disclosureMarker });
+    assert.equal((html.match(/DISCLOSURE_SLOT_MARKER/g) ?? []).length, 1, status);
+    assert.match(html.match(/<article\b[\s\S]*?<\/article>/)?.[0] ?? '', /DISCLOSURE_SLOT_MARKER/, status);
+    for (const fieldset of html.match(/<fieldset\b[\s\S]*?<\/fieldset>/g) ?? []) assert.doesNotMatch(fieldset, /DISCLOSURE_SLOT_MARKER/);
+    if (status === 'in_progress') {
+      assert.ok(html.indexOf('DISCLOSURE_SLOT_MARKER') < html.indexOf('<form'), 'disclosure precedes result form');
+      const withoutSlot = html.replace('<aside data-testid="analysis-disclosure-slot">DISCLOSURE_SLOT_MARKER</aside>', '');
+      assert.equal(withoutSlot, markup({ orders: ready([order(status)]) }), 'slot does not change command controls or inputs');
+    }
+  }
+});
+test('optional disclosure stays absent outside result states and while pause or reject form is open', () => {
+  for (const status of ['issued', 'queued', 'accepted', 'rejected', 'paused', 'cancelled']) assert.doesNotMatch(markup({ orders: ready([order(status)]), resultAnalysisDisclosure: disclosureMarker }), /DISCLOSURE_SLOT_MARKER/);
+  const base = props({ orders: ready([order('in_progress')]), resultAnalysisDisclosure: disclosureMarker });
+  const h = harness(base); assert.match(h.text(), /DISCLOSURE_SLOT_MARKER/);
+  h.button('Приостановить').props.onClick(); h.render(base); assert.doesNotMatch(h.text(), /DISCLOSURE_SLOT_MARKER/);
+  h.button('Вернуться без отправки').props.onClick(); h.render(base); assert.equal((h.text().match(/DISCLOSURE_SLOT_MARKER/g) ?? []).length, 1);
+  const reject = harness(props({ resultAnalysisDisclosure: disclosureMarker })); reject.button('Отклонить').props.onClick(); reject.render(); assert.doesNotMatch(reject.text(), /DISCLOSURE_SLOT_MARKER/);
+});
+test('missing or quarantined selected order cannot render disclosure-associated private content', () => {
+  const privateDisclosure = React.createElement('aside', null, 'PRIVATE_OLD_RESULT_DISCLOSURE');
+  for (const selectedOrderId of [null, 'order-1']) {
+    const html = markup({ operationScopeKey: 'none', quarantinedIntentCount: 1, selectedOrderId, orders: ready([order('in_progress', { id: 'order-2', number: 'Н-002' })]), resultAnalysisDisclosure: privateDisclosure });
+    assert.doesNotMatch(html, /PRIVATE_OLD_RESULT_DISCLOSURE/);
+  }
+  assert.doesNotMatch(markup({ orders: ready([]), selectedOrderId: null, resultAnalysisDisclosure: privateDisclosure }), /PRIVATE_OLD_RESULT_DISCLOSURE/);
+});
+test('default unknown disclosure slot adds no configured-provider or completed-assessment claim', () => {
+  const html = markup({ orders: ready([order('in_progress')]), resultAnalysisDisclosure: React.createElement(ResultAnalysisDisclosure) });
+  assert.equal((html.match(/Когда оператор включает OpenAI/g) ?? []).length, 1);
+  assert.match(html, /Настроенный режим:<\/strong> не подтверждён/);
+  assert.match(html, /Статус проверки результата не подтверждён/);
+  assert.doesNotMatch(html, /Результат анализа OpenAI получен|Проверка по правилам завершена/);
+});

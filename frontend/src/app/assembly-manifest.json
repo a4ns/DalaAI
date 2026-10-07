@@ -12,7 +12,7 @@
     },
     {
       "lane": "B-103",
-      "sha": "b7c67a8066c03c382fe12c0f21800aa316a0ec47",
+      "sha": "d8ad2f9cd72aa3eda46b220617e468f8fe7ad18c",
       "paths": [
         "frontend/src/mobile/executor"
       ]
@@ -35,7 +35,7 @@
     },
     {
       "lane": "B-106",
-      "sha": "942a403528ee78ad37e9c7bed193005c4b1c1dfe",
+      "sha": "863bedf8c409c0047005574100d84d26c41f15a5",
       "paths": [
         "frontend/tests",
         "frontend/playwright.config.ts"
@@ -82,6 +82,7 @@
     "frontend/src/shared/api/pushProtocol.ts: exact additive A0-0031 validation without changing generated core wire",
     "frontend/src/shared/api/client.ts: same-origin additive push requests and bounded safe error codes",
     "frontend/src/app/pushSession.ts: explicit-action backend bridge with logout/epoch/expiry fences",
-    "frontend/src/app/PushPreferences.tsx: inert per-session push settings mount"
+    "frontend/src/app/PushPreferences.tsx: inert per-session push settings mount",
+    "frontend/src/app/Workspace.tsx: conditional result-analysis disclosure with explicit unknown defaults and no inferred provider provenance"
   ]
 }
