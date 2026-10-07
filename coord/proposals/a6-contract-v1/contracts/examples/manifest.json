@@ -1,0 +1,101 @@
+{
+  "synthetic": true,
+  "contract_version": "1.0.0-proposal.1",
+  "fixtures": [
+    {
+      "file": "01-create.request.json",
+      "schema": "CreateOrder",
+      "valid": true
+    },
+    {
+      "file": "02-create.response.json",
+      "schema": "CommandResult",
+      "valid": true
+    },
+    {
+      "file": "03-accept.request.json",
+      "schema": "OrderCommand",
+      "valid": true
+    },
+    {
+      "file": "04-start.request.json",
+      "schema": "OrderCommand",
+      "valid": true
+    },
+    {
+      "file": "05-submit.request.json",
+      "schema": "OrderCommand",
+      "valid": true
+    },
+    {
+      "file": "06-review.request.json",
+      "schema": "OrderCommand",
+      "valid": true
+    },
+    {
+      "file": "07-incomplete-submit.request.json",
+      "schema": "OrderCommand",
+      "valid": true
+    },
+    {
+      "file": "08-version-conflict.response.json",
+      "schema": "Problem",
+      "valid": true
+    },
+    {
+      "file": "09-ai-review.event.json",
+      "schema": "OrderEvent",
+      "valid": true
+    },
+    {
+      "file": "10-incomplete-submission.response.json",
+      "schema": "Submission",
+      "valid": true
+    },
+    {
+      "file": "11-rules-fallback.assessment.json",
+      "schema": "Assessment",
+      "valid": true
+    },
+    {
+      "file": "12-delivery-job.internal.json",
+      "schema": "DeliveryJob",
+      "valid": true
+    },
+    {
+      "file": "negative-spoofed-actor.json",
+      "schema": "CreateOrder",
+      "valid": false
+    },
+    {
+      "file": "negative-empty-work.json",
+      "schema": "OrderCommand",
+      "valid": false
+    },
+    {
+      "file": "negative-quantity.json",
+      "schema": "OrderCommand",
+      "valid": false
+    },
+    {
+      "file": "negative-unknown-action.json",
+      "schema": "OrderCommand",
+      "valid": false
+    },
+    {
+      "file": "negative-bad-timestamp.json",
+      "schema": "CreateOrder",
+      "valid": false
+    },
+    {
+      "file": "negative-impossible-timestamp.json",
+      "schema": "CreateOrder",
+      "valid": false
+    },
+    {
+      "file": "negative-unzoned-timestamp.json",
+      "schema": "CreateOrder",
+      "valid": false
+    }
+  ]
+}

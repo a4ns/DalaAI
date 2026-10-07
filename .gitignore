@@ -26,3 +26,9 @@ node_modules/
 dist/
 coverage/
 *.log
+
+# Python build/test artifacts and local database volumes.
+*.egg-info/
+.coverage
+htmlcov/
+postgres_data/

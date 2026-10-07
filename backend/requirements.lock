@@ -1,0 +1,18 @@
+# Python 3.12, Linux. Exact pins; no provider SDK or paid API dependency.
+# Existing runtime dependency closure checked with importlib.metadata.
+# psycopg packages verified on PyPI; clean installation is a CI gate.
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.14.2
+click==8.4.2
+fastapi==0.141.1
+h11==0.16.0
+idna==3.18
+psycopg==3.3.6
+psycopg-binary==3.3.6
+pydantic==2.13.4
+pydantic-core==2.46.4
+starlette==1.6.0
+typing-extensions==4.16.0
+typing-inspection==0.4.3
+uvicorn==0.52.1

@@ -1,0 +1,27 @@
+{
+  "id": "00000000-0000-4000-8000-000000000011",
+  "order_id": "00000000-0000-4000-8000-000000000010",
+  "assignment_revision": 1,
+  "attempt_number": 1,
+  "submitted_by": "00000000-0000-4000-8000-000000000003",
+  "submitted_at": "2026-10-07T17:00:00Z",
+  "done_late": false,
+  "payload": {
+    "work_description": "Ремень заменён, выполнена пробная проверка. Синтетический пример.",
+    "work_code_id": "00000000-0000-4000-8000-000000000006",
+    "materials": [
+      {
+        "material_id": "00000000-0000-4000-8000-000000000007",
+        "quantity": 1
+      }
+    ],
+    "after_photo_ids": [],
+    "comment": "Проверка мастером обязательна"
+  },
+  "completeness": "incomplete",
+  "missing_evidence": [
+    "AFTER_PHOTO_REQUIRED"
+  ],
+  "assessments": [],
+  "reviews": []
+}

@@ -1,0 +1,40 @@
+name: dalaai
+services:
+  db:
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_USER: naryadai
+      POSTGRES_DB: naryadai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run make env first}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U naryadai -d naryadai"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+  api:
+    build:
+      context: ../backend
+    environment:
+      DATABASE_URL: postgresql://naryadai:${POSTGRES_PASSWORD:?Run make env first}@db:5432/naryadai
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/readyz', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+volumes:
+  postgres_data:

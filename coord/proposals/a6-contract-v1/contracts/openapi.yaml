@@ -1,0 +1,1728 @@
+openapi: 3.1.0
+info:
+  title: НарядAI thin vertical slice PROPOSAL
+  version: 1.0.0-proposal.1
+  description: Not frozen or implemented. Acceptance owner A0/human A pending; B0 and C0 handshake pending.
+    See CONTRACT.md. No production or device performance claim.
+servers:
+- url: /api/v1
+  description: Same-origin deployment
+security:
+- sessionCookie: []
+x-approval-status:
+  A0: pending
+  B0: pending
+  C0: pending
+paths:
+  /auth/login:
+    post:
+      operationId: loginDemoSession
+      summary: Sign in to isolated demo
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: __Host-naryadai_session=<opaque>; Path=/; Secure; HttpOnly; SameSite=Strict
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+      description: Same-origin JSON login; generic invalid-credential errors and real-clock rate limits. Secure
+        session cookie is set. No authenticated CSRF token exists before login; require exact same Origin and
+        reject cross-site requests.
+      security: []
+  /auth/logout:
+    post:
+      operationId: logoutSession
+      summary: Revoke current session and clear cookie
+      parameters:
+      - &id002
+        name: X-CSRF-Token
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 256
+        description: Session-bound token returned by login or /me; exact Origin validation also required.
+      responses:
+        '204':
+          description: Session revoked
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /me:
+    get:
+      operationId: getCurrentSession
+      summary: Get caller scope and current CSRF token
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /dicts:
+    get:
+      operationId: getDictionaries
+      summary: Get only dictionaries and executors within caller scope
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dictionaries'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /orders:
+    get:
+      operationId: listOrders
+      summary: List authorized current snapshots
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPage'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      parameters:
+      - name: cursor
+        in: query
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 512
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/Status'
+      - name: section_id
+        in: query
+        schema: &id001
+          type: string
+          format: uuid
+      - name: equipment_id
+        in: query
+        schema: *id001
+      - name: executor_id
+        in: query
+        schema: *id001
+    post:
+      operationId: createOrder
+      summary: Issue an order as scoped master
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandResult'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrder'
+      parameters:
+      - *id002
+      description: One transaction attaches owned staged before-photos, assigns number and domain issued_at,
+        stores events, delivery jobs and receipt. expected_version=0. Identical retry returns original 201
+        body.
+  /orders/{order_id}:
+    parameters:
+    - &id003
+      name: order_id
+      in: path
+      required: true
+      schema: *id001
+    get:
+      operationId: getOrder
+      summary: Read an authorized current snapshot
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /orders/{order_id}/commands:
+    parameters:
+    - *id003
+    post:
+      operationId: executeOrderCommand
+      summary: Apply one authorized idempotent order command
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandResult'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCommand'
+      parameters:
+      - *id002
+      description: Authentication and CURRENT object authorization precede receipt lookup; identical committed
+        replay bypasses old version/transition checks. Reused ID with a different canonical request => 409
+        OPERATION_ID_REUSED. Missing required after-photo can produce an incomplete submission; closing it
+        yields 409 INCOMPLETE_SUBMISSION.
+  /orders/{order_id}/events:
+    parameters:
+    - *id003
+    get:
+      operationId: listOrderEvents
+      summary: Read append-only authorized per-order event history
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventPage'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      parameters:
+      - name: after_sequence
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 100
+  /orders/{order_id}/submissions/{submission_id}:
+    parameters:
+    - *id003
+    - name: submission_id
+      in: path
+      required: true
+      schema: *id001
+    get:
+      operationId: getSubmission
+      summary: Read an immutable attempt with assessment and human review history
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /photos/stage:
+    post:
+      operationId: stagePhoto
+      summary: Validate and privately stage one photo
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StagedPhoto'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '413':
+          description: Maximum upload size exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '415':
+          description: Unsupported or invalid image
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - *id002
+      description: Before requires neither order_id nor assignment_revision; after requires both and current
+        assigned executor. Max 8 MiB and 20 megapixels, decode-and-reencode, strip EXIF/GPS, safe generated
+        storage key. TTL 24 real hours; limits are proposal choices. Hash includes raw file SHA-256 and form
+        metadata. Replay does not extend TTL. No remote URL upload.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StagePhotoRequest'
+  /photos/{photo_id}:
+    parameters:
+    - name: photo_id
+      in: path
+      required: true
+      schema: *id001
+    get:
+      operationId: getPhoto
+      summary: Read a photo after current staged-owner or order authorization
+      responses:
+        '200':
+          description: Private image; no public object-storage URL
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: private, no-store
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-naryadai_session
+  schemas:
+    Role:
+      type: string
+      enum:
+      - master
+      - executor
+      - manager
+      - admin
+    Status:
+      type: string
+      enum:
+      - issued
+      - queued
+      - accepted
+      - rejected
+      - in_progress
+      - paused
+      - done
+      - ai_review
+      - rework
+      - closed
+      - cancelled
+    Assignment:
+      type: object
+      additionalProperties: false
+      properties:
+        executor_id: *id001
+        brigade_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+      required:
+      - executor_id
+      - brigade_id
+    Principal:
+      type: object
+      additionalProperties: false
+      properties:
+        user_id: *id001
+        active:
+          type: boolean
+        employee_code:
+          type: string
+          minLength: 1
+          maxLength: 40
+        role:
+          $ref: '#/components/schemas/Role'
+        section_ids:
+          type: array
+          items: *id001
+        on_shift:
+          type: boolean
+      required:
+      - user_id
+      - active
+      - employee_code
+      - role
+      - section_ids
+      - on_shift
+    Session:
+      type: object
+      additionalProperties: false
+      properties:
+        principal:
+          $ref: '#/components/schemas/Principal'
+        csrf_token:
+          type: string
+          minLength: 1
+          maxLength: 256
+        expires_at: &id004
+          type: string
+          format: date-time
+          description: RFC3339; normalize inputs to UTC and emit Z. Real/domain clock determined by field semantics.
+      required:
+      - principal
+      - csrf_token
+      - expires_at
+    Login:
+      type: object
+      additionalProperties: false
+      properties:
+        employee_code:
+          type: string
+          minLength: 1
+          maxLength: 40
+        pin:
+          type: string
+          minLength: 4
+          maxLength: 64
+          writeOnly: true
+      required:
+      - employee_code
+      - pin
+    FieldError:
+      type: object
+      additionalProperties: false
+      properties:
+        path:
+          type: string
+          minLength: 1
+          maxLength: 200
+        code:
+          type: string
+          minLength: 1
+          maxLength: 80
+      required:
+      - path
+      - code
+    Problem:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          enum:
+          - INVALID_REQUEST
+          - VALIDATION_FAILED
+          - UNAUTHENTICATED
+          - FORBIDDEN
+          - NOT_FOUND
+          - VERSION_CONFLICT
+          - TRANSITION_CONFLICT
+          - OPERATION_ID_REUSED
+          - INCOMPLETE_SUBMISSION
+          - STALE_ASSIGNMENT
+          - PHOTO_EXPIRED
+          - RATE_LIMITED
+          - TEMPORARILY_UNAVAILABLE
+          - PAYLOAD_TOO_LARGE
+          - UNSUPPORTED_MEDIA_TYPE
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        request_id: *id001
+        retryable:
+          type: boolean
+        current_version:
+          anyOf:
+          - &id005
+            type: integer
+            minimum: 1
+          - type: 'null'
+        field_errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+      required:
+      - code
+      - message
+      - request_id
+      - retryable
+      - current_version
+      - field_errors
+    CreatePayload:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum:
+          - planned
+          - unplanned
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        section_id: *id001
+        equipment_id: *id001
+        assignment:
+          $ref: '#/components/schemas/Assignment'
+        due_at: *id004
+        norm_minutes:
+          type: integer
+          minimum: 1
+          maximum: 525600
+        priority:
+          type: string
+          enum:
+          - normal
+          - high
+          - emergency
+        comment:
+          type: string
+          minLength: 0
+          maxLength: 2000
+        before_photo_ids:
+          type: array
+          items: *id001
+          maxItems: 5
+          uniqueItems: true
+      required:
+      - type
+      - description
+      - section_id
+      - equipment_id
+      - assignment
+      - due_at
+      - norm_minutes
+      - priority
+      - comment
+      - before_photo_ids
+    CreateOrder:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version:
+          type: integer
+          const: 0
+        action:
+          const: create
+          type: string
+        payload:
+          $ref: '#/components/schemas/CreatePayload'
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    MaterialUse:
+      type: object
+      additionalProperties: false
+      properties:
+        material_id: *id001
+        quantity:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 999999999
+          description: Up to three fractional digits; unit is the material dictionary unit.
+      required:
+      - material_id
+      - quantity
+    SubmitPayload:
+      type: object
+      additionalProperties: false
+      properties:
+        work_description:
+          type: string
+          minLength: 1
+          maxLength: 6000
+        work_code_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        materials:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialUse'
+          maxItems: 40
+        after_photo_ids:
+          type: array
+          items: *id001
+          maxItems: 5
+          uniqueItems: true
+        comment:
+          type: string
+          minLength: 0
+          maxLength: 2000
+      required:
+      - work_description
+      - work_code_id
+      - materials
+      - after_photo_ids
+      - comment
+    ReviewPayload:
+      type: object
+      additionalProperties: false
+      properties:
+        submission_id: *id001
+        decision:
+          type: string
+          enum:
+          - close
+          - rework
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        final_score:
+          anyOf:
+          - type: integer
+            minimum: 0
+            maximum: 100
+          - type: 'null'
+      required:
+      - submission_id
+      - decision
+      - reason
+      - final_score
+    MissingEvidence:
+      type: string
+      enum:
+      - WORK_CODE_REQUIRED
+      - AFTER_PHOTO_REQUIRED
+    Assessment:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        submission_id: *id001
+        assignment_revision: *id005
+        schema_version:
+          type: string
+          const: '1'
+        mode:
+          type: string
+          enum:
+          - model
+          - rules_fallback
+          - manual
+        model:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 120
+          - type: 'null'
+        model_version:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 120
+          - type: 'null'
+        duration_ms:
+          type: integer
+          minimum: 0
+        recommendation:
+          type: string
+          enum:
+          - satisfactory
+          - rework_recommended
+          - needs_master_review
+        score:
+          anyOf:
+          - type: integer
+            minimum: 0
+            maximum: 100
+          - type: 'null'
+        reasons:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 2000
+        evidence_ids:
+          type: array
+          items: *id001
+        fallback_reason:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 120
+          - type: 'null'
+        stale:
+          type: boolean
+        created_at: *id004
+      required:
+      - id
+      - submission_id
+      - assignment_revision
+      - schema_version
+      - mode
+      - model
+      - model_version
+      - duration_ms
+      - recommendation
+      - score
+      - reasons
+      - evidence_ids
+      - fallback_reason
+      - stale
+      - created_at
+    Review:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        submission_id: *id001
+        reviewer_id: *id001
+        decision:
+          type: string
+          enum:
+          - close
+          - rework
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        final_score:
+          anyOf:
+          - type: integer
+            minimum: 0
+            maximum: 100
+          - type: 'null'
+        created_at: *id004
+      required:
+      - id
+      - submission_id
+      - reviewer_id
+      - decision
+      - reason
+      - final_score
+      - created_at
+    Submission:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        order_id: *id001
+        assignment_revision: *id005
+        attempt_number: *id005
+        submitted_by: *id001
+        submitted_at: *id004
+        done_late:
+          type: boolean
+        payload:
+          $ref: '#/components/schemas/SubmitPayload'
+        completeness:
+          type: string
+          enum:
+          - complete
+          - incomplete
+        missing_evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/MissingEvidence'
+        assessments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assessment'
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
+      required:
+      - id
+      - order_id
+      - assignment_revision
+      - attempt_number
+      - submitted_by
+      - submitted_at
+      - done_late
+      - payload
+      - completeness
+      - missing_evidence
+      - assessments
+      - reviews
+    Order:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        number:
+          type: string
+          minLength: 1
+          maxLength: 80
+        version: *id005
+        assignment_revision: *id005
+        scheduling_revision: *id005
+        status:
+          $ref: '#/components/schemas/Status'
+        type:
+          type: string
+          enum:
+          - planned
+          - unplanned
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        section_id: *id001
+        equipment_id: *id001
+        assignment:
+          $ref: '#/components/schemas/Assignment'
+        created_by: *id001
+        issued_at: *id004
+        due_at: *id004
+        norm_minutes:
+          type: integer
+          minimum: 1
+        priority:
+          type: string
+          enum:
+          - normal
+          - high
+          - emergency
+        comment:
+          type: string
+          minLength: 0
+          maxLength: 2000
+        before_photo_ids:
+          type: array
+          items: *id001
+          maxItems: 5
+        current_submission_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        is_overdue:
+          type: boolean
+        domain_now: *id004
+        updated_at: *id004
+      required:
+      - id
+      - number
+      - version
+      - assignment_revision
+      - scheduling_revision
+      - status
+      - type
+      - description
+      - section_id
+      - equipment_id
+      - assignment
+      - created_by
+      - issued_at
+      - due_at
+      - norm_minutes
+      - priority
+      - comment
+      - before_photo_ids
+      - current_submission_id
+      - is_overdue
+      - domain_now
+      - updated_at
+    CommandResult:
+      type: object
+      additionalProperties: false
+      properties:
+        order:
+          $ref: '#/components/schemas/Order'
+        event_ids:
+          type: array
+          items: *id001
+          minItems: 1
+        submission_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+      required:
+      - order
+      - event_ids
+      - submission_id
+    OrderPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        next_cursor:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 512
+          - type: 'null'
+      required:
+      - items
+      - next_cursor
+    OrderEvent:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        order_id: *id001
+        sequence: *id005
+        order_version: *id005
+        assignment_revision: *id005
+        scheduling_revision: *id005
+        reason:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 2000
+          - type: 'null'
+        details:
+          type: object
+          additionalProperties: true
+          description: Trusted server-generated audit changes only; never raw prompts or arbitrary client metadata.
+        kind:
+          type: string
+          enum:
+          - order.created
+          - order.queued
+          - order.accepted
+          - order.rejected
+          - order.started
+          - order.paused
+          - order.resumed
+          - order.done
+          - order.ai_review_requested
+          - order.assessment_recorded
+          - order.reviewed
+          - order.reassigned
+          - order.cancelled
+          - order.priority_changed
+        actor_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        operation_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        from_status:
+          anyOf:
+          - $ref: '#/components/schemas/Status'
+          - type: 'null'
+        to_status:
+          $ref: '#/components/schemas/Status'
+        submission_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        occurred_at: *id004
+        recorded_at: *id004
+      required:
+      - id
+      - order_id
+      - sequence
+      - order_version
+      - assignment_revision
+      - scheduling_revision
+      - reason
+      - details
+      - kind
+      - actor_id
+      - operation_id
+      - from_status
+      - to_status
+      - submission_id
+      - occurred_at
+      - recorded_at
+    EventPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderEvent'
+        next_after_sequence:
+          type: integer
+          minimum: 0
+        has_more:
+          type: boolean
+      required:
+      - items
+      - next_after_sequence
+      - has_more
+    StagedPhoto:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        purpose:
+          type: string
+          enum:
+          - before
+          - after
+        owner_id: *id001
+        order_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        assignment_revision:
+          anyOf:
+          - *id005
+          - type: 'null'
+        mime_type:
+          type: string
+          enum:
+          - image/jpeg
+          - image/png
+          - image/webp
+        bytes:
+          type: integer
+          minimum: 1
+          maximum: 8388608
+        sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        uploaded_at: *id004
+        expires_at: *id004
+        exif_removed:
+          type: boolean
+      required:
+      - id
+      - purpose
+      - owner_id
+      - order_id
+      - assignment_revision
+      - mime_type
+      - bytes
+      - sha256
+      - uploaded_at
+      - expires_at
+      - exif_removed
+    StagePhotoRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version:
+          type: integer
+          const: 0
+        purpose:
+          type: string
+          enum:
+          - before
+          - after
+        order_id: *id001
+        assignment_revision: *id005
+        file:
+          type: string
+          format: binary
+      required:
+      - operation_id
+      - expected_version
+      - purpose
+      - file
+    QueueCommand:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version: *id005
+        action:
+          const: queue
+          type: string
+        payload:
+          type: object
+          additionalProperties: false
+          properties: {}
+          required: []
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    AcceptCommand:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version: *id005
+        action:
+          const: accept
+          type: string
+        payload:
+          type: object
+          additionalProperties: false
+          properties: {}
+          required: []
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    StartCommand:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version: *id005
+        action:
+          const: start
+          type: string
+        payload:
+          type: object
+          additionalProperties: false
+          properties: {}
+          required: []
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    ResumeCommand:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version: *id005
+        action:
+          const: resume
+          type: string
+        payload:
+          type: object
+          additionalProperties: false
+          properties: {}
+          required: []
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    RejectCommand:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version: *id005
+        action:
+          const: reject
+          type: string
+        payload:
+          type: object
+          additionalProperties: false
+          properties:
+            reason:
+              type: string
+              minLength: 1
+              maxLength: 2000
+          required:
+          - reason
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    PauseCommand:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version: *id005
+        action:
+          const: pause
+          type: string
+        payload:
+          type: object
+          additionalProperties: false
+          properties:
+            reason:
+              type: string
+              minLength: 1
+              maxLength: 2000
+          required:
+          - reason
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    SubmitCommand:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version: *id005
+        action:
+          const: submit
+          type: string
+        payload:
+          $ref: '#/components/schemas/SubmitPayload'
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    ReviewCommand:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version: *id005
+        action:
+          const: review
+          type: string
+        payload:
+          $ref: '#/components/schemas/ReviewPayload'
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    ReassignCommand:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version: *id005
+        action:
+          const: reassign
+          type: string
+        payload:
+          type: object
+          additionalProperties: false
+          properties:
+            assignment:
+              $ref: '#/components/schemas/Assignment'
+            reason:
+              type: string
+              minLength: 1
+              maxLength: 2000
+          required:
+          - assignment
+          - reason
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    CancelCommand:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version: *id005
+        action:
+          const: cancel
+          type: string
+        payload:
+          type: object
+          additionalProperties: false
+          properties:
+            reason:
+              type: string
+              minLength: 1
+              maxLength: 2000
+          required:
+          - reason
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    ChangePriorityCommand:
+      type: object
+      additionalProperties: false
+      properties:
+        operation_id: *id001
+        expected_version: *id005
+        action:
+          const: change_priority
+          type: string
+        payload:
+          type: object
+          additionalProperties: false
+          properties:
+            priority:
+              type: string
+              enum:
+              - normal
+              - high
+              - emergency
+            reason:
+              type: string
+              minLength: 1
+              maxLength: 2000
+          required:
+          - priority
+          - reason
+      required:
+      - operation_id
+      - expected_version
+      - action
+      - payload
+    OrderCommand:
+      oneOf:
+      - $ref: '#/components/schemas/QueueCommand'
+      - $ref: '#/components/schemas/AcceptCommand'
+      - $ref: '#/components/schemas/StartCommand'
+      - $ref: '#/components/schemas/ResumeCommand'
+      - $ref: '#/components/schemas/RejectCommand'
+      - $ref: '#/components/schemas/PauseCommand'
+      - $ref: '#/components/schemas/SubmitCommand'
+      - $ref: '#/components/schemas/ReviewCommand'
+      - $ref: '#/components/schemas/ReassignCommand'
+      - $ref: '#/components/schemas/CancelCommand'
+      - $ref: '#/components/schemas/ChangePriorityCommand'
+      discriminator:
+        propertyName: action
+        mapping:
+          queue: '#/components/schemas/QueueCommand'
+          accept: '#/components/schemas/AcceptCommand'
+          start: '#/components/schemas/StartCommand'
+          resume: '#/components/schemas/ResumeCommand'
+          reject: '#/components/schemas/RejectCommand'
+          pause: '#/components/schemas/PauseCommand'
+          submit: '#/components/schemas/SubmitCommand'
+          review: '#/components/schemas/ReviewCommand'
+          reassign: '#/components/schemas/ReassignCommand'
+          cancel: '#/components/schemas/CancelCommand'
+          change_priority: '#/components/schemas/ChangePriorityCommand'
+    DictionaryItem:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        code:
+          type: string
+          minLength: 1
+          maxLength: 80
+        label:
+          type: string
+          minLength: 1
+          maxLength: 200
+      required:
+      - id
+      - code
+      - label
+    EquipmentItem:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        code:
+          type: string
+          minLength: 1
+          maxLength: 80
+        label:
+          type: string
+          minLength: 1
+          maxLength: 200
+        section_id: *id001
+      required:
+      - id
+      - code
+      - label
+      - section_id
+    MaterialItem:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        code:
+          type: string
+          minLength: 1
+          maxLength: 80
+        label:
+          type: string
+          minLength: 1
+          maxLength: 200
+        unit:
+          type: string
+          minLength: 1
+          maxLength: 40
+      required:
+      - id
+      - code
+      - label
+      - unit
+    ExecutorItem:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        employee_code:
+          type: string
+          minLength: 1
+          maxLength: 40
+        section_ids:
+          type: array
+          items: *id001
+        brigade_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        on_shift:
+          type: boolean
+        active_order_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        queue_count:
+          type: integer
+          minimum: 0
+      required:
+      - id
+      - employee_code
+      - section_ids
+      - brigade_id
+      - on_shift
+      - active_order_id
+      - queue_count
+    Dictionaries:
+      type: object
+      additionalProperties: false
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/DictionaryItem'
+        equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentItem'
+        brigades:
+          type: array
+          items:
+            $ref: '#/components/schemas/DictionaryItem'
+        executors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutorItem'
+        work_codes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DictionaryItem'
+        materials:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialItem'
+      required:
+      - sections
+      - equipment
+      - brigades
+      - executors
+      - work_codes
+      - materials
+    DeliveryJob:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        order_id: *id001
+        assignment_revision: *id005
+        scheduling_revision: *id005
+        kind:
+          type: string
+          enum:
+          - new_order
+          - deadline_reminder
+          - overdue
+          - acceptance_escalation
+          - manager_escalation
+          - submission_ready
+          - review_result
+        recipient_id: *id001
+        channel:
+          type: string
+          minLength: 1
+          maxLength: 40
+        bucket:
+          type: string
+          minLength: 1
+          maxLength: 100
+        due_at: *id004
+        state:
+          type: string
+          enum:
+          - pending
+          - sending
+          - provider_accepted
+          - retry
+          - cancelled
+          - failed
+        attempts:
+          type: integer
+          minimum: 0
+        next_attempt_at: *id004
+        provider_receipt:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 256
+          - type: 'null'
+      required:
+      - id
+      - order_id
+      - assignment_revision
+      - scheduling_revision
+      - kind
+      - recipient_id
+      - channel
+      - bucket
+      - due_at
+      - state
+      - attempts
+      - next_attempt_at
+      - provider_receipt
+      description: Internal worker interface only, not a public endpoint or evidence of device delivery. Provider
+        and channel await A3/A0 approval.
+  responses:
+    Error400:
+      description: Malformed request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error401:
+      description: Unauthenticated
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error403:
+      description: Not authorized or CSRF/origin rejected
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error404:
+      description: Object does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error409:
+      description: Version, transition, idempotency, completeness, or assignment conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error422:
+      description: Semantically invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Error429:
+      description: Rate limited; Retry-After header
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            minimum: 1
+          description: Real seconds until retry
+    Error503:
+      description: Temporary failure; never a success receipt
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            minimum: 1
+          description: Real seconds until retry

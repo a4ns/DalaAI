@@ -1,0 +1,15 @@
+{
+  "id": "00000000-0000-4000-8000-000000000013",
+  "order_id": "00000000-0000-4000-8000-000000000010",
+  "assignment_revision": 1,
+  "scheduling_revision": 1,
+  "kind": "new_order",
+  "recipient_id": "00000000-0000-4000-8000-000000000003",
+  "channel": "adapter_pending_approval",
+  "bucket": "initial",
+  "due_at": "2026-10-07T17:00:00Z",
+  "state": "pending",
+  "attempts": 0,
+  "next_attempt_at": "2026-10-07T17:00:00Z",
+  "provider_receipt": null
+}

@@ -1,0 +1,21 @@
+{
+  "id": "00000000-0000-4000-8000-000000000012",
+  "submission_id": "00000000-0000-4000-8000-000000000011",
+  "assignment_revision": 1,
+  "schema_version": "1",
+  "mode": "rules_fallback",
+  "model": null,
+  "model_version": null,
+  "duration_ms": 0,
+  "recommendation": "needs_master_review",
+  "score": null,
+  "reasons": [
+    "Модель недоступна; требуется решение мастера"
+  ],
+  "evidence_ids": [
+    "00000000-0000-4000-8000-000000000011"
+  ],
+  "fallback_reason": "provider_unavailable",
+  "stale": false,
+  "created_at": "2026-10-07T17:00:00Z"
+}

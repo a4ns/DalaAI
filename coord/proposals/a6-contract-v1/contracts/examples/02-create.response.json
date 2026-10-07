@@ -1,0 +1,33 @@
+{
+  "order": {
+    "id": "00000000-0000-4000-8000-000000000010",
+    "number": "DEMO-2026-0001",
+    "version": 1,
+    "assignment_revision": 1,
+    "scheduling_revision": 1,
+    "status": "issued",
+    "type": "unplanned",
+    "description": "Синтетический пример: заменить изношенный ремень",
+    "section_id": "00000000-0000-4000-8000-000000000001",
+    "equipment_id": "00000000-0000-4000-8000-000000000002",
+    "assignment": {
+      "executor_id": "00000000-0000-4000-8000-000000000003",
+      "brigade_id": "00000000-0000-4000-8000-000000000004"
+    },
+    "due_at": "2026-10-07T18:00:00Z",
+    "norm_minutes": 45,
+    "priority": "normal",
+    "comment": "Демонстрационные данные",
+    "created_by": "00000000-0000-4000-8000-000000000005",
+    "issued_at": "2026-10-07T17:00:00Z",
+    "before_photo_ids": [],
+    "current_submission_id": null,
+    "is_overdue": false,
+    "domain_now": "2026-10-07T17:00:00Z",
+    "updated_at": "2026-10-07T17:00:00Z"
+  },
+  "event_ids": [
+    "00000000-0000-4000-8000-000000000201"
+  ],
+  "submission_id": null
+}

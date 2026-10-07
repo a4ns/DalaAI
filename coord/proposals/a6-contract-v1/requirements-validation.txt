@@ -1,0 +1,6 @@
+# Proposal-only offline validation dependencies; A5 owns root/dev lock integration.
+# Timestamp checking is explicit Python stdlib code, not optional package extras.
+PyYAML==6.0.3
+fastapi==0.141.1
+pydantic==2.13.4
+jsonschema==4.26.0

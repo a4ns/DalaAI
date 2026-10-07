@@ -1,0 +1,18 @@
+{
+  "id": "00000000-0000-4000-8000-000000000205",
+  "order_id": "00000000-0000-4000-8000-000000000010",
+  "sequence": 5,
+  "order_version": 4,
+  "assignment_revision": 1,
+  "scheduling_revision": 1,
+  "reason": null,
+  "details": {},
+  "kind": "order.ai_review_requested",
+  "actor_id": null,
+  "operation_id": "00000000-0000-4000-8000-000000000105",
+  "from_status": "done",
+  "to_status": "ai_review",
+  "submission_id": "00000000-0000-4000-8000-000000000011",
+  "occurred_at": "2026-10-07T17:00:00Z",
+  "recorded_at": "2026-10-07T17:00:00Z"
+}
