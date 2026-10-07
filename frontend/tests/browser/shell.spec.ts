@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   await page.route('**/api/v1/**', route => route.fulfill({ status: 200, contentType: 'application/json', body: '{"synthetic":"unavailable-api"}' }));
 });
-test('synthetic unavailable API: RU shell at 390px has a main landmark, no overflow or runtime console errors', async ({ page }, testInfo) => {
+test('synthetic unavailable API: RU shell at the configured viewport has a main landmark, no overflow or runtime console errors', async ({ page }, testInfo) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
@@ -19,8 +19,16 @@ test('synthetic unavailable API: RU shell at 390px has a main landmark, no overf
     viewport: document.documentElement.clientWidth,
   }));
   expect(overflow.scroll).toBeLessThanOrEqual(overflow.viewport);
+  const browserFacts = await page.evaluate(() => ({ userAgent: navigator.userAgent, touchPoints: navigator.maxTouchPoints, pixelRatio: devicePixelRatio, innerWidth }));
+  await testInfo.attach('browser-emulation-observation', { body: JSON.stringify({ project: testInfo.project.name, viewport: page.viewportSize(), ...browserFacts, physicalDevice: false }), contentType: 'application/json' });
+  if (testInfo.project.name === 'android-emulation-pixel-9') {
+    expect(browserFacts.userAgent).toContain('Android');
+    expect(browserFacts.touchPoints).toBeGreaterThan(0);
+    expect(browserFacts.pixelRatio).toBe(3);
+    expect(browserFacts.innerWidth).toBe(360);
+  }
   expect(errors, 'Errors are not suppressed, including failed resource loads.').toEqual([]);
-  await page.screenshot({ path: testInfo.outputPath('synthetic-unavailable-api-shell-390.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath(`synthetic-unavailable-api-${testInfo.project.name}.png`), fullPage: true });
 });
 
 test('keyboard skip link reaches main and navigation survives repeated activation', async ({ page }) => {
