@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "kind": "attributed_runtime_milestones_addendum",
+  "checked_at": "2026-10-07T23:07:44Z",
+  "checked_by": "C-106 source and public CI metadata review",
+  "documentation_base_sha": "a8c0183f7375ee1add082e49376f136549474570",
+  "selected_report_runtime_sha": "f101e4320b59b0a7dc81bdcb8b28c73849d4a747",
+  "latest_main_claim": false,
+  "own_product_execution": "NOT_RUN",
+  "ci_runs": [
+    {
+      "run_id": 37697793713,
+      "run_url": "https://github.com/a4ns/DalaAI/actions/runs/37697793713",
+      "head_sha": "ab632c0cf411b7670c1a03fe7aa97419950019a2",
+      "event": "push",
+      "head_branch": "main",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "run_created_at": "2026-10-07T22:41:43Z",
+      "run_updated_at": "2026-10-07T22:44:02Z",
+      "job_id": 113053699040,
+      "job_name": "mobile-core",
+      "job_url": "https://github.com/a4ns/DalaAI/actions/runs/37697793713/job/113053699040",
+      "job_status": "completed",
+      "job_conclusion": "success",
+      "acceptance_steps": [
+        {
+          "name": "Real PostgreSQL, mounted app, composed frontend and C-110 scenarios",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "run_id": 37698758395,
+      "run_url": "https://github.com/a4ns/DalaAI/actions/runs/37698758395",
+      "head_sha": "f101e4320b59b0a7dc81bdcb8b28c73849d4a747",
+      "event": "push",
+      "head_branch": "main",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "run_created_at": "2026-10-07T22:51:07Z",
+      "run_updated_at": "2026-10-07T22:52:04Z",
+      "job_id": 113056852691,
+      "job_name": "history-demo",
+      "job_url": "https://github.com/a4ns/DalaAI/actions/runs/37698758395/job/113056852691",
+      "job_status": "completed",
+      "job_conclusion": "success",
+      "acceptance_steps": [
+        {
+          "name": "Ten real historical/live/report PostgreSQL cases, zero skips",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "run_id": 37698758299,
+      "run_url": "https://github.com/a4ns/DalaAI/actions/runs/37698758299",
+      "head_sha": "f101e4320b59b0a7dc81bdcb8b28c73849d4a747",
+      "event": "push",
+      "head_branch": "main",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "run_created_at": "2026-10-07T22:51:07Z",
+      "run_updated_at": "2026-10-07T22:54:21Z",
+      "job_id": 113056852440,
+      "job_name": "postgres",
+      "job_url": "https://github.com/a4ns/DalaAI/actions/runs/37698758299/job/113056852440",
+      "job_status": "completed",
+      "job_conclusion": "success",
+      "acceptance_steps": [
+        {
+          "name": "Protected report author, restricted-login and actual-main PostgreSQL gates",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "mobile_summary": {
+    "artifact_id": 11515809067,
+    "artifact_name": "mobile-ci-summary-ab632c0cf411b7670c1a03fe7aa97419950019a2",
+    "archive_sha256": "c86c34a52994bc405a6ccb9f8b0fbc0ef154169aafd80df5990d9d21cd6addf0",
+    "expires_at": "2026-10-14T22:43:55Z",
+    "preserved_member": "docs/evidence/run/mobile-ab632c0-summary.json",
+    "member_bytes": 2103,
+    "archive_digest_verified": true,
+    "raw_logs_preserved": false,
+    "member_sha256": "699602336ed88b0176d32d9c62394b9e9c935cf390258a0b1d2e84101a705a9b"
+  },
+  "sources": [
+    {
+      "sha": "ab632c0cf411b7670c1a03fe7aa97419950019a2",
+      "paths": [
+        "ops/ci/README.md",
+        "ops/ci/scenarios.json"
+      ]
+    },
+    {
+      "sha": "23a135348a0e8ad9a140a36ca60e8440704b7893",
+      "paths": [
+        "tests/e2e/c110_README.md"
+      ]
+    },
+    {
+      "sha": "f101e4320b59b0a7dc81bdcb8b28c73849d4a747",
+      "paths": [
+        "backend/app/main.py",
+        "docs/analytics/runtime-http.md",
+        "docs/reports/runtime-contract.md",
+        "ops/provision/HISTORY_DEMO.md",
+        "ops/run_history_demo_tests.py",
+        "ops/run_report_runtime_tests.py"
+      ]
+    }
+  ],
+  "command_references": [
+    {
+      "command": "python ops/ci/run_mobile.py --report mobile-ci-summary.json",
+      "source_sha": "ab632c0cf411b7670c1a03fe7aa97419950019a2",
+      "source_path": "ops/ci/README.md",
+      "local_execution": "NOT_RUN",
+      "owner": "A5",
+      "limit": "Disposable CI setup, source reference checkout and safety preflight required; not an operator setup shortcut"
+    },
+    {
+      "command": "python ops/run_history_demo_tests.py --with-reports",
+      "source_sha": "f101e4320b59b0a7dc81bdcb8b28c73849d4a747",
+      "source_path": "ops/run_history_demo_tests.py",
+      "local_execution": "NOT_RUN",
+      "owner": "A5",
+      "limit": "Explicit isolated disposable local PostgreSQL acceptance inputs; ten cases, zero skips"
+    },
+    {
+      "command": "python ops/run_report_runtime_tests.py",
+      "source_sha": "f101e4320b59b0a7dc81bdcb8b28c73849d4a747",
+      "source_path": "ops/run_report_runtime_tests.py",
+      "local_execution": "NOT_RUN",
+      "owner": "A5",
+      "limit": "Explicit isolated disposable PostgreSQL acceptance inputs; 8 author + 8 restricted-login + 1 actual-main cases"
+    }
+  ],
+  "limitations": [
+    "CI metadata and allowlisted summary are attributed external execution, not a C-106 rerun",
+    "The two backend SHAs are separate milestones; no claim of a single fully accepted final candidate",
+    "Historical 540 orders, 568 submissions and 444 unavailable after-photo references are synthetic metadata, not verified image evidence",
+    "Physical Android, native camera, actual push/provider delivery, real model quality, timed rehearsal and video are separate unverified gates",
+    "New optional frontend/C110 real-core pair, frontend analytics, fresh-history one-command Compose and PDF/XLSX remain pending in this snapshot",
+    "No release, deployment, credentials, new access, payment or submission performed"
+  ]
+}

@@ -5,6 +5,9 @@
 > [актуализацию выбранного снимка](CURRENT_RUNTIME_RU.md). Старые PASS
 > не переносятся на новый backend; «текущий» ниже относится только к f3.
 
+Новый отдельный срез: [проверенные runtime этапы и сценарий показа](RUNTIME_HANDOFF_RU.md)
+с exact-SHA evidence ручного Android-emulated core и более поздних history/report gates.
+
 ## Снимок и граница утверждений
 
 Этот пакет относится к исходникам `f3b3ffd00d8bb59e55d539e2321196bf18c30d7d`

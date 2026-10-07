@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "status": "PASS_ANDROID_EMULATION_MANUAL_CORE",
+  "stage": "completed",
+  "observed_at": "2026-10-07T22:42:40.332497+00:00",
+  "environment": "real_compose_postgresql_mounted_app_android_chromium_emulation",
+  "real_android_device": "NOT_RUN",
+  "real_webpush_provider_delivery": "NOT_RUN",
+  "synthetic_push_transport": "NOT_CLAIMED_BY_THIS_GATE",
+  "paid_model_calls": "NOT_RUN_NO_KEY",
+  "rules_worker_execution": "NOT_RUN_MANUAL_CORE",
+  "full_cycle_green": false,
+  "deployment_performed": false,
+  "source_sha": "ab632c0cf411b7670c1a03fe7aa97419950019a2",
+  "playwright_version": "1.63.0",
+  "frontend_sha": "ca320bf692c01d89dd79496fe18d1bc2742052df",
+  "accepted_c110_source_sha": "23a135348a0e8ad9a140a36ca60e8440704b7893",
+  "observer_python_import": "PASS_FILTERED_ENV",
+  "secrecy_preflight": {
+    "version": "c110-failure-output-v2",
+    "result": "PASS",
+    "playwright": "1.63.0",
+    "source_sha": "ab632c0cf411b7670c1a03fe7aa97419950019a2",
+    "frontend_sha": "ca320bf692c01d89dd79496fe18d1bc2742052df",
+    "created_at": "2026-10-07T22:42:48.120Z",
+    "expected_dummy_failures": 1,
+    "observed_dummy_failures": 1,
+    "scanned_outputs": 5,
+    "sentinel_matches": 0,
+    "scanned_output_sha256": "ab28c573cba56296131df34fa7c51c68ac5365c6604b1eab019cced8f3a14699"
+  },
+  "worker_absence_service_inventory": [
+    "api",
+    "db",
+    "observer",
+    "photo-directory",
+    "prepare",
+    "web"
+  ],
+  "actual_service_inventory": [
+    "api",
+    "db",
+    "observer",
+    "photo-directory",
+    "prepare",
+    "web"
+  ],
+  "browser_transport_probe": {
+    "status": "PASS",
+    "scope": "public_health_browser_and_node_tls_only"
+  },
+  "observer_connection": "READONLY_SIDECAR_DB_LOOPBACK_NO_HOST_PORT",
+  "readonly_observer_probe": {
+    "status": "PASS",
+    "scope": "readonly_zero_uuid_projection_only"
+  },
+  "tests_passed": 1,
+  "tests_failed": 0,
+  "tests_skipped": 0,
+  "asserted_stages": 6,
+  "committed_commands": 11,
+  "persisted_events": 13,
+  "required_test_title": "C110 real composed master executor lifecycle",
+  "cleanup": "completed"
+}
