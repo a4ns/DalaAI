@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "suite_id": "C5-ASSEMBLED-BROWSER-V1",
+  "suite_id": "C5-ASSEMBLED-BROWSER-V2",
   "contract_sha256": "b8b5b855eb8fffd4607473a4e878a3c64820030820cabb1b0c92d70928730f97",
   "sources": {
     "core": {
@@ -32,6 +32,14 @@
         "A0-0006"
       ],
       "note": "Current accepted clarifications supplied in C-105 GRANT brief: moving scoped keyset pages; representative lowest-number active order; queued-only counts; scoped roles; absent assessment and null human score."
+    },
+    "push_wire": {
+      "url": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6046265475",
+      "event_ids": [
+        "A0-0031"
+      ],
+      "author": "a4ns",
+      "note": "Exact additive shape approved by A0 at 20:29Z; core proposal.2 bytes unchanged; source/fixtures are not live implementation or delivery evidence."
     }
   },
   "cases": [
@@ -554,10 +562,12 @@
       ],
       "sources": [
         "core",
-        "agents"
+        "agents",
+        "push_wire"
       ],
       "physical_android": true,
       "steps": [
+        "Primary direction is the exact additive A0-0031 WebPush protocol. Configured/server-provider acceptance is not phone delivery. No real permission/subscription/dispatch is authorized by this matrix or current C-105 task.",
         "Obtain explicit approved channel and synthetic test phone recipients; no real employee messages, new provider spend or notification subscription implied by this suite.",
         "Operator grants/denies native notification permissions. Trigger approved new-order and overdue notification to intended role with visible domain-time mode.",
         "Observe delivery on physical locked/backgrounded Android; record actual receive time and sound/vibration conditions separately from provider accepted/sent.",
@@ -589,7 +599,8 @@
         }
       ],
       "dependencies": [
-        "Approved channel/recipients and physical phone; no real dispatch performed in C-105"
+        "Approved channel/recipients and physical phone; no real dispatch performed in C-105",
+        "Accepted A0-0031 implementation and specific authorization for real permission/subscription/test-device delivery"
       ]
     },
     {
@@ -633,6 +644,321 @@
       "dependencies": [
         "Physical Android and provisioning; device lifecycle cannot be concluded from desktop unit tests"
       ]
+    },
+    {
+      "id": "C5-P01",
+      "title": "Push availability, disclosure and explicit user intent",
+      "roles": [
+        "executor"
+      ],
+      "sources": [
+        "push_wire",
+        "core",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "On an accepted assembled candidate, inspect authenticated GET /api/v1/push/config for enabled=false/key=null, enabled=true/public key, expired-session401 and supported error states; use an A-owned isolated configuration seam.",
+        "Observe actual assembled UI after page load, session restoration, refresh, reconnect and tab navigation. No notification permission prompt, subscribe/register or delivery may happen just from these events.",
+        "Check disabled/unsupported/unconfigured, permission denied, configured and delivered are distinct. Config enabled=true is server capability; POST200 enabled=true is registration configuration only.",
+        "Before any future authorized subscription action, the UI visibly explains one device per user, latest registration replacing the prior device and binding to current login. Do not test real permission prompts in this source-only task."
+      ],
+      "checks": [
+        {
+          "id": "config_truth",
+          "expectation": "UI reflects authenticated config/error state, disabled has null key, delivery/device semantics remain exact",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "explicit_action",
+          "expectation": "Page load/session/refresh/reconnect never prompts or subscribes; any future permission step is initiated explicitly by the user",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "disclosure",
+          "expectation": "One-device/current-session limitation and configured-versus-delivered meaning visible; no Safari support promise",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        }
+      ],
+      "dependencies": [
+        "Accepted mounted push backend/frontend SHA and A-owned config states",
+        "Current C-105 work does not authorize real permission prompts, subscription or delivery"
+      ]
+    },
+    {
+      "id": "C5-P02",
+      "title": "Latest registration belongs to current login",
+      "roles": [
+        "executor"
+      ],
+      "sources": [
+        "push_wire",
+        "core",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "Prepare two independently isolated browser contexts for the SAME provisioned synthetic user, each with a distinct controlled endpoint fixture. Do not duplicate that user as two different role identities in deployment metadata.",
+        "After separately authorized explicit user action, observe actual UI request to POST /api/v1/push/subscriptions: subscription.toJSON shape, exact Origin, current cookie and CSRF; expirationTime is optional and null when present.",
+        "A0 supplies a read-only eligibility/effect evidence reference showing the latest registration replaced the previous device and is associated with the current login session. Do not send a notification to establish this.",
+        "Observe assembled UI describes configured state only after200 enabled=true; an older in-flight callback or previously configured label cannot establish current-session registration."
+      ],
+      "checks": [
+        {
+          "id": "registration_shape",
+          "expectation": "Real UI uses additive JSON shape/current session; no invented operation_id or expected_version, no secret logging",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "latest_only",
+          "expectation": "A0 eligibility proof identifies only latest registration for user/current login; no actual delivery inferred",
+          "evidence_kinds": [
+            "ui",
+            "backend_reference"
+          ]
+        },
+        {
+          "id": "configured_only",
+          "expectation": "200 enabled=true means configured, never sent/received/delivered; late prior-session callbacks cannot overwrite current state",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        }
+      ],
+      "dependencies": [
+        "A0 synthetic endpoint/session eligibility fixture and nonsecret observation seam",
+        "Supported distinct same-user browser contexts",
+        "Separate authorization before any real subscription; source task performs none"
+      ]
+    },
+    {
+      "id": "C5-P03",
+      "title": "Logout, expiry and fresh login invalidate stale push state",
+      "roles": [
+        "executor"
+      ],
+      "sources": [
+        "push_wire",
+        "core",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "Begin with an explicitly configured synthetic test registration. Exercise logout, expiry and session restoration/fresh login as separate cases using the existing A-owned authorized session fixture controls.",
+        "Observe GET config and unsafe request failures as applicable; stop stale mutation/retry under401 and never transform transport/auth failure into configured success.",
+        "Use A0 eligibility evidence to verify logout/expiry makes the prior current-session registration ineligible even if a browser-side subscription object remains. Retained local object is not current delivery eligibility.",
+        "Hold an old-session response, change session, then release it using the supported isolated runner seam; neither old callback nor old account UI may register or confirm state for the new session."
+      ],
+      "checks": [
+        {
+          "id": "session_ineligible",
+          "expectation": "Logout/expiry invalidate registration eligibility; browser UI no longer implies an active current-session registration",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "backend_reference"
+          ]
+        },
+        {
+          "id": "fresh_session",
+          "expectation": "Fresh login re-evaluates current session/config, no automatic permission prompt or inherited configured-success claim",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "stale_response",
+          "expectation": "Late prior-session response and queued intent cannot change/confirm registration under a newer session",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        }
+      ],
+      "dependencies": [
+        "Existing authorized login/expiry fixtures and supported response-hold seam",
+        "No A0 session/DB acceptance duplication and no live provider delivery"
+      ]
+    },
+    {
+      "id": "C5-P04",
+      "title": "Account switch clears old subscription;409 is not success",
+      "roles": [
+        "executor",
+        "other_executor"
+      ],
+      "sources": [
+        "push_wire",
+        "core",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "Use two distinct provisioned synthetic accounts in one test browser profile sequentially; current account/scope must come from the real session.",
+        "Before any fresh subscribe/register for the new account, clear the old browser subscription using the accepted app flow. If clearing cannot be confirmed, do not treat retained endpoint state as a successful new registration.",
+        "Arrange A0's isolated endpoint-owned-by-other-account fixture and observe real409 SUBSCRIPTION_CONFLICT through the assembled UI. Preserve an explicit conflict state; do not silently report enabled, generate a replacement intent, or steal endpoint ownership.",
+        "After operator resolves the account/endpoint conflict through the approved flow, revalidate current session before any new explicit subscription action. No permission prompts are executed in this preparation task."
+      ],
+      "checks": [
+        {
+          "id": "cleanup_order",
+          "expectation": "Old browser subscription is cleared before fresh subscribe/register; previous-account state is not reused",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "conflict",
+          "expectation": "409 SUBSCRIPTION_CONFLICT is visible and not converted into success; A0 proof shows other ownership unchanged",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "backend_reference"
+          ]
+        },
+        {
+          "id": "resolved_intent",
+          "expectation": "Only an explicit resolved current-account action can retry/register; no automatic silent takeover",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        }
+      ],
+      "dependencies": [
+        "A0 controlled endpoint-ownership fixture",
+        "Separate permission/subscription authorization for a future live run"
+      ]
+    },
+    {
+      "id": "C5-P05",
+      "title": "Remove only the current user registration",
+      "roles": [
+        "executor",
+        "other_executor"
+      ],
+      "sources": [
+        "push_wire",
+        "core",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "Observe actual assembled removal request: POST /api/v1/push/subscriptions/remove, JSON exact endpoint, current cookie, exact Origin and X-CSRF-Token. It is not DELETE and carries no invented domain receipt/version fields.",
+        "For a current-user synthetic registration, confirm204 empty and repeat the same removal through the approved UI/runner path; idempotent removal must not display delivery success.",
+        "For an endpoint belonging to another user, reference A0's own-user-only evidence and verify assembled UI does not claim removal of that account. Do not invent whether a forbidden operation returns denial or a no-op where the protocol only specifies ownership protection.",
+        "Exercise unconfirmed removal/session loss. The UI must distinguish browser cleanup, backend removal confirmation and eligibility, instead of pretending an unknown operation succeeded."
+      ],
+      "checks": [
+        {
+          "id": "own_idempotent",
+          "expectation": "Correct own-user POST shape and204 empty; repeated removal idempotent and distinctly represented in UI",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "no_foreign_delete",
+          "expectation": "Current user cannot remove another account registration; no foreign-ownership mutation claim",
+          "evidence_kinds": [
+            "ui",
+            "browser_network",
+            "backend_reference"
+          ]
+        },
+        {
+          "id": "unknown_remove",
+          "expectation": "Unconfirmed removal or session failure remains explicit; local disappearance alone is not server confirmation",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        }
+      ],
+      "dependencies": [
+        "A0 own/foreign synthetic endpoint fixture and effect evidence",
+        "No direct API/DB test runner added by C5"
+      ]
+    },
+    {
+      "id": "C5-P06",
+      "title": "Minimal worker payload, fixed click target and no private cache",
+      "roles": [
+        "executor"
+      ],
+      "sources": [
+        "push_wire",
+        "core",
+        "agents"
+      ],
+      "physical_android": false,
+      "steps": [
+        "On the accepted assembled worker build, consume the exact A0-0031 payload through an explicitly authorized synthetic event/recorded-message seam. Label this synthetic worker execution; do not count it as provider or phone delivery.",
+        "Observe title/body/tag and fixed root click target. Reject or safely ignore extra employee/order content, alternate URLs, external/data/javascript schemes, wrong version or unexpected payload shapes according to the reviewed worker policy; no untrusted URL may navigate.",
+        "Inspect actual controlled browser cache/storage/network behavior across API/photo reads and account switch: no API/photo cache and no offline mutation outbox. This complements B6 source/component checks; source declarations alone are insufficient.",
+        "Confirm public application_server_key is not a private VAPID key. Evidence excludes real endpoint/auth/p256dh/session material. A true phone receipt remains the separate physical C5-D03 gate."
+      ],
+      "checks": [
+        {
+          "id": "payload_privacy",
+          "expectation": "Exact v1 generic payload has no employee/order details; A0 payload evidence and observed worker display agree",
+          "evidence_kinds": [
+            "ui",
+            "backend_reference"
+          ]
+        },
+        {
+          "id": "fixed_target",
+          "expectation": "Notification click remains same-origin fixed /; altered or foreign targets never navigate",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "no_cache_outbox",
+          "expectation": "Observed assembled worker does not cache API/photos or persist offline mutations/account data",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        },
+        {
+          "id": "not_delivery",
+          "expectation": "Synthetic payload/event replay and provider acceptance are never labeled physical delivery",
+          "evidence_kinds": [
+            "ui",
+            "browser_network"
+          ]
+        }
+      ],
+      "dependencies": [
+        "Accepted worker/backend immutable SHAs and safe synthetic event seam",
+        "No real notification permission, provider dispatch or phone claim in this task"
+      ]
+    }
+  ],
+  "additive_protocols": [
+    {
+      "id": "A0-0031",
+      "path": "tests/e2e/push-protocol.json",
+      "sha256": "73a0304bdeeb24dd632fb5a0448b5f2db9939f38d727de183b5fdcf8a0d06afe"
     }
   ]
 }

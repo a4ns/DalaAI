@@ -7,8 +7,9 @@ never supplies credentials, guessed UI selectors, invented endpoints or mock
 successes. Its runnable commands prepare and check evidence; only an operator's
 real browser execution can establish the product outcomes.
 
-At the C-105 base, all 12 product journeys are **NOT_RUN**. See
-[the blocker ledger](../../docs/evidence/e2e/gaps.json). The absence of an
+The V2 matrix has 18 product journeys, including 6 additive WebPush journeys.
+All 18 remain **NOT_RUN** in this package; historical 12-case evidence stays historical. See
+[the historical core blocker ledger](../../docs/evidence/e2e/gaps.json). The absence of an
 assembled frontend is not a passing skip.
 
 ## Boundaries
@@ -32,6 +33,13 @@ assembled frontend is not a passing skip.
 observation kinds, numerical limits and source links. It pins the accepted
 proposal.2 OpenAPI bytes to SHA-256
 `b8b5b855eb8fffd4607473a4e878a3c64820030820cabb1b0c92d70928730f97`.
+The A0-0031 additive WebPush shape is separately pinned in
+[push-protocol.json](push-protocol.json); it does not change those core bytes.
+V2 reports pin the additive document as well as the harness/matrix; an older
+report must be checked with its matching historical harness. See the
+[WebPush handoff](../../docs/evidence/e2e/webpush-a0-0031.md) for authorization
+and delivery limits.
+
 The artifact's historical PROPOSED labels must be read with the current A0
 RUN_OPEN/GRANT acceptance, not silently rewritten by C5. Journal A0-0004/0006
 clarifications govern moving pages, representative active order, queued-only
@@ -149,7 +157,7 @@ python tests/e2e/browser_evidence.py gate --report docs/evidence/e2e/RUN/report.
 
 - `validate` exits 0 only for consistent metadata, pinned Git provenance and
   matching artifact hashes; output says EVIDENCE_STRUCTURE_VALID, **not product PASS**
-- `gate` exits 0 only if all 12 cases carry complete evidenced PASS records;
+- `gate` exits 0 only if all 18 cases carry complete evidenced PASS records;
   otherwise exits 1, with counts including NOT_RUN/BLOCKED/FAIL
 - Invalid JSON/provenance/evidence exits 2. Neither command contacts the deployment
 - The harness verifies the report commit actually contains the claimed harness

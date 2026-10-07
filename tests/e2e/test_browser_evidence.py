@@ -31,14 +31,14 @@ class HarnessTests(unittest.TestCase):
                 "executor": {"role": "executor", "user_id": "10000000-0000-4000-8000-000000000002", "section_ids": ["20000000-0000-4000-8000-000000000001"], "browser_context": "unit-executor", "provisioned": True},
             },
         }
-        self.provenance = {"commit": "c" * 40, "script_sha256": h.digest(Path(h.__file__).read_bytes()), "matrix_sha256": h.digest(h.MATRIX.read_bytes())}
+        self.provenance = {"commit": "c" * 40, "script_sha256": h.digest(Path(h.__file__).read_bytes()), "matrix_sha256": h.digest(h.MATRIX.read_bytes()), "push_protocol_sha256": h.digest(h.PUSH_PROTOCOL.read_bytes())}
         self.report = h.prepare(self.config, self.matrix, self.provenance, "2026-10-07T00:00:00Z")
 
     def validate(self):
         return h.validate_report(self.report, self.matrix, self.root)
 
     def test_preparation_is_entirely_not_run(self):
-        self.assertEqual(self.validate(), {"NOT_RUN": 12})
+        self.assertEqual(self.validate(), {"NOT_RUN": 18})
         self.assertTrue(all(check["status"] == "NOT_RUN" for case in self.report["cases"] for check in case["checks"]))
 
     def test_example_requires_real_provisioning(self):
@@ -46,7 +46,7 @@ class HarnessTests(unittest.TestCase):
             h.validate_config(h.load_json(h.HERE / "deployment.example.json"))
 
     def test_plan_checks_pinned_contract_and_case_sources(self):
-        self.assertEqual(len(self.matrix["cases"]), 12)
+        self.assertEqual(len(self.matrix["cases"]), 18)
         for case in self.matrix["cases"]:
             self.assertTrue(set(case["sources"]) <= self.matrix["sources"].keys())
         with patch.object(h, "CONTRACT_SHA256", "0" * 64):
@@ -115,7 +115,7 @@ class HarnessTests(unittest.TestCase):
         case = next(case for case in self.report["cases"] if case["id"] == "C5-B03")
         self.assertIn("provision roles:", case["reason"])
         self.assertEqual(case["status"], "NOT_RUN")
-        self.assertEqual(len(self.report["cases"]), 12)
+        self.assertEqual(len(self.report["cases"]), 18)
 
     def test_skip_or_missing_case_cannot_be_green(self):
         self.report["cases"][0]["status"] = "SKIPPED"
@@ -207,6 +207,77 @@ class HarnessTests(unittest.TestCase):
         self.report["cases"][0]["checks"][0]["status"] = "PASS"
         with self.assertRaisesRegex(h.EvidenceError, "executed_at"):
             self.validate()
+
+    def test_push_source_and_three_exact_additive_routes(self):
+        protocol = h.load_json(h.PUSH_PROTOCOL)
+        self.assertEqual(protocol["source"]["author"], "a4ns")
+        self.assertEqual(protocol["source"]["event_id"], "A0-0031")
+        self.assertEqual(protocol["source"]["url"], "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6046265475")
+        self.assertEqual(protocol["core_contract_sha256"], h.CONTRACT_SHA256)
+        self.assertEqual([(protocol[name]["method"], protocol[name]["path"]) for name in ("config", "registration", "removal")], [
+            ("GET", "/api/v1/push/config"), ("POST", "/api/v1/push/subscriptions"),
+            ("POST", "/api/v1/push/subscriptions/remove")])
+
+    def test_push_disabled_config_and_configured_response_are_distinct(self):
+        protocol = h.load_json(h.PUSH_PROTOCOL)
+        self.assertEqual(protocol["config"]["disabled_shape"], {
+            "enabled": False, "application_server_key": None,
+            "delivery_semantics": "provider_acceptance_is_not_device_delivery",
+            "device_policy": "latest_registration_per_user"})
+        self.assertEqual(protocol["registration"]["response"], {"enabled": True})
+        self.assertNotIn("delivered", protocol["registration"]["response"])
+        self.assertEqual(protocol["live_permission_subscription_delivery"], "NOT_RUN")
+
+    def test_push_json_fields_do_not_invent_domain_receipts(self):
+        protocol = h.load_json(h.PUSH_PROTOCOL)
+        registration = protocol["registration"]
+        self.assertEqual(registration["required_body_fields"], ["endpoint", "keys"])
+        self.assertEqual(registration["optional_body_fields"], ["expirationTime"])
+        self.assertIsNone(registration["expirationTime"])
+        self.assertEqual(registration["keys_fields"], ["p256dh", "auth"])
+        self.assertEqual(protocol["removal"]["body_fields"], ["endpoint"])
+        self.assertEqual(protocol["removal"]["status"], 204)
+        self.assertIsNone(protocol["removal"]["response_body"])
+
+    def test_push_conflict_and_disabled_retryability_are_preserved(self):
+        errors = {entry["code"]: entry for entry in h.load_json(h.PUSH_PROTOCOL)["errors"]}
+        self.assertEqual(errors["SUBSCRIPTION_CONFLICT"]["status"], 409)
+        self.assertEqual(errors["PUSH_DISABLED"]["status"], 503)
+        self.assertIs(errors["PUSH_DISABLED"]["retryable"], False)
+        self.assertIs(errors["TEMPORARILY_UNAVAILABLE"]["retryable"], True)
+        self.assertEqual(errors["PAYLOAD_TOO_LARGE"]["condition"], "above 4096 bytes")
+
+    def test_push_worker_payload_is_exact_and_minimal(self):
+        self.assertEqual(h.load_json(h.PUSH_PROTOCOL)["service_worker_payload"], {
+            "v": 1, "title": "НарядAI", "body": "Есть обновление наряда. Откройте приложение.",
+            "url": "/", "tag": "naryadai-update"})
+        physical = next(case for case in self.matrix["cases"] if case["id"] == "C5-D03")
+        self.assertTrue(physical["physical_android"])
+        self.assertIn("push_wire", physical["sources"])
+
+    def test_six_push_cases_cannot_be_silently_skipped(self):
+        pushes = [case for case in self.report["cases"] if case["id"].startswith("C5-P")]
+        self.assertEqual(len(pushes), 6)
+        self.assertTrue(all(case["status"] == "NOT_RUN" for case in pushes))
+        self.report["cases"] = [case for case in self.report["cases"] if not case["id"].startswith("C5-P")]
+        with self.assertRaisesRegex(h.EvidenceError, "every case"):
+            self.validate()
+
+    def test_additive_protocol_report_and_provenance_pins_cannot_drift(self):
+        self.report["harness"]["push_protocol_sha256"] = "f" * 64
+        with self.assertRaisesRegex(h.EvidenceError, "different push protocol"):
+            self.validate()
+        self.report["harness"]["push_protocol_sha256"] = h.digest(h.PUSH_PROTOCOL.read_bytes())
+        self.report["additive_protocols"] = []
+        with self.assertRaisesRegex(h.EvidenceError, "additive protocol pin"):
+            self.validate()
+
+    def test_edited_protocol_bytes_require_new_matrix_pin(self):
+        changed = self.root / "protocol.json"
+        changed.write_bytes(h.PUSH_PROTOCOL.read_bytes() + b" ")
+        with patch.object(h, "PUSH_PROTOCOL", changed):
+            with self.assertRaisesRegex(h.EvidenceError, "protocol digest drift"):
+                h.read_matrix()
 
     def test_measured_target_requires_number_not_boolean(self):
         # Minimal synthetic specification exercises the validator, not C5 outcomes.

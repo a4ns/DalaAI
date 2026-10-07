@@ -22,6 +22,7 @@ from uuid import UUID
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 MATRIX = HERE / "journeys.json"
+PUSH_PROTOCOL = HERE / "push-protocol.json"
 CONTRACT = "coord/proposals/a6-contract-v1/contracts/openapi.yaml"
 CONTRACT_SHA256 = "b8b5b855eb8fffd4607473a4e878a3c64820030820cabb1b0c92d70928730f97"
 STATUSES = {"PASS", "FAIL", "NOT_RUN", "BLOCKED"}
@@ -141,6 +142,9 @@ def read_matrix():
     matrix = load_json(MATRIX)
     require(matrix.get("contract_sha256") == CONTRACT_SHA256, "Matrix contract digest drift")
     require(digest((ROOT / CONTRACT).read_bytes()) == CONTRACT_SHA256, "Accepted contract bytes changed; obtain handshake before updating")
+    require(matrix.get("additive_protocols") == [{"id": "A0-0031", "path": "tests/e2e/push-protocol.json", "sha256": digest(PUSH_PROTOCOL.read_bytes())}], "Additive push protocol digest drift")
+    protocol = load_json(PUSH_PROTOCOL)
+    require(protocol.get("core_contract_sha256") == CONTRACT_SHA256, "Additive protocol must preserve accepted core digest")
     ids = [case["id"] for case in matrix["cases"]]
     require(len(ids) == len(set(ids)), "Duplicate case IDs")
     for case in matrix["cases"]:
@@ -153,22 +157,23 @@ def read_matrix():
 
 
 def fingerprint():
-    """Pin committed harness+matrix bytes, never silently test an edited working tree."""
+    """Pin committed harness, matrix and additive protocol bytes, never silently test an edited working tree."""
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     sha(commit, "harness commit")
-    for path in (Path(__file__).resolve(), MATRIX):
+    for path in (Path(__file__).resolve(), MATRIX, PUSH_PROTOCOL):
         relative = path.relative_to(ROOT).as_posix()
         committed = subprocess.check_output(["git", "show", f"HEAD:{relative}"], cwd=ROOT)
-        require(committed == path.read_bytes(), "Commit harness and matrix before preparing evidence")
-    return {"commit": commit, "script_sha256": digest(Path(__file__).read_bytes()), "matrix_sha256": digest(MATRIX.read_bytes())}
+        require(committed == path.read_bytes(), "Commit harness, matrix and protocol before preparing evidence")
+    return {"commit": commit, "script_sha256": digest(Path(__file__).read_bytes()), "matrix_sha256": digest(MATRIX.read_bytes()), "push_protocol_sha256": digest(PUSH_PROTOCOL.read_bytes())}
 
 
 def verify_provenance(provenance):
-    """Ensure a report commit actually contains the claimed harness/matrix bytes."""
+    """Ensure a report commit contains the claimed harness/matrix/protocol bytes."""
     commit = provenance.get("commit")
     sha(commit, "harness.commit")
     for relative, key in (("tests/e2e/browser_evidence.py", "script_sha256"),
-                          ("tests/e2e/journeys.json", "matrix_sha256")):
+                          ("tests/e2e/journeys.json", "matrix_sha256"),
+                          ("tests/e2e/push-protocol.json", "push_protocol_sha256")):
         committed = subprocess.check_output(["git", "show", f"{commit}:{relative}"], cwd=ROOT, stderr=subprocess.DEVNULL)
         require(digest(committed) == provenance.get(key), "Report commit does not contain the claimed harness bytes")
 
@@ -189,6 +194,7 @@ def prepare(config, matrix, provenance, now):
                                  for check in case["checks"]]})
     return {"schema_version": 1, "suite_id": matrix["suite_id"], "created_at": now,
             "harness": provenance, "contract_sha256": CONTRACT_SHA256,
+            "additive_protocols": matrix["additive_protocols"],
             "deployment": config, "artifacts": [], "cases": cases}
 
 
@@ -197,11 +203,13 @@ def validate_report(report, matrix, report_dir):
     check_no_secrets(report)
     require(report.get("schema_version") == 1 and report.get("suite_id") == matrix["suite_id"], "Wrong evidence schema or suite")
     require(report.get("contract_sha256") == CONTRACT_SHA256, "Evidence contract digest mismatch")
+    require(report.get("additive_protocols") == matrix["additive_protocols"], "Evidence additive protocol pin mismatch")
     created = utc_timestamp(report.get("created_at"), "created_at")
     provenance = report.get("harness", {})
     sha(provenance.get("commit"), "harness.commit")
     require(provenance.get("script_sha256") == digest(Path(__file__).read_bytes()), "Evidence used a different harness; review the pinned version")
     require(provenance.get("matrix_sha256") == digest(MATRIX.read_bytes()), "Evidence used a different matrix")
+    require(provenance.get("push_protocol_sha256") == digest(PUSH_PROTOCOL.read_bytes()), "Evidence used a different push protocol")
     config = validate_config(report.get("deployment"))
     artifacts = report.get("artifacts")
     require(isinstance(artifacts, list), "artifacts must be a list")

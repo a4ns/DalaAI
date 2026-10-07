@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "task": "C-105",
+  "generation": 1,
+  "implementation_sha": "535e9ef4d8c21b64c7af4872648b07130e0a4f8c",
+  "checked_at": "2026-10-07T20:45:03Z",
+  "level": "source_and_evidence_harness_unit_only",
+  "protocol_source": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6046265475",
+  "core_contract_sha256": "b8b5b855eb8fffd4607473a4e878a3c64820030820cabb1b0c92d70928730f97",
+  "core_bytes_changed": false,
+  "suite_id": "C5-ASSEMBLED-BROWSER-V2",
+  "product_case_count": 18,
+  "new_push_case_count": 6,
+  "checks": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests/e2e -p 'test_*.py' -q",
+      "status": "PASS",
+      "tests": 34,
+      "scope": "Synthetic metadata/protocol fixture guards only"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python tests/e2e/browser_evidence.py plan",
+      "status": "PASS",
+      "output_product_status": "NOT_RUN",
+      "cases": 18
+    },
+    {
+      "command": "browser_evidence.verify_provenance(browser_evidence.fingerprint())",
+      "status": "PASS",
+      "scope": "Committed harness, matrix and additive protocol bytes"
+    },
+    {
+      "command": "git diff --check f3b3ffd00d8bb59e55d539e2321196bf18c30d7d HEAD",
+      "status": "PASS"
+    }
+  ],
+  "file_sha256": {
+    "tests/e2e/browser_evidence.py": "4b9a0cc019edd33c0dd81bbda8859863a3da9a5cbdf1b740d896a87dcbc9575c",
+    "tests/e2e/journeys.json": "2237f7322ce429aabc233a76d210df74790e5f67405ba3c6f9ca6f738d9b2f5b",
+    "tests/e2e/push-protocol.json": "73a0304bdeeb24dd632fb5a0448b5f2db9939f38d727de183b5fdcf8a0d06afe",
+    "tests/e2e/test_browser_evidence.py": "c62593450e2a09ed0ea48a9deb69b52b06560e4c16a0071c634bc6a47ab4ad10"
+  },
+  "product_browser_cases": "NOT_RUN",
+  "physical_delivery": "NOT_RUN",
+  "real_permission_prompt": "NOT_RUN",
+  "real_subscription_or_removal": "NOT_RUN",
+  "provider_dispatch": "NOT_RUN",
+  "api_database_calls": "NOT_RUN",
+  "limitations": [
+    "No real browser rendering, permission prompt, subscription, provider or device delivery was executed",
+    "Protocol fixtures record A0-approved shapes, not proof of mounted implementation",
+    "Physical device gate remains separate from configured state and synthetic worker event handling",
+    "Independent review required before publication"
+  ],
+  "follow_on_diff": "Evidence JSON and historical-ledger README wording only; implementation source/tests/matrix/protocol unchanged"
+}

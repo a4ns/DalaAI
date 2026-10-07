@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "protocol_id": "A0-0031",
+  "scope": "Additive WebPush implementation shape; no change to accepted core OpenAPI bytes",
+  "source": {
+    "url": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6046265475",
+    "event_id": "A0-0031",
+    "author": "a4ns",
+    "at": "2026-10-07T20:29:00Z",
+    "status": "A0-approved shape for implementation; consumer compatibility ACK requested"
+  },
+  "core_contract_sha256": "b8b5b855eb8fffd4607473a4e878a3c64820030820cabb1b0c92d70928730f97",
+  "config": {
+    "method": "GET",
+    "path": "/api/v1/push/config",
+    "authentication": [
+      "current session cookie"
+    ],
+    "status": 200,
+    "enabled_shape": {
+      "enabled": true,
+      "application_server_key": "<base64url public VAPID>",
+      "delivery_semantics": "provider_acceptance_is_not_device_delivery",
+      "device_policy": "latest_registration_per_user"
+    },
+    "disabled_shape": {
+      "enabled": false,
+      "application_server_key": null,
+      "delivery_semantics": "provider_acceptance_is_not_device_delivery",
+      "device_policy": "latest_registration_per_user"
+    }
+  },
+  "registration": {
+    "method": "POST",
+    "path": "/api/v1/push/subscriptions",
+    "authentication": [
+      "exact Origin",
+      "current session cookie",
+      "X-CSRF-Token"
+    ],
+    "content_type": "application/json",
+    "required_body_fields": [
+      "endpoint",
+      "keys"
+    ],
+    "optional_body_fields": [
+      "expirationTime"
+    ],
+    "endpoint": "HTTPS provider URL; initial Chrome/Firefox provider support only",
+    "keys_fields": [
+      "p256dh",
+      "auth"
+    ],
+    "keys_encoding": "base64url",
+    "expirationTime": null,
+    "status": 200,
+    "response": {
+      "enabled": true
+    },
+    "meaning": "Configured only, never delivered; do not add domain operation_id/expected_version fields"
+  },
+  "removal": {
+    "method": "POST",
+    "path": "/api/v1/push/subscriptions/remove",
+    "authentication": [
+      "exact Origin",
+      "current session cookie",
+      "X-CSRF-Token"
+    ],
+    "content_type": "application/json",
+    "body_fields": [
+      "endpoint"
+    ],
+    "endpoint": "Exact endpoint string",
+    "status": 204,
+    "response_body": null,
+    "semantics": "Idempotent, own user only; no authority over another account"
+  },
+  "error_envelope_fields": [
+    "code",
+    "message",
+    "request_id",
+    "retryable",
+    "current_version",
+    "field_errors"
+  ],
+  "error_current_version": null,
+  "errors": [
+    {
+      "status": 401,
+      "code": "UNAUTHENTICATED"
+    },
+    {
+      "status": 403,
+      "code": "FORBIDDEN"
+    },
+    {
+      "status": 400,
+      "code": "INVALID_REQUEST",
+      "condition": "ambiguous/query input"
+    },
+    {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    },
+    {
+      "status": 413,
+      "code": "PAYLOAD_TOO_LARGE",
+      "condition": "above 4096 bytes"
+    },
+    {
+      "status": 422,
+      "code": "VALIDATION_FAILED"
+    },
+    {
+      "status": 409,
+      "code": "SUBSCRIPTION_CONFLICT",
+      "condition": "browser endpoint belongs to another account"
+    },
+    {
+      "status": 503,
+      "code": "PUSH_DISABLED",
+      "retryable": false
+    },
+    {
+      "status": 503,
+      "code": "TEMPORARILY_UNAVAILABLE",
+      "retryable": true
+    }
+  ],
+  "device_policy": "latest_registration_per_user",
+  "session_policy": "Latest registration replaces previous device and is tied to current login session; logout/expiry makes it ineligible",
+  "account_switch": "Clear old browser subscription before fresh subscribe/register; never silently treat 409 as success",
+  "permission": "Explicit user click only; no real prompt/subscription/delivery authorized by this artifact",
+  "service_worker_payload": {
+    "v": 1,
+    "title": "НарядAI",
+    "body": "Есть обновление наряда. Откройте приложение.",
+    "url": "/",
+    "tag": "naryadai-update"
+  },
+  "privacy": [
+    "No employee/order details in payload",
+    "Validate fixed same-origin click target",
+    "No API/photo caching",
+    "No offline outbox",
+    "Private VAPID keys remain server-only",
+    "Do not publish real endpoint/auth/key/session material"
+  ],
+  "implementation_claim": false,
+  "live_permission_subscription_delivery": "NOT_RUN"
+}
