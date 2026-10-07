@@ -15,8 +15,9 @@ jobs:
     timeout-minutes: 30
     env:
       CI: 'true'
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/dalaai-playwright-browsers
     steps:
+      - name: Set isolated browser installation path
+        run: printf 'PLAYWRIGHT_BROWSERS_PATH=%s/dalaai-playwright-browsers\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, same accepted pin as backend CI
         with:
           persist-credentials: false
@@ -75,8 +76,9 @@ jobs:
     timeout-minutes: 15
     env:
       CI: 'true'
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/dalaai-b-playwright-browsers
     steps:
+      - name: Set isolated browser installation path
+        run: printf 'PLAYWRIGHT_BROWSERS_PATH=%s/dalaai-playwright-browsers\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
