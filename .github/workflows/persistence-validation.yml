@@ -50,5 +50,18 @@ jobs:
           assert not re.search(r'\bskipped\b', log), 'Skipped tests cannot satisfy acceptance'
           print('PASS: 24 real PostgreSQL tests, zero skips')
           PY
+      - name: Non-owner application-role gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          scripts/run_postgres_role_tests.sh 2>&1 | tee postgres-role-gate.log
+          python - <<'PYCODE'
+          import pathlib, re
+          log = pathlib.Path('postgres-role-gate.log').read_text()
+          count = re.search(r'Ran (\d+) tests? in', log)
+          assert count and int(count.group(1)) == 29, 'Expected 24 inherited cases plus 5 role checks'
+          assert not re.search(r'\bskipped\b', log), 'Skipped role tests cannot satisfy acceptance'
+          print('PASS: 29 application-role cases, zero skips')
+          PYCODE
       - name: Aggregate with real PostgreSQL configured
         run: make check
