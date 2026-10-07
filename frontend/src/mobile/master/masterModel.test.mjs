@@ -43,3 +43,4 @@ test('workload off-shift has priority and queue is retained', () => assert.equal
 const photoContext = { mounted: true, locked: false, expectedGeneration: 1, currentGeneration: 1, expectedSection: 's1', currentSection: 's1' };
 test('current photo callback may update latest draft', () => assert.equal(canApplyPhotoResult(photoContext), true));
 for (const patch of [{ mounted: false }, { locked: true }, { currentGeneration: 2 }, { currentSection: 's2' }]) test(`late photo callback ignored: ${JSON.stringify(patch)}`, () => assert.equal(canApplyPhotoResult({ ...photoContext, ...patch }), false));
+test('photo context uses identity, not merely equal-looking section metadata', () => assert.equal(canApplyPhotoResult({ ...photoContext, expectedGeneration: { sectionId: 's1' }, currentGeneration: { sectionId: 's1' } }), false));

@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { MutationOutcome, ResourceState } from '../../shared/ui/types';
-import type { MasterCreateDraft, MasterOrderVM, MasterScreenProps } from './types';
+import type { MasterCreateDraft, MasterOrderVM, MasterPhotoControlProps, MasterScreenProps } from './types';
 import { emptyMasterCreateDraft, emptyMasterReviewDraft } from './types';
 import { canApplyPhotoResult, closeBlockers, executorLoad, formatMasterTime, normalizeOutcome, orderStatusLabels, resourceIsCurrent, reviewErrors, validateCreate, type DraftErrors } from './masterModel';
 import './master.css';
@@ -39,6 +39,9 @@ function OperationNotice({ state, confirmedText, retry, resolve, canResolve, onl
 function Field({ id, label, error, children, hint }: { id: string; label: string; error?: string; children: ReactNode; hint?: string }) {
   return <div className="master-field"><label htmlFor={id}>{label}</label>{children}{hint && <span className="master-hint" id={`${id}-hint`}>{hint}</span>}{error && <span className="master-error" id={`${id}-error`}>{error}</span>}</div>;
 }
+function BeforePhotoControl({ render, ...controlProps }: MasterPhotoControlProps & { render: NonNullable<MasterScreenProps['renderBeforePhotos']> }) {
+  return <>{render(controlProps)}</>;
+}
 function Assessment({ order }: { order: MasterOrderVM }) {
   const assessment = order.submission?.assessment;
   return <section className="master-assessment" aria-label="Рекомендация проверки">
@@ -64,15 +67,17 @@ export function MasterScreen(props: MasterScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState('');
   const mounted = useRef(true);
-  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useLayoutEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const latestProps = useRef(props);
-  latestProps.current = props;
   const currentCreateState = useRef(createState);
-  currentCreateState.current = createState;
   const applyCreateState = (state: Operation) => { currentCreateState.current = state; setCreateState(state); };
-  const photoContext = useRef({ sectionId: props.createDraft.sectionId, generation: 0 });
-  if (photoContext.current.sectionId !== props.createDraft.sectionId) photoContext.current = { sectionId: props.createDraft.sectionId, generation: photoContext.current.generation + 1 };
-  const photoGeneration = photoContext.current.generation;
+  const photoContext = useMemo(() => ({ sectionId: props.createDraft.sectionId, phase: createState.phase }), [props.createDraft.sectionId, createState.phase]);
+  const latestPhotoContext = useRef<object | null>(photoContext);
+  useLayoutEffect(() => {
+    latestProps.current = props;
+    currentCreateState.current = createState;
+    latestPhotoContext.current = photoContext;
+  }, [props, createState, photoContext]);
   const photoSection = props.createDraft.sectionId;
   const createInFlight = useRef(false);
   const reviewInFlight = useRef(new Set<string>());
@@ -102,7 +107,7 @@ export function MasterScreen(props: MasterScreenProps) {
       setCreateErrors(errors);
       if (Object.keys(errors).length) return;
     } else if (createState.phase !== 'unknown' || !props.onRetryCreate) return;
-    createInFlight.current = true; photoContext.current.generation += 1; applyCreateState({ phase: 'pending', message: '' });
+    createInFlight.current = true; latestPhotoContext.current = null; applyCreateState({ phase: 'pending', message: '' });
     let result: MutationOutcome;
     try {
       result = normalizeOutcome(await (retry ? props.onRetryCreate!() : props.onCreate({ ...props.createDraft, beforePhotoIds: [...props.createDraft.beforePhotoIds] })));
@@ -153,7 +158,7 @@ export function MasterScreen(props: MasterScreenProps) {
           {draft.priority === 'emergency' && <p className="master-emergency">Аварийный наряд. Требует срочного ответа исполнителя.</p>}
           <Field id={inputId('description')} label="Задача или неисправность *" error={createErrors.description}><textarea {...a11y('description')} required maxLength={2000} rows={3} value={draft.description} onChange={event => updateDraft('description', event.target.value)} /></Field>
           <div className="master-two-columns">
-            <Field id={inputId('sectionId')} label="Участок *" error={createErrors.sectionId} hint={draft.beforePhotoIds.length ? 'Чтобы сменить участок, сначала уберите прикреплённые фото.' : undefined}><select {...a11y('sectionId')} required disabled={draft.beforePhotoIds.length > 0} value={draft.sectionId} onChange={event => { props.onCreateDraftChange({ ...draft, sectionId: event.target.value, equipmentId: '', executorId: '', brigadeId: '' }); setCreateErrors({}); }}><option value="">Выберите участок</option>{dictionaries?.sections.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></Field>
+            <Field id={inputId('sectionId')} label="Участок *" error={createErrors.sectionId} hint={draft.beforePhotoIds.length ? 'Чтобы сменить участок, сначала уберите прикреплённые фото.' : undefined}><select {...a11y('sectionId')} required disabled={draft.beforePhotoIds.length > 0} value={draft.sectionId} onChange={event => { latestPhotoContext.current = null; props.onCreateDraftChange({ ...draft, sectionId: event.target.value, equipmentId: '', executorId: '', brigadeId: '' }); setCreateErrors({}); }}><option value="">Выберите участок</option>{dictionaries?.sections.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></Field>
             <Field id={inputId('equipmentId')} label="Оборудование *" error={createErrors.equipmentId}><select {...a11y('equipmentId')} required value={draft.equipmentId} onChange={event => updateDraft('equipmentId', event.target.value)}><option value="">Выберите оборудование</option>{dictionaries?.equipment.filter(item => item.sectionId === draft.sectionId).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></Field>
           </div>
           <Field id={inputId('brigadeId')} label="Назначение бригаде" error={createErrors.brigadeId} hint="У бригады обязательно должен быть один ответственный исполнитель."><select {...a11y('brigadeId')} value={draft.brigadeId} onChange={event => { props.onCreateDraftChange({ ...draft, brigadeId: event.target.value, executorId: '' }); setCreateErrors({}); }}><option value="">Индивидуальный исполнитель</option>{dictionaries?.brigades.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></Field>
@@ -164,14 +169,14 @@ export function MasterScreen(props: MasterScreenProps) {
           </div>
           {!props.domainNow && <p className="master-hint">Время сервера пока неизвестно. Допустимость срока будет проверена при выдаче; срок сам не изменится.</p>}
           <Field id={inputId('comment')} label="Комментарий к наряду" error={createErrors.comment}><textarea {...a11y('comment')} maxLength={2000} rows={2} value={draft.comment} onChange={event => updateDraft('comment', event.target.value)} /></Field>
-          <section aria-label="Фото до выполнения"><h3>Фото до выполнения · необязательно</h3>{props.renderBeforePhotos ? props.renderBeforePhotos({ disabled: createLocked || !props.online || !draft.sectionId, sectionId: draft.sectionId, photoIds: draft.beforePhotoIds, onPhotoIdsChange: photoIds => { if (canApplyPhotoResult({ mounted: mounted.current, locked: createInFlight.current || locked(currentCreateState.current), expectedGeneration: photoGeneration, currentGeneration: photoContext.current.generation, expectedSection: photoSection, currentSection: latestProps.current.createDraft.sectionId })) updateDraft('beforePhotoIds', photoIds); } }) : <p className="master-hint">Загрузка фото пока не подключена.</p>}{createErrors.beforePhotoIds && <p className="master-error">{createErrors.beforePhotoIds}</p>}</section>
+          <section aria-label="Фото до выполнения"><h3>Фото до выполнения · необязательно</h3>{props.renderBeforePhotos ? <BeforePhotoControl render={props.renderBeforePhotos} disabled={createLocked || !props.online || !draft.sectionId} sectionId={draft.sectionId} photoIds={draft.beforePhotoIds} onPhotoIdsChange={photoIds => { if (canApplyPhotoResult({ mounted: mounted.current, locked: createInFlight.current || locked(currentCreateState.current), expectedGeneration: photoContext, currentGeneration: latestPhotoContext.current, expectedSection: photoSection, currentSection: latestProps.current.createDraft.sectionId })) updateDraft('beforePhotoIds', photoIds); }} /> : <p className="master-hint">Загрузка фото пока не подключена.</p>}{createErrors.beforePhotoIds && <p className="master-error">{createErrors.beforePhotoIds}</p>}</section>
         </fieldset>
         {Object.keys(createErrors).some(key => createErrors[key as keyof DraftErrors]) && <p className="master-error" role="alert">Проверьте отмеченные поля. Черновик не отправлен.</p>}
         {props.beforePhotosBusy && <p role="status">Дождитесь завершения загрузки выбранных фото перед выдачей.</p>}
         <button className="master-primary" type="submit" disabled={!createReady || createLocked}>{createState.phase === 'pending' ? 'Выдаём наряд…' : 'Выдать наряд'}</button>
       </form>
       <OperationNotice state={createState} online={props.online} confirmedText="Выдача наряда подтверждена сервером." retry={props.onRetryCreate ? () => void create(true) : undefined} canResolve={freshAfter(props.dictionaries, createState)} resolve={() => applyCreateState(idle())} />
-      {createState.phase === 'confirmed' && <button type="button" onClick={() => { photoContext.current.generation += 1; props.onCreateDraftChange(emptyMasterCreateDraft()); setCreateErrors({}); applyCreateState(idle()); }}>Создать следующий наряд</button>}
+      {createState.phase === 'confirmed' && <button type="button" onClick={() => { latestPhotoContext.current = null; props.onCreateDraftChange(emptyMasterCreateDraft()); setCreateErrors({}); applyCreateState(idle()); }}>Создать следующий наряд</button>}
     </section>
     <section className="master-review-list" aria-labelledby={`${prefix}-review-title`}>
       <h2 id={`${prefix}-review-title`}>Результаты на проверке</h2>
