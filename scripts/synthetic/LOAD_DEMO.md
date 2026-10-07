@@ -1,15 +1,18 @@
-# Canonical synthetic historical loader, v1
+# Canonical synthetic historical loader, v1.1
 
 This package imports only the reviewed **540-order offline C1 export** into an
 explicitly authorized, isolated demo schema. It is not a live order-creation API,
-account provisioner, migration runner or proof of a real completed workflow.
+login provisioner, migration runner or proof of a real completed workflow.
+Under [A0-0037](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6046815144),
+missing historical actors can be inserted as disabled business records only.
 
 ## Evidence status
 
 - Unit, deterministic-source, static-schema and fake-SQL checks are available in
   `test_load_demo.py`. They do not execute PostgreSQL.
 - **Real PostgreSQL import: BLOCKED / NOT_RUN.** This package has no authorized
-  isolated OWNER connection and no confirmed complete 17-account mapping.
+  isolated OWNER connection. Seventeen usable/preprovisioned logins are no
+  longer required; the explicit identity mapping is still mandatory.
 - Actual PostgreSQL constraints, lock behavior under concurrency, rollback,
   persisted readback, application reports and live browser/mobile flows still
   need their own checks on the integrated exact SHA.
@@ -48,22 +51,35 @@ python scripts/synthetic/load_demo.py /path/to/canonical-history.json
 ```
 
 This CLI is **offline only**. It reports `VALIDATED_OFFLINE`, counts and the
-required account descriptors, including canonical source IDs, roles, section
-IDs and brigades. It reports PostgreSQL as `NOT_RUN`; it never opens a connection.
+historical actor descriptors, including canonical source IDs, roles, section
+IDs and brigades, plus a complete `canonical_identity_mapping`. Current actor
+state is shown as inactive/off-shift. It reports PostgreSQL as `NOT_RUN`; it
+never opens a connection.
 Only point it at the intended public history file, never a credential document.
 
-## Required external identity seam
+## Disabled historical actor policy
 
 An authorized operator must first provide:
 
 1. An isolated demo database/schema with the accepted schema already applied
-2. Canonical sections and brigades needed by the preprovisioned accounts' FKs
-3. Seventeen already-existing, active synthetic accounts with these exact codes:
-   `SYN-M-01`, `SYN-M-02` and `SYN-E-01` through `SYN-E-15`
-4. Matching source roles, exact canonical section-membership sets and canonical
-   brigade IDs; the offline CLI lists the complete source requirements
-5. An explicit one-to-one mapping from each of those codes to its existing
-   account UUID, plus an already-open, idle OWNER connection
+2. An explicit one-to-one mapping from the 17 source codes to runtime UUIDs,
+   plus an already-open, idle OWNER connection
+
+The source codes are `SYN-M-01`, `SYN-M-02` and `SYN-E-01` through `SYN-E-15`.
+For each missing actor, the mapping **must equal its canonical C1 source UUID**.
+The offline CLI emits that complete map. The loader inserts required canonical
+section/brigade references, then the missing employee with its historical
+master/executor role, `active=false`, `on_shift=false`, and the public non-hash
+sentinel `!DISABLED_SYNTHETIC_HISTORY`. It inserts canonical section memberships
+only for those newly inserted actors, in the same transaction. No real PIN,
+valid hash, credential, session, database role or usable access is created.
+
+An existing mapped actor must already have the exact source code, historical
+role, brigade, inactive/off-shift state, locked sentinel and complete canonical
+membership set. An explicit noncanonical target UUID may only reference such an
+already-existing matching disabled actor; it cannot cause creation of a new
+arbitrary ID. Missing/extra memberships on an existing actor are a conflict,
+not an invitation to expand or repair its scope. ID/code collisions fail closed.
 
 The two live fixture accounts `DALA-DEMO-MASTER` and `DALA-DEMO-EXECUTOR` are not
 historical actors. Their known IDs are rejected by the mapping validator even
@@ -74,16 +90,39 @@ entity ID also fails.
 The schema must contain no unrelated business rows. Existing catalogue rows
 must exactly match the canonical ID, code, label, unit and ownership fields.
 All accounts in the selected schema must use `SYN-` codes. The exact matched
-17 actors are checked for role, active status, section scopes and brigade;
-`on_shift` and credentials are not read or changed. Existing synthetic accounts
-outside the map are not used. A shared schema containing the separate live
+17 actors are checked for role, disabled/off-shift status, section scopes and
+brigade. SQL returns only a boolean comparison against the public locked
+sentinel, never the stored credential hash. Existing synthetic accounts outside
+the map are not used. A shared schema containing the separate live
 fixture is deliberately refused; coexistence would require a separately
 reviewed namespace policy.
 
-Missing identities/scopes or namespace conflicts stop the import. The loader
-never fills the gap by creating accounts, changing membership or expanding
-privileges. It does not inspect password hashes, read secret files, discover
-environment DSNs, create a role, perform login, or create a session.
+Existing mismatched actors/scopes or namespace conflicts stop the import. The
+loader never alters, reactivates or expands an existing account or its scope.
+It does not retrieve password hashes, read secret files, discover environment
+DSNs, create a role, perform login, or create a session.
+
+Historical reports must retain facts referencing these now-disabled actors.
+Current reader authorization still applies: authorizing a separate history
+viewer, if needed for UI, is an operator-owned later action. The loader does not
+broaden the live master's scope or change reports to filter out former actors.
+
+### Concrete A2 non-authentication check
+
+The test imports actual `Argon2idVerifier` from
+`backend/app/sessions/crypto.py` at base
+`e435ec9a290279ab49b8cb63237b872955c79938` (blob
+`19f65c12a24e3eaa123bd5f5b5fecfa443249f6c`). The non-Argon2 sentinel takes its
+unsupported-hash path, which performs dummy work and always returns false.
+The unit test executes that real verifier with dummy PINs only. It is not a
+mock of the verifier and does not attempt a real account login. Dependencies
+must match the existing backend lock; a missing dependency fails this test
+rather than being reported as a skipped success.
+
+`backend/app/sessions/service.py` independently requires `active=true` before
+creating a session and rechecks it inside the transaction. These imported
+actors are inactive. Neither real session issuance nor PostgreSQL login is
+claimed tested by the sentinel-only check.
 
 ## Authorized runner integration
 
@@ -97,7 +136,7 @@ The caller retains responsibility for its connection and authorization.
 from load_demo import load_demo
 
 # owner_connection is supplied by the separately authorized runner.
-# mapping contains all 17 exact synthetic employee codes and existing UUIDs.
+# mapping contains all 17 codes; missing actors use their canonical source UUIDs.
 result = load_demo(
     owner_connection,
     canonical_history_bytes,
@@ -114,9 +153,11 @@ qualified; `search_path` is locally restricted to `pg_catalog`. This prevents
 accidental default-schema targeting. It cannot independently attest that an
 operator-designated database is organizationally approved for demo use.
 
-Only the ten business tables listed in `load_demo.COLUMNS` receive INSERTs:
+The ten business tables listed in `load_demo.COLUMNS` receive INSERTs:
 sections, brigades, equipment, work codes, materials, orders, submissions,
-material writeoffs, reviews and order events. The loader has no UPDATE, DELETE,
+material writeoffs, reviews and order events. In addition, the two tables in
+`ACTOR_COLUMNS` receive only missing canonical disabled employees and their
+memberships. The loader has no UPDATE, DELETE,
 TRUNCATE, UPSERT, DDL, privilege, HTTP or outbound-provider path.
 
 ## Transaction, identity and repeat behavior
@@ -125,10 +166,13 @@ TRUNCATE, UPSERT, DDL, privilege, HTTP or outbound-provider path.
   lock. A repeated concurrent invocation gets a fresh snapshot after waiting
 - Deterministically ordered table locks protect all preflight reads and INSERTs
   from concurrent writes; `lock_timeout=5s` and `statement_timeout=60s` bound waits
-- Owner/table checks, complete account checks and all-table conflict checks run
+- Owner/table checks, complete actor checks and all-table conflict checks run
   before the first INSERT. Any unexpected/changed row fails closed
 - Only an entirely absent business history or an entirely identical complete
   history is accepted. A partial history is refused rather than repaired
+- Matching disabled actors/references may precede the first import. Once the
+  complete business history exists, missing actors also block rather than being
+  silently repaired
 - An identical repeat returns `NOOP`, performs no INSERTs and consumes no new
   order numbers. A changed map, provenance, source ID or source field conflicts
 - Source UUIDs are retained; actor references use the explicit account mapping
@@ -143,7 +187,11 @@ TRUNCATE, UPSERT, DDL, privilege, HTTP or outbound-provider path.
 No automatic recovery or destructive reset is provided. For an uncertain commit,
 reinvoke with the identical bytes/map only after the connection outcome is
 known: complete matching history is a no-op, partial/conflicting history blocks.
-An operator must review any other recovery outside this package.
+An operator must review any other recovery outside this package. In particular,
+v1.0 (`175e40870457ec94df4745083f694956a683927c`) expected active preprovisioned
+actors and different provenance. A v1.0-imported state intentionally conflicts
+with v1.1; there is no in-place disabling, reactivation, provenance rewrite or
+upgrade. No actual v1.0 database import was performed for this package.
 
 ## Historical photo and scoring honesty
 
@@ -175,15 +223,19 @@ they do not fetch, install, contact a provider or access a database. Missing
 objects cause setup failure, not a skipped-as-passed PostgreSQL claim.
 
 ```sh
+# Use the backend's locked environment, including argon2-cffi and its bindings.
 PYTHONDONTWRITEBYTECODE=1 python -m unittest discover \
   -s scripts/synthetic -p test_load_demo.py -v
 git diff --check
 ```
 
-The fake checks cover exact canonical input, guards, owner and account mapping,
+The fake checks cover exact canonical input, guards, owner and actor mapping,
 deterministic projection, full INSERT/no-op behavior, namespace/conflict failure,
-partial-import refusal, absent evidence, preserved null scores, mocked rollback,
-SQL write allowlists and column compatibility. They do not establish real
+disabled canonical actor insertion, refusal to change existing actor state or
+scope, partial-import refusal, absent evidence, preserved null scores, mocked
+rollback, SQL write allowlists and column compatibility. The separate actual-A2
+crypto unit check proves rejection of the locked sentinel for tested dummy PINs.
+These checks do not establish real
 PostgreSQL concurrency or FK behavior. Once the isolated seam is authorized,
 A5's runner must additionally verify real commit/readback, an identical no-op,
 conflict rollback, concurrent invocation outcome and unchanged account rights.

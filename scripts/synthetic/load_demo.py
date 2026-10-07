@@ -18,7 +18,8 @@ from uuid import UUID
 
 SOURCE_COMMIT = "8af3897f03aa2f41f0af07ec74ec2c807a4a535a"
 HISTORY_SHA256 = "7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1"
-LOADER_VERSION = "1.0.0"
+LOADER_VERSION = "1.1.0"
+DISABLED_PIN_SENTINEL = "!DISABLED_SYNTHETIC_HISTORY"
 WATERMARK = "Синтетические данные — не история предприятия"
 PHOTO_POLICY = "metadata_only_no_image_bytes_no_file_valid_claim"
 MAX_HISTORY_BYTES = 8 * 1024 * 1024
@@ -53,6 +54,14 @@ COLUMNS = {
 CATALOGUES = ("sections", "brigades", "equipment", "work_codes", "materials")
 EMPTY_TABLES = ("photos", "ai_assessments", "ai_jobs", "delivery_jobs", "operation_receipts")
 ACCOUNT_TABLES = ("employees", "employee_sections")
+ACTOR_COLUMNS = {
+    "employees": ("id", "employee_code", "role", "active", "on_shift", "brigade_id", "pin_hash"),
+    "employee_sections": ("employee_id", "section_id"),
+}
+# Parent references precede disabled historical actors, then ordinary history.
+INSERT_COLUMNS = {"sections": COLUMNS["sections"], "brigades": COLUMNS["brigades"],
+                  **ACTOR_COLUMNS, **{table: columns for table, columns in COLUMNS.items()
+                                     if table not in {"sections", "brigades"}}}
 ALL_TABLES = (*COLUMNS, *EMPTY_TABLES, *ACCOUNT_TABLES)
 JSON_COLUMNS = {"details", "missing_evidence"}
 TIMESTAMPS = {"issued_at", "due_at", "updated_at", "submitted_at", "created_at", "occurred_at", "recorded_at"}
@@ -97,7 +106,7 @@ def normalize(value):
 
 
 def identity_map(history, mapping):
-    """The non-secret map is {canonical employee_code: existing account UUID}."""
+    """Map source codes to actor UUIDs; missing actors require canonical UUIDs."""
     expected = {item["employee_code"] for item in history["employees"]}
     require(type(mapping) is dict and set(mapping) == expected,
             "Explicit mapping for all 17 canonical synthetic employee codes is required")
@@ -156,6 +165,7 @@ def prepare_rows(history, mapping):
                 "watermark": WATERMARK, "photo_policy": PHOTO_POLICY,
                 "source_photo_placeholders": photos.get(source["order_id"], []),
                 "historical_completeness_not_verified_evidence": True,
+                "historical_actor_state": "disabled_no_login",
             }
         rows["order_events"].append(row)
     for table_rows in rows.values():
@@ -166,6 +176,8 @@ def prepare_rows(history, mapping):
 
 
 def key_for(table, row):
+    if table == "employee_sections":
+        return row["employee_id"], row["section_id"]
     return (row["submission_id"], row["material_id"]) if table == "material_writeoffs" else row["id"]
 
 
@@ -175,20 +187,39 @@ def qualified(schema, table):
 
 
 def verify_accounts(db, schema, history, identities):
-    accounts = db.execute(f"SELECT id,employee_code,role,active,brigade_id FROM {qualified(schema, 'employees')}").fetchall()
+    # Compare against a public non-credential sentinel inside SQL; never retrieve
+    # actual stored credential hashes. The accepted A2 verifier rejects it.
+    accounts = db.execute(f"SELECT id,employee_code,role,active,on_shift,brigade_id,"
+                          f"pin_hash=%s AS locked FROM {qualified(schema, 'employees')}",
+                          (DISABLED_PIN_SENTINEL,)).fetchall()
     actual = {str(row["id"]): normalize(row) for row in accounts}
     require(all(type(row["employee_code"]) is str and row["employee_code"].startswith("SYN-") for row in accounts),
             "Non-synthetic account found in the demo schema")
     memberships = db.execute(f"SELECT employee_id,section_id FROM {qualified(schema, 'employee_sections')}").fetchall()
+    missing = {table: [] for table in ACCOUNT_TABLES}
+    codes = {row["employee_code"]: str(row["id"]) for row in accounts}
     for source in history["employees"]:
         account_id = identities[source["id"]]
+        require(source["id"] not in actual or account_id == source["id"],
+                "Canonical source actor ID collides with another mapped account")
         account = actual.get(account_id)
-        require(account is not None, f"Provisioning required for {source['employee_code']}")
-        require(account["employee_code"] == source["employee_code"] and account["role"] == source["role"]
-                and account["active"] is True and account["brigade_id"] == source["brigade_id"],
-                f"Synthetic account does not match {source['employee_code']}")
         scopes = {str(row["section_id"]) for row in memberships if str(row["employee_id"]) == account_id}
+        if account is None:
+            require(account_id == source["id"], "Missing historical actors require canonical identity mapping")
+            require(source["employee_code"] not in codes and not scopes,
+                    f"Canonical actor code or membership collision for {source['employee_code']}")
+            missing["employees"].append({"id": account_id, "employee_code": source["employee_code"],
+                "role": source["role"], "active": False, "on_shift": False,
+                "brigade_id": source["brigade_id"], "pin_hash": DISABLED_PIN_SENTINEL})
+            missing["employee_sections"].extend({"employee_id": account_id, "section_id": section}
+                                                   for section in source["section_ids"])
+            continue
+        require(account["employee_code"] == source["employee_code"] and account["role"] == source["role"]
+                and account["active"] is False and account["on_shift"] is False and account["locked"] is True
+                and account["brigade_id"] == source["brigade_id"],
+                f"Synthetic account does not match {source['employee_code']}")
         require(scopes == set(source["section_ids"]), f"Existing scope mismatch for {source['employee_code']}")
+    return missing
 
 
 def inspect_existing(db, schema, rows):
@@ -233,7 +264,7 @@ def add_runtime_numbers(events, numbers):
 def insert_rows(db, schema, missing):
     counts = {}
     runtime_numbers = {}
-    for table, columns in COLUMNS.items():
+    for table, columns in INSERT_COLUMNS.items():
         if table == "order_events":
             add_runtime_numbers(missing[table], runtime_numbers)
         placeholders = ["%s::jsonb" if column in JSON_COLUMNS else "%s::uuid[]"
@@ -260,8 +291,9 @@ def load_demo(db, history_bytes, mapping, *, demo_only=False, expected_database=
     """Import atomically using an existing idle psycopg3 dict-row OWNER connection.
 
     The caller must separately authorize and provision an isolated demo database,
-    the accepted migrations and all 17 accounts/scopes. No connection is opened,
-    no account is changed, and no live HTTP command is called here.
+    and the accepted migrations. Missing historical actors use canonical IDs,
+    are inactive/off-shift and have a non-authenticating sentinel. Existing
+    actors/scopes are never altered. No connection or live HTTP command occurs.
     """
     require(demo_only is True, "Explicit demo_only=True is required")
     require(type(expected_database) is str and bool(expected_database), "Expected demo database is required")
@@ -293,8 +325,11 @@ def load_demo(db, history_bytes, mapping, *, demo_only=False, expected_database=
         # lock acquisition deterministic; audit triggers are never disabled.
         tables = ",".join(qualified(expected_schema, table) for table in sorted(ALL_TABLES))
         db.execute(f"LOCK TABLE {tables} IN SHARE ROW EXCLUSIVE MODE")
-        verify_accounts(db, expected_schema, history, identities)
+        missing_actors = verify_accounts(db, expected_schema, history, identities)
         missing = inspect_existing(db, expected_schema, rows)
+        require(not missing_actors["employees"] or len(missing["orders"]) == len(rows["orders"]),
+                "Partial historical actor state found; no automatic repair")
+        missing.update(missing_actors)
         counts = insert_rows(db, expected_schema, missing)
         # Force the accepted deferred orders->submissions FK before success.
         db.execute("SET CONSTRAINTS ALL IMMEDIATE")
@@ -314,7 +349,9 @@ def main(argv=None):
         parser.exit(2, f"BLOCKED: {exc}\n")
     print(json.dumps({"status": "VALIDATED_OFFLINE", "history_sha256": HISTORY_SHA256,
         "counts": {table: len(items) for table, items in history.items() if isinstance(items, list)},
-        "required_existing_accounts": history["employees"], "postgresql": "NOT_RUN",
+        "historical_actors": [dict(actor, active=False, on_shift=False) for actor in history["employees"]],
+        "canonical_identity_mapping": {actor["employee_code"]: actor["id"] for actor in history["employees"]},
+        "postgresql": "NOT_RUN",
         "note": "No database connection opened. An authorized isolated OWNER seam is required."},
         ensure_ascii=False, sort_keys=True))
     return 0

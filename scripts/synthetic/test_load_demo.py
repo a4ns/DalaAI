@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 from types import SimpleNamespace
 import unittest
 from unittest.mock import mock_open, patch
@@ -20,6 +21,7 @@ import load_demo as loader
 
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "backend"))
 GENERATOR_SHA256 = "02825ee7acf5d9ccccb5e3be016266c9a29f35d63d85bde35588acaed5bc5a99"
 
 
@@ -59,14 +61,15 @@ class FakeOwner:
         self.insert_count = 0
         self.next_number = 1000
         self.commits = self.rollbacks = 0
-        # These references/accounts/scopes are preprovisioned by an external
-        # operator; no CREATE/INSERT-auth SQL is used by the loader under test.
+        # These matching disabled actors can be preprovisioned. Separate tests
+        # clear all rows to exercise canonical inactive insertion from scratch.
         for table in ("sections", "brigades"):
             self.tables[table] = deepcopy(history[table])
         for source in history["employees"]:
             target = mapping[source["employee_code"]]
             self.tables["employees"].append({"id": target, "employee_code": source["employee_code"],
-                "role": source["role"], "active": True, "brigade_id": source["brigade_id"]})
+                "role": source["role"], "active": False, "on_shift": False,
+                "pin_hash": loader.DISABLED_PIN_SENTINEL, "brigade_id": source["brigade_id"]})
             self.tables["employee_sections"].extend({"employee_id": target, "section_id": section}
                                                    for section in source["section_ids"])
 
@@ -106,7 +109,9 @@ class FakeOwner:
             return Result([{"present": bool(self.tables[table])}])
         if statement.startswith("SELECT "):
             columns = statement.split(" FROM ", 1)[0][len("SELECT "):].split(",")
-            return Result([{column: row[column] for column in columns} for row in self.tables[table]])
+            return Result([{("locked" if column == "pin_hash=%s AS locked" else column):
+                            row["pin_hash"] == params[0] if column == "pin_hash=%s AS locked" else row[column]
+                            for column in columns} for row in self.tables[table]])
         if statement.startswith("INSERT INTO "):
             self.insert_count += 1
             if self.fail_after == self.insert_count:
@@ -203,6 +208,83 @@ class LoadDemoTests(unittest.TestCase):
         self.assertEqual(accounts, {table: self.db.tables[table] for table in loader.ACCOUNT_TABLES})
         self.assertEqual(self.db.commits, 2)
 
+    def test_new_canonical_actors_are_disabled_and_repeat_is_noop(self):
+        mapping = {actor["employee_code"]: actor["id"] for actor in self.history["employees"]}
+        self.db.tables = {table: [] for table in loader.ALL_TABLES}
+        with patch.object(self, "mapping", mapping):
+            first = self.run_import()
+            self.assertEqual(first["inserted"]["employees"], 17)
+            self.assertEqual(first["inserted"]["employee_sections"], 34)
+            for actor in self.db.tables["employees"]:
+                self.assertIs(actor["active"], False)
+                self.assertIs(actor["on_shift"], False)
+                self.assertEqual(actor["pin_hash"], loader.DISABLED_PIN_SENTINEL)
+                self.assertEqual(actor["id"], mapping[actor["employee_code"]])
+            before = deepcopy(self.db.tables)
+            self.db.calls.clear()
+            self.assertEqual(self.run_import()["status"], "NOOP")
+            self.assertEqual(self.db.tables, before)
+            self.assert_no_writes()
+
+    def test_actual_a2_verifier_rejects_locked_sentinel_with_dummy_pin(self):
+        # This imports the concrete tracked A2 verifier, not PinHashVerifier's
+        # protocol or a substitute mock. Missing locked dependencies fail loudly.
+        from app.sessions.crypto import Argon2idVerifier
+        verifier = Argon2idVerifier()
+        self.assertFalse(verifier.verify("0000", loader.DISABLED_PIN_SENTINEL))
+        self.assertFalse(verifier.verify("dummy-pin-only", loader.DISABLED_PIN_SENTINEL))
+
+    def test_missing_noncanonical_actor_is_not_created(self):
+        self.db.tables["employees"].pop(0)
+        with self.assertRaisesRegex(loader.ImportBlocked, "canonical identity mapping"):
+            self.run_import()
+        self.assert_no_writes()
+
+    def test_canonical_actor_id_and_code_collisions_fail(self):
+        canonical = {actor["employee_code"]: actor["id"] for actor in self.history["employees"]}
+        # The existing same code uses another UUID; never add another identity.
+        with patch.object(self, "mapping", canonical), self.assertRaises(loader.ImportBlocked):
+            self.run_import()
+        self.assert_no_writes()
+        self.db.tables["employees"].append(dict(self.db.tables["employees"][0],
+            id=self.history["employees"][0]["id"], employee_code="SYN-OTHER"))
+        with self.assertRaisesRegex(loader.ImportBlocked, "Canonical source actor ID"):
+            self.run_import()
+        self.assert_no_writes()
+
+    def test_v1_active_actor_is_never_disabled_or_reactivated(self):
+        self.db.tables["employees"][0]["active"] = True
+        before = deepcopy(self.db.tables)
+        with self.assertRaises(loader.ImportBlocked):
+            self.run_import()
+        self.assertEqual(self.db.tables, before)
+        self.assert_no_writes()
+
+    def test_v1_provenance_is_not_upgraded_in_place(self):
+        self.run_import()
+        event = next(row for row in self.db.tables["order_events"] if row["kind"] == "order.created")
+        event["details"]["synthetic_import"]["loader_version"] = "1.0.0"
+        before = deepcopy(self.db.tables)
+        self.db.calls.clear()
+        with self.assertRaises(loader.ImportBlocked):
+            self.run_import()
+        self.assertEqual(self.db.tables, before)
+        self.assert_no_writes()
+
+    def test_actor_memberships_are_not_added_to_existing_rows(self):
+        for direction in ("missing", "extra"):
+            self.db = FakeOwner(self.history, self.mapping)
+            if direction == "missing":
+                self.db.tables["employee_sections"].pop(0)
+            else:
+                self.db.tables["employee_sections"].append({"employee_id": self.mapping["SYN-M-01"],
+                                                           "section_id": str(UUID(int=900))})
+            before = deepcopy(self.db.tables)
+            with self.subTest(direction=direction), self.assertRaises(loader.ImportBlocked):
+                self.run_import()
+            self.assertEqual(self.db.tables, before)
+            self.assert_no_writes()
+
     def test_provenance_mapping_and_unavailable_photo_evidence(self):
         self.run_import()
         self.assertTrue(all(not self.db.tables[table] for table in loader.EMPTY_TABLES))
@@ -272,7 +354,8 @@ class LoadDemoTests(unittest.TestCase):
                 self.assert_no_writes()
 
     def test_unprovisioned_identity_and_scope_mismatch_block(self):
-        for field, value in (("role", "admin"), ("active", False), ("employee_code", "REAL-M-01"),
+        for field, value in (("role", "admin"), ("active", True), ("on_shift", True),
+                             ("pin_hash", "not-the-disabled-sentinel"), ("employee_code", "REAL-M-01"),
                              ("brigade_id", str(UUID(int=123)))):
             with self.subTest(field=field):
                 self.db = FakeOwner(self.history, self.mapping)
@@ -287,7 +370,7 @@ class LoadDemoTests(unittest.TestCase):
         self.assert_no_writes()
         self.db = FakeOwner(self.history, self.mapping)
         self.db.tables["employees"].pop(0)
-        with self.assertRaisesRegex(loader.ImportBlocked, "Provisioning required"):
+        with self.assertRaisesRegex(loader.ImportBlocked, "canonical identity mapping"):
             self.run_import()
         self.assert_no_writes()
 
@@ -316,7 +399,19 @@ class LoadDemoTests(unittest.TestCase):
         self.assertEqual(self.db.commits, 0)
         self.assertEqual(self.db.info.transaction_status, 0)
 
-    def test_sql_has_no_privilege_auth_or_evidence_writes(self):
+    def test_new_actor_insertions_roll_back_with_history_error(self):
+        mapping = {actor["employee_code"]: actor["id"] for actor in self.history["employees"]}
+        self.db.tables = {table: [] for table in loader.ALL_TABLES}
+        before = deepcopy(self.db.tables)
+        self.db.fail_after = 150
+        with patch.object(self, "mapping", mapping), self.assertRaisesRegex(RuntimeError, "Simulated"):
+            self.run_import()
+        self.assertEqual(self.db.tables, before)
+        self.assertEqual(self.db.rollbacks, 1)
+        self.assertTrue(any(sql.startswith('INSERT INTO "synthetic_demo"."employees"')
+                            for sql, _ in self.db.calls))
+
+    def test_sql_has_no_credential_session_privilege_or_evidence_changes(self):
         self.run_import()
         statements = [sql for sql, _ in self.db.calls]
         self.assertEqual(statements[0], "SET TRANSACTION ISOLATION LEVEL READ COMMITTED")
@@ -331,10 +426,14 @@ class LoadDemoTests(unittest.TestCase):
         for statement in statements:
             self.assertNotRegex(statement.upper(), r"\b(CREATE|ALTER|UPDATE|DELETE|TRUNCATE|GRANT|REVOKE|SETVAL|NEXTVAL)\b")
             self.assertNotIn("SELECT *", statement)
-            self.assertNotIn("pin_hash", statement)
+            if "pin_hash" in statement:
+                self.assertTrue(statement.startswith("SELECT id,employee_code")
+                                or statement.startswith('INSERT INTO "synthetic_demo"."employees"'))
+                if statement.startswith("SELECT "):
+                    self.assertIn("pin_hash=%s AS locked", statement)
             self.assertNotIn("auth_sessions", statement)
             if statement.startswith("INSERT "):
-                self.assertFalse(any(f'"{table}"' in statement for table in (*loader.EMPTY_TABLES, *loader.ACCOUNT_TABLES)))
+                self.assertFalse(any(f'"{table}"' in statement for table in loader.EMPTY_TABLES))
                 self.assertNotIn("file_valid", statement)
                 self.assertNotIn("number", statement.split("VALUES", 1)[0] if '"orders"' in statement else "")
 
@@ -342,7 +441,7 @@ class LoadDemoTests(unittest.TestCase):
         migrations = ROOT / "backend/db/migrations"
         ddl = (migrations / "001_vertical_slice.sql").read_text()
         evidence = (migrations / "002_trusted_evidence.sql").read_text()
-        for table, columns in loader.COLUMNS.items():
+        for table, columns in loader.INSERT_COLUMNS.items():
             body = re.search(rf"CREATE TABLE {table} \((.*?)\n\);", ddl, re.S)[1]
             if table == "submissions":
                 body += evidence
@@ -357,7 +456,10 @@ class LoadDemoTests(unittest.TestCase):
         result = json.loads(output.getvalue())
         self.assertEqual(result["status"], "VALIDATED_OFFLINE")
         self.assertEqual(result["postgresql"], "NOT_RUN")
-        self.assertEqual(len(result["required_existing_accounts"]), 17)
+        self.assertEqual(len(result["historical_actors"]), 17)
+        self.assertTrue(all(not actor["active"] and not actor["on_shift"] for actor in result["historical_actors"]))
+        self.assertEqual(result["canonical_identity_mapping"],
+                         {actor["employee_code"]: actor["id"] for actor in self.history["employees"]})
         self.assertEqual(self.db.calls, [])
 
 
