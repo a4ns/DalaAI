@@ -16,3 +16,12 @@
   disposable trust. No tunnel, certificate-warning bypass or ignored TLS errors.
 - Physical Android, real delivery, semantic model quality and a deployed URL are
   separate evidence gates. Source/build/synthetic browser checks cannot prove them.
+# Worker integration increment, 2026-10-07
+
+The full operator launcher now composes the reviewed worker overlay. Its API and
+worker database capability profiles are independent from provider activation.
+Web Push remains paused without configured keys; durable work is not consumed by
+a disabled adapter. Key absence chooses rules fallback; an operator-supplied
+OpenAI key selects the named interactive-demo policy, sharing the persistent
+budget ledger. The worker-free base remains the manual C-110 fixture. No host
+deployment, live provider call or physical-phone pass is implied by publication.

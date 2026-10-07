@@ -50,6 +50,9 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
         references_factory = partial(VerifiedPhotoReferences, verifier=PhotoIntegrityVerifier(store))
 
     def check_database():
+        if settings.notification_enabled or settings.push_enabled:
+            return validate_database(connector, photo_enabled=photo_enabled,
+                notification_enabled=settings.notification_enabled, push_enabled=settings.push_enabled)
         if photo_enabled:
             return validate_database(connector, photo_enabled=True)
         return validate_database(connector)
@@ -95,7 +98,7 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     app.include_router(session_router(SessionService(connector, allowed_origin=settings.allowed_origin,
                        demo_enabled=True, real_clock=clock)))
     app.include_router(command_router(CommandService(connector, allowed_origin=settings.allowed_origin,
-                       delivery_channel='synthetic', domain_clock=clock, real_clock=clock,
+                       delivery_channel=settings.delivery_channel, domain_clock=clock, real_clock=clock,
                        references_factory=references_factory)))
     app.include_router(create_discovery_router(DiscoveryService(connector, domain_clock=clock,
                        real_clock=clock, dictionary_policy=WorkloadPolicy(POLICY_NAME))))
@@ -103,6 +106,12 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     if photo_service is not None:
         from app.photos.http import create_photo_router
         app.include_router(create_photo_router(photo_service))
+    if settings.push_enabled:
+        from app.push.http import create_push_router
+        from app.push.service import PushService
+        from app.push.settings import PushSettings
+        app.include_router(create_push_router(PushService(connector,
+            allowed_origin=settings.allowed_origin, settings=PushSettings.from_env(), real_clock=clock)))
     return app
 
 

@@ -6,6 +6,7 @@ from io import BytesIO
 import json
 from pathlib import Path
 import ssl
+import time
 from urllib.error import HTTPError
 from urllib.parse import urlsplit
 from urllib.request import Request, build_opener, HTTPCookieProcessor, HTTPSHandler
@@ -16,7 +17,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--base-url',required=True);p.add_argument('--ca-file',type=Path,required=True)
     p.add_argument('--secrets',type=Path,required=True);p.add_argument('--report',type=Path,required=True)
-    p.add_argument('--source-sha',required=True);a=p.parse_args()
+    p.add_argument('--source-sha',required=True);p.add_argument('--expect-rules-worker',action='store_true');a=p.parse_args()
     parsed=urlsplit(a.base_url)
     if parsed.scheme!='https' or parsed.hostname!='localhost' or parsed.path:
         raise SystemExit('This disposable smoke requires an explicit localhost HTTPS origin')
@@ -73,6 +74,17 @@ def main():
             'work_description':'Синтетическая работа выполнена','work_code_id':d['work_codes'][0]['id'],
             'materials':[],'after_photo_ids':[photo],'comment':'Синтетическое фото, без семантической оценки'}})
         report['steps'].append('actual sanitized photo upload and submitted immutable evidence')
+        if a.expect_rules_worker:
+            deadline=time.monotonic()+40
+            while True:
+                detail=json_call('master',f'/api/v1/orders/{order}/submissions/{submitted["submission_id"]}')
+                assessments=detail['assessments']
+                if assessments:break
+                if time.monotonic()>=deadline:raise AssertionError('RULES_WORKER_ASSESSMENT_TIMEOUT')
+                time.sleep(.5)
+            assert len(assessments)==1 and assessments[0]['mode']=='rules_fallback' and not assessments[0]['stale']
+            report['AI_worker']='PASS_PERSISTED_RULES_FALLBACK'
+            report['steps'].append('separate restricted worker persisted actual rules assessment')
         current=json_call('master','/api/v1/orders/'+order)
         # getOrder is an Order snapshot, not a command receipt wrapper.
         version=current['version']

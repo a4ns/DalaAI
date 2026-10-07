@@ -4,7 +4,13 @@ Set DALA_PHOTO_STORAGE_ROOT to an existing absolute durable directory owned by
 the API UID (10001 in the image), mode0700. The same PrivateFileStore instance
 serves staging/retrieval and supplies physical integrity checks at human CLOSE.
 No public/static mount exposes that directory. DALA_PHOTO_MAX_TOTAL_BYTES defaults
-to1GiB and includes retained orphans; outstanding stages are bounded per owner.
+to1GiB and includes retained orphans and expired staged files. Each owner may
+have at most20 live, unattached stages; the quota uses real time sampled after
+the owner lock. At expires_at the stage stops consuming a slot, but its row,
+receipt and private bytes remain unchanged. Expired stages cannot be read,
+attached or replayed as a new upload. Attached evidence is outside this quota.
+Disk reclamation remains a separate retention-policy task; expiry does not
+free disk space or bypass the independent total-byte limit.
 No cleanup/reset of final files is automatic, especially after uncertain COMMIT.
 
 Only photo-enabled runtime permits/requires the extra INSERT privilege on photos.

@@ -211,8 +211,13 @@ class PhotoService:
                 # across workers. Hash collisions only conservatively serialize.
                 quota_key = int.from_bytes(sha256(("photo-quota:" + actor).encode()).digest()[:8], "big", signed=True)
                 db.execute("SELECT pg_advisory_xact_lock(%s)", (quota_key,))
-                count = db.execute("SELECT count(*) AS n FROM photos WHERE owner_id=%s AND attached_at IS NULL",
-                                   (actor,)).fetchone()["n"]
+                # Capacity is for live stages. Sample real time after the lock
+                # wait; expired rows/receipts/blobs remain intact, and the store
+                # independently counts all retained bytes against its limit.
+                quota_now = self.real_clock.now()
+                count = db.execute("""SELECT count(*) AS n FROM photos
+                    WHERE owner_id=%s AND attached_at IS NULL AND expires_at>%s""",
+                    (actor, quota_now)).fetchone()["n"]
                 if count >= self.max_outstanding_stages:
                     raise DomainError("RATE_LIMITED", "Outstanding photo limit reached")
                 self._authorize_request(db, context, request, lock=True, revision=True)

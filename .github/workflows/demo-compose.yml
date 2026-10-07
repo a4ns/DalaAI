@@ -34,12 +34,12 @@ jobs:
         run: >-
           python ops/demo/smoke_https.py --base-url https://localhost:8443
           --ca-file "$RUNNER_TEMP/dalaai-local-ca.crt" --secrets ops/demo/.local
-          --report compose-demo-summary.json --source-sha "$GITHUB_SHA"
+          --report compose-demo-summary.json --source-sha "$GITHUB_SHA" --expect-rules-worker
       - name: Repeat startup without migration, grants or account reset
         run: ops/demo/run.sh
       - name: Stop disposable services
         if: always()
         run: |
           if [ -f ops/demo/.local/env ]; then
-            docker compose --env-file ops/demo/.local/env -f ops/demo/compose.yaml down
+            docker compose --env-file ops/demo/.local/env --env-file ops/demo/.local/workers.env -f ops/demo/compose.yaml -f ops/demo/compose.workers.yaml down
           fi

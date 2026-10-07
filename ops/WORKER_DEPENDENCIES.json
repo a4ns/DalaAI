@@ -1,0 +1,116 @@
+[
+  {
+    "package": "aiohappyeyeballs",
+    "version": "2.7.1",
+    "source": "https://pypi.org/pypi/aiohappyeyeballs/2.7.1/json",
+    "yanked": false
+  },
+  {
+    "package": "aiohttp",
+    "version": "3.14.4",
+    "source": "https://pypi.org/pypi/aiohttp/3.14.4/json",
+    "yanked": false
+  },
+  {
+    "package": "aiosignal",
+    "version": "1.4.0",
+    "source": "https://pypi.org/pypi/aiosignal/1.4.0/json",
+    "yanked": false
+  },
+  {
+    "package": "attrs",
+    "version": "26.1.0",
+    "source": "https://pypi.org/pypi/attrs/26.1.0/json",
+    "yanked": false
+  },
+  {
+    "package": "certifi",
+    "version": "2026.7.22",
+    "source": "https://pypi.org/pypi/certifi/2026.7.22/json",
+    "yanked": false
+  },
+  {
+    "package": "charset-normalizer",
+    "version": "3.5.2",
+    "source": "https://pypi.org/pypi/charset-normalizer/3.5.2/json",
+    "yanked": false
+  },
+  {
+    "package": "cryptography",
+    "version": "50.0.2",
+    "source": "https://pypi.org/pypi/cryptography/50.0.2/json",
+    "yanked": false
+  },
+  {
+    "package": "frozenlist",
+    "version": "1.8.0",
+    "source": "https://pypi.org/pypi/frozenlist/1.8.0/json",
+    "yanked": false
+  },
+  {
+    "package": "http-ece",
+    "version": "1.2.1",
+    "source": "https://pypi.org/pypi/http-ece/1.2.1/json",
+    "yanked": false
+  },
+  {
+    "package": "multidict",
+    "version": "6.9.1",
+    "source": "https://pypi.org/pypi/multidict/6.9.1/json",
+    "yanked": false
+  },
+  {
+    "package": "propcache",
+    "version": "0.5.4",
+    "source": "https://pypi.org/pypi/propcache/0.5.4/json",
+    "yanked": false
+  },
+  {
+    "package": "py-vapid",
+    "version": "1.9.4",
+    "source": "https://pypi.org/pypi/py-vapid/1.9.4/json",
+    "yanked": false
+  },
+  {
+    "package": "pywebpush",
+    "version": "2.1.2",
+    "source": "https://pypi.org/pypi/pywebpush/2.1.2/json",
+    "yanked": false
+  },
+  {
+    "package": "requests",
+    "version": "2.34.2",
+    "source": "https://pypi.org/pypi/requests/2.34.2/json",
+    "yanked": false
+  },
+  {
+    "package": "six",
+    "version": "1.17.0",
+    "source": "https://pypi.org/pypi/six/1.17.0/json",
+    "yanked": false
+  },
+  {
+    "package": "urllib3",
+    "version": "2.8.0",
+    "source": "https://pypi.org/pypi/urllib3/2.8.0/json",
+    "yanked": false
+  },
+  {
+    "package": "yarl",
+    "version": "1.25.1",
+    "source": "https://pypi.org/pypi/yarl/1.25.1/json",
+    "yanked": false
+  },
+  {
+    "package": "httpx",
+    "version": "0.28.1",
+    "source": "https://pypi.org/pypi/httpx/0.28.1/json",
+    "yanked": false
+  },
+  {
+    "package": "httpcore",
+    "version": "1.0.9",
+    "source": "https://pypi.org/pypi/httpcore/1.0.9/json",
+    "yanked": false
+  }
+]

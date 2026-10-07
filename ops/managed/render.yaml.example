@@ -1,0 +1,83 @@
+# SOURCE-ONLY, PAID RESOURCE EXAMPLE. Do not import/apply overnight.
+# A human must approve Render, charges, resource names, region and exact release.
+# Blueprint creation/sync CAN provision paid resources even with autodeploy off.
+# Copy/choose this file as the Blueprint path only after that approval.
+previews:
+  generation: 'off'
+services:
+  - type: web
+    name: dalaai-demo
+    runtime: docker
+    region: frankfurt
+    plan: 1c-2g # PAID: 2 GB shared by edge + API + worker; load not certified
+    numInstances: 1 # Required by local private filesystem/budget storage
+    autoDeployTrigger: 'off'
+    dockerfilePath: ./ops/managed/Dockerfile
+    dockerContext: .
+    dockerCommand: python ops/managed/supervise.py
+    healthCheckPath: /readyz
+    maxShutdownDelaySeconds: 90
+    disk:
+      name: dalaai-private-data
+      mountPath: /var/lib/naryadai
+      sizeGB: 2 # PAID; app photo quota 1 GiB, budget/headroom share the remainder
+    envVars:
+      - key: DALA_MANAGED_START_APPROVED
+        value: 'false' # Human changes to true only after DB/role/preflight gates
+      - key: PORT
+        value: '10000'
+      - key: DALA_API_MODE
+        value: demo
+      - key: DALA_DATABASE_SCHEMA
+        value: dalaai_demo
+      - key: DALA_ALLOWED_ORIGIN
+        sync: false # Exact https://<chosen-public-host>, no trailing slash
+      - key: DATABASE_URL
+        sync: false # Restricted API LOGIN, INTERNAL host; NEVER database owner
+      - key: DALA_WORKER_DATABASE_URL
+        sync: false # Distinct restricted worker LOGIN, same INTERNAL database
+      - key: DALA_PHOTO_STORAGE_ROOT
+        value: /var/lib/naryadai/photos
+      - key: DALA_PHOTO_MAX_TOTAL_BYTES
+        value: '1073741824'
+      # Optional model setup before key handoff, once A5's loader is accepted:
+      # DALA_MODEL_APPROVAL_FILE=/etc/secrets/demo-model-policy.json
+      # DALA_MODEL_PROJECT_ID and DALA_MODEL_INSTANCE_ID match that policy.
+      # OPENAI_API_KEY OR OPENAI_API_KEY_FILE enables it; no key = rules fallback.
+      # No extra DALA_WORKER_OPENAI_ENABLED switch in the canonical contract.
+      - key: DALA_MODEL_BUDGET_PATH
+        value: /var/lib/naryadai/budget/openai.sqlite3
+      - key: DALA_WORKER_ENABLED
+        value: 'true'
+      - key: DALA_WORKER_AI_ENABLED
+        value: 'true'
+      - key: DALA_WORKER_AI_LIMIT
+        value: '1'
+      - key: DALA_WORKER_NOTIFY_ENABLED
+        value: 'true'
+      - key: DALA_WORKER_CHANNEL
+        value: web_push
+      - key: DALA_NOTIFICATION_CAPABILITY
+        value: 'true'
+      - key: DALA_PUSH_CAPABILITY
+        value: 'true'
+      - key: DALA_DELIVERY_CHANNEL
+        value: web_push
+      - key: DALA_WEB_PUSH_ENABLED
+        value: 'false'
+      - key: DALA_WORKER_TELEGRAM_ENABLED
+        value: 'false'
+      - key: TELEGRAM_MODE
+        value: disabled
+# Optional resource declaration: remove this stanza when reusing an approved DB.
+# No connectionString is injected automatically: it would expose the owner role.
+databases:
+  - name: dalaai-demo-db
+    region: frankfurt
+    plan: 0.5c-1g # PAID PostgreSQL; human reviews current price before creation
+    databaseName: naryadai
+    user: naryadai_owner
+    postgresMajorVersion: '17'
+    diskSizeGB: 5
+    storageAutoscalingEnabled: false
+    ipAllowList: [] # Disable public connections; use same-region private network

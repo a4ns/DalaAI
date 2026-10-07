@@ -9,6 +9,8 @@ from pathlib import Path
 import re
 import secrets
 import stat
+import json
+import sys
 
 
 def read_owned(path):
@@ -38,7 +40,7 @@ def new_pin(exclude):
         if len(set(value))>=3 and value!='71426839' and value!=exclude:return value
 
 
-def prepare(directory,domain,bind,http_port,https_port):
+def prepare(directory,domain,bind,http_port,https_port,workers=False):
     if not re.fullmatch(r'[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?',domain) or '..' in domain:
         raise ValueError('Use one lowercase DNS hostname, without a scheme/path/port')
     if bind not in {'127.0.0.1','0.0.0.0'} or not all(1<=p<=65535 for p in (http_port,https_port)):
@@ -58,6 +60,21 @@ def prepare(directory,domain,bind,http_port,https_port):
         save_once(path,value);values[name]=value
     save_once(directory/'owner_dsn',f"postgresql://naryadai_owner:{values['postgres_owner_password']}@db:5432/naryadai")
     save_once(directory/'runtime_dsn',f"postgresql://naryadai_api:{values['postgres_runtime_password']}@db:5432/naryadai")
+    if workers:
+        path=directory/'postgres_worker_password'
+        password=read_owned(path) if path.exists() else secrets.token_urlsafe(32)
+        if not re.fullmatch(r'[A-Za-z0-9_-]{32,128}',password):raise ValueError('Invalid worker password file')
+        save_once(path,password)
+        save_once(directory/'worker_dsn',f'postgresql://naryadai_worker:{password}@db:5432/naryadai')
+        instance_path=directory/'model_instance'
+        instance=read_owned(instance_path) if instance_path.exists() else 'demo-'+secrets.token_hex(16)
+        save_once(instance_path,instance)
+        sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'backend'))
+        from app.ai.demo_policy import build_interactive_demo_policy,PROCESSING_DISCLOSURE
+        policy=build_interactive_demo_policy(project_id='DalaAI',instance_id=instance)
+        save_once(directory/'model_policy.json',json.dumps(policy,ensure_ascii=False,sort_keys=True))
+        save_once(directory/'workers.env','DALA_MODEL_PROJECT_ID=DalaAI\nDALA_MODEL_INSTANCE_ID='+instance)
+        print(PROCESSING_DISCLOSURE)
     origin=f'https://{domain}'+(f':{https_port}' if https_port!=443 else '')
     save_once(directory/'env',f'DALA_DOMAIN={domain}\nDALA_ALLOWED_ORIGIN={origin}\nDALA_BIND_ADDRESS={bind}\nDALA_HTTP_PORT={http_port}\nDALA_HTTPS_PORT={https_port}')
     print('Prepared private local configuration; values are not printed. Existing credentials were preserved.')
@@ -66,9 +83,10 @@ def prepare(directory,domain,bind,http_port,https_port):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--directory',type=Path,required=True);p.add_argument('--domain',required=True)
+    p.add_argument('--workers',action='store_true',help='Prepare the reviewed full worker profile and named-demo model policy')
     p.add_argument('--bind',default='127.0.0.1');p.add_argument('--http-port',type=int,default=8080);p.add_argument('--https-port',type=int,default=8443)
     a=p.parse_args()
-    try:prepare(a.directory,a.domain,a.bind,a.http_port,a.https_port)
+    try:prepare(a.directory,a.domain,a.bind,a.http_port,a.https_port,a.workers)
     except (ValueError,OSError):raise SystemExit('Private demo configuration not prepared; inspect ownership/configuration. No values disclosed.') from None
 
 

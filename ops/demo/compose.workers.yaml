@@ -1,0 +1,78 @@
+# Full morning demo overlay. The base remains a worker-free HTTP test profile.
+# Apply only on a fresh, explicitly chosen isolated volume; no schema adoption/reset.
+services:
+  db:
+    secrets: [postgres_worker_password]
+  prepare:
+    environment:
+      DALA_DEMO_WORKER_CAPABILITY_ALLOWED: '1'
+    secrets: [worker_dsn]
+  budget-directory:
+    build: {context: ../.., dockerfile: ops/demo/Dockerfile.api}
+    user: '0:0'
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER]
+    security_opt: [no-new-privileges:true]
+    command: [python, -c, "import os; os.chmod('/budget',0o700); os.chown('/budget',10001,10001)"]
+    volumes: [model_budget:/budget]
+    network_mode: none
+    read_only: true
+  api:
+    environment:
+      DALA_NOTIFICATION_CAPABILITY: 'true'
+      DALA_PUSH_CAPABILITY: 'true'
+      DALA_DELIVERY_CHANNEL: web_push
+      DALA_WEB_PUSH_ENABLED: ${DALA_WEB_PUSH_ENABLED:-false}
+      DALA_VAPID_PUBLIC_KEY: ${DALA_VAPID_PUBLIC_KEY:-}
+      DALA_VAPID_PRIVATE_KEY: ${DALA_VAPID_PRIVATE_KEY:-}
+      DALA_VAPID_SUBJECT: ${DALA_VAPID_SUBJECT:-}
+  worker:
+    build: {context: ../.., dockerfile: ops/demo/Dockerfile.api}
+    command: [python, -m, app.worker_runtime]
+    environment:
+      DALA_API_MODE: demo
+      DALA_DATABASE_SCHEMA: dalaai_demo
+      DALA_WORKER_ENABLED: 'true'
+      DALA_WORKER_AI_ENABLED: 'true'
+      DALA_WORKER_NOTIFY_ENABLED: 'true'
+      DALA_WORKER_CHANNEL: web_push
+      DALA_WORKER_DATABASE_URL_FILE: /run/secrets/worker_dsn
+      DALA_PHOTO_STORAGE_ROOT: /var/lib/naryadai/photos
+      DALA_MODEL_APPROVAL_FILE: /run/secrets/model_policy
+      DALA_MODEL_PROJECT_ID: ${DALA_MODEL_PROJECT_ID:?Prepare the named demo policy}
+      DALA_MODEL_INSTANCE_ID: ${DALA_MODEL_INSTANCE_ID:?Prepare the named demo policy}
+      DALA_MODEL_BUDGET_PATH: /var/lib/naryadai/budget/openai.sqlite3
+      DALA_MODEL_FORCE_OFF: ${DALA_MODEL_FORCE_OFF:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DALA_WEB_PUSH_ENABLED: ${DALA_WEB_PUSH_ENABLED:-false}
+      DALA_VAPID_PUBLIC_KEY: ${DALA_VAPID_PUBLIC_KEY:-}
+      DALA_VAPID_PRIVATE_KEY: ${DALA_VAPID_PRIVATE_KEY:-}
+      DALA_VAPID_SUBJECT: ${DALA_VAPID_SUBJECT:-}
+    secrets: [worker_dsn, model_policy]
+    volumes:
+      - photos:/var/lib/naryadai/photos:ro
+      - model_budget:/var/lib/naryadai/budget
+    networks: [backend, worker_egress]
+    depends_on:
+      prepare: {condition: service_completed_successfully}
+      photo-directory: {condition: service_completed_successfully}
+      budget-directory: {condition: service_completed_successfully}
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1024m
+    healthcheck:
+      test: [CMD, python, -m, app.worker_runtime, --check]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+networks:
+  worker_egress: {}
+volumes:
+  model_budget: {}
+secrets:
+  postgres_worker_password: {file: ./.local/postgres_worker_password}
+  worker_dsn: {file: ./.local/worker_dsn}
+  model_policy: {file: ./.local/model_policy.json}

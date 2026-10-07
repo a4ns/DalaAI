@@ -13,6 +13,23 @@ spec=importlib.util.spec_from_file_location('demo_prepare',path)
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 
 class PrivateBootstrapTests(unittest.TestCase):
+    def test_full_profile_preserves_worker_identity_and_named_model_policy(self):
+        import json
+        with tempfile.TemporaryDirectory() as tmp:
+            directory=Path(tmp)/'private';output=io.StringIO()
+            with patch.object(module.secrets,'token_urlsafe',return_value='SYNTHETIC_'+'x'*34),patch.object(module.secrets,'randbelow',side_effect=[12345678,87654321]),patch.object(module.secrets,'token_hex',return_value='f'*32),contextlib.redirect_stdout(output):
+                module.prepare(directory,'localhost','127.0.0.1',8080,8443,workers=True)
+                before={p.name:p.read_bytes() for p in directory.iterdir()}
+                module.prepare(directory,'localhost','127.0.0.1',8080,8443,workers=True)
+            self.assertEqual(before,{p.name:p.read_bytes() for p in directory.iterdir()})
+            policy=json.loads(before['model_policy.json'])
+            self.assertEqual(policy['project_id'],'DalaAI')
+            self.assertEqual(policy['instance_id'],'demo-'+'f'*32)
+            self.assertEqual(policy['total_microusd'],50_000_000)
+            self.assertNotIn('SYNTHETIC_',output.getvalue())
+            self.assertIn('OpenAI',output.getvalue())
+            self.assertFalse((directory/'openai.sqlite3').exists())
+
     def test_preserves_credentials_and_prints_no_values(self):
         with tempfile.TemporaryDirectory() as tmp:
             directory=Path(tmp)/'private';output=io.StringIO()

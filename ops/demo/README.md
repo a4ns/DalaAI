@@ -3,8 +3,10 @@
 This increment packages the reviewed Russian frontend, real FastAPI API,
 PostgreSQL, private photo storage and Caddy on one origin. It covers login,
 create/accept/start, actual photo staging/submission and human CLOSE with current
-physical evidence. Worker/model and WebPush activation are separate pending
-increments; a successful photo smoke does not claim those are running. No host
+physical evidence. The full overlay adds a separate restricted worker, durable
+rules assessments, notification queues, Web Push subscription routes and an
+optional bounded model path. Provider acceptance and actual phone delivery remain
+separate checks. No host
 has been selected and nothing is deployed by publishing this package.
 
 ## Local/disposable start
@@ -56,10 +58,40 @@ photo-directory initializer only sets that named volume's root ownership/mode.
 The starting API memory envelope is1536MiB; worst-case mixed-load capacity remains
 unmeasured. Keep the private photo volume outside every static file root.
 
+The default launcher adds `compose.workers.yaml`, a distinct worker LOGIN, exact
+001/002/003/004/005/011/012 bootstrap and a durable model-budget volume. The worker
+reads the same photo volume read-only. AI and notification capabilities are
+enabled; absent VAPID configuration pauses notification consumption and preserves
+pending jobs. Rules assessment remains active without an OpenAI key. The base
+`compose.yaml` alone is the older worker-free four-migration profile used by the
+separate manual C-110 browser gate. Existing baseline schemas are not upgraded or
+reset by the full launcher: retain them and arrange an explicit reviewed forward
+upgrade or choose a fresh isolated instance before running the full profile.
+
+Setup creates one named DalaAI model policy and prints its disclosure. Once the
+operator supplies `OPENAI_API_KEY` to the launcher environment, the model worker
+selects the approved demo path automatically; no key keeps rules fallback.
+`DALA_MODEL_FORCE_OFF=true` is the explicit override. The $50 total/$10 night
+ledger persists on `model_budget`; restarting must never delete it. The policy
+expires at 2026-10-08 18:59 UTC. Private-key file mounting is supported by the
+worker's `OPENAI_API_KEY_FILE` when the operator supplies an explicit Compose
+mount/override; never set both key sources. No key is generated or committed.
+
+Текст результата и выбранные фото демонстрационного наряда отправляются в OpenAI
+для проверки соответствия и сравнения до/после. Синтетичность содержимого загрузок
+не подтверждена автоматически. Модель рекомендует; решение принимает мастер.
+
+Web Push remains off until human VAPID setup and browser permission/subscription.
+Supply `DALA_WEB_PUSH_ENABLED=true`, the matching public/private keys and subject
+to both API and worker through the operator environment. The private key is never
+passed to Caddy or the frontend. Telegram remains an optional separately enabled
+adapter; this default Compose lane is Web Push only.
+
 Stop without deleting data:
 
 ```sh
-docker compose --env-file ops/demo/.local/env -f ops/demo/compose.yaml down
+docker compose --env-file ops/demo/.local/env --env-file ops/demo/.local/workers.env \
+  -f ops/demo/compose.yaml -f ops/demo/compose.workers.yaml down
 ```
 
 ## Morning checks
@@ -75,7 +107,8 @@ Current source assembly: B product2a12798c19a26b33aabd9ffd572b99586f80e2f1 plus
 only five reviewed harness files from9f37c2951cbffb88db8a254beff033f7e31ed6d9.
 Mobile CI separates13 synthetic Pixel9 rendering cases from C-110's real composed
 API scenarios. An absent/unaccepted C-110 contract is BLOCKED, never a green core
-result. The separate Compose HTTPS smoke labels browser/model/push NOT_RUN.
+result. The separate full Compose HTTPS smoke waits for the actual rules worker
+verdict; it still labels live model, browser and phone push outside that scope.
 
 Official image/config references checked2026-10-07:
 - https://hub.docker.com/_/caddy (2.11.7-alpine)

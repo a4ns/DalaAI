@@ -1,0 +1,56 @@
+{
+    admin off
+    auto_https off
+    log default {
+        output discard
+    }
+}
+
+# Render terminates HTTPS; never redirect based on the internal HTTP scheme.
+:{$PORT} {
+    route {
+        header {
+            X-Content-Type-Options nosniff
+            Referrer-Policy no-referrer
+            X-Frame-Options DENY
+            Permissions-Policy "camera=(self), microphone=(), geolocation=()"
+            -Server
+        }
+        # Render chooses a verified custom domain (or onrender host) for probes.
+        # Only these fixed non-sensitive probe paths normalize upstream Host.
+        @health path /healthz /readyz
+        handle @health {
+            reverse_proxy 127.0.0.1:8000 {
+                header_up Host {$DALA_PUBLIC_HOST}
+                header_up -Forwarded
+                header_up -X-Forwarded-For
+                header_up -X-Forwarded-Proto
+                header_up -X-Forwarded-Host
+            }
+        }
+        @wrong_host not host {$DALA_PUBLIC_HOST}
+        respond @wrong_host "Misdirected request" 421
+        @backend path /api/*
+        handle @backend {
+            request_body {
+                max_size 9MB
+            }
+            reverse_proxy 127.0.0.1:8000 {
+                header_up -Forwarded
+                header_up -X-Forwarded-For
+                header_up -X-Forwarded-Proto
+                header_up -X-Forwarded-Host
+                transport http {
+                    dial_timeout 3s
+                    response_header_timeout 45s
+                }
+            }
+        }
+        handle {
+            root * /srv
+            try_files {path} /index.html
+            header Cache-Control "no-cache"
+            file_server
+        }
+    }
+}

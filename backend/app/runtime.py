@@ -14,9 +14,18 @@ class RuntimeSettings:
     database_schema: str = 'public'
     photo_storage_root: str = ''
     photo_max_total_bytes: int = 1024 * 1024 * 1024
+    notification_enabled: bool = False
+    push_enabled: bool = False
+    delivery_channel: str = 'synthetic'
 
     def __post_init__(self):
         from pathlib import Path
+        if any(type(v) is not bool for v in (self.notification_enabled, self.push_enabled)):
+            raise ValueError('Runtime capabilities must be explicit booleans')
+        if self.delivery_channel not in {'synthetic', 'web_push', 'telegram'}:
+            raise ValueError('Unsupported delivery channel')
+        if self.notification_enabled != (self.delivery_channel != 'synthetic'):
+            raise ValueError('Notification capability and delivery channel must match')
         if not isinstance(self.photo_storage_root,str) or (self.photo_storage_root and not Path(self.photo_storage_root).is_absolute()):
             raise ValueError('Private photo storage must be an absolute path')
         if type(self.photo_max_total_bytes) is not int or not 8388608 <= self.photo_max_total_bytes <= 10737418240:
@@ -32,12 +41,20 @@ class RuntimeSettings:
 
     @classmethod
     def from_env(cls):
+        def flag(name):
+            value = os.environ.get(name, 'false')
+            if value not in {'true', 'false'}:
+                raise ValueError('Invalid runtime capability flag')
+            return value == 'true'
         return cls(mode=os.environ.get('DALA_API_MODE', 'health'),
                    database_url=os.environ.get('DATABASE_URL', ''),
                    allowed_origin=os.environ.get('DALA_ALLOWED_ORIGIN', ''),
                    database_schema=os.environ.get('DALA_DATABASE_SCHEMA', 'public'),
                    photo_storage_root=os.environ.get('DALA_PHOTO_STORAGE_ROOT',''),
-                   photo_max_total_bytes=int(os.environ.get('DALA_PHOTO_MAX_TOTAL_BYTES',str(1024*1024*1024))))
+                   photo_max_total_bytes=int(os.environ.get('DALA_PHOTO_MAX_TOTAL_BYTES',str(1024*1024*1024))),
+                   notification_enabled=flag('DALA_NOTIFICATION_CAPABILITY'),
+                   push_enabled=flag('DALA_PUSH_CAPABILITY'),
+                   delivery_channel=os.environ.get('DALA_DELIVERY_CHANNEL', 'synthetic'))
 
 
 def connection_factory(settings):
@@ -101,13 +118,30 @@ class RuntimePrerequisiteError(RuntimeError):
         super().__init__('Runtime database prerequisites failed')
 
 
-def validate_database(connect, *, photo_enabled=False):
+def validate_database(connect, *, photo_enabled=False, push_enabled=False, notification_enabled=False):
     """No grants, seeds, migrations or external calls. Never include DSN in errors."""
     from psycopg import sql
     from psycopg.rows import dict_row
-    if type(photo_enabled) is not bool:
+    if any(type(v) is not bool for v in (photo_enabled, push_enabled, notification_enabled)):
         raise RuntimePrerequisiteError('INVALID_RUNTIME_CAPABILITY')
     insert_tables = (*INSERT_TABLES, 'photos') if photo_enabled else INSERT_TABLES
+    table_columns = dict(TABLE_COLUMNS)
+    required_triggers = set(REQUIRED_TRIGGERS)
+    update_columns = dict(UPDATE_COLUMNS)
+    if notification_enabled:
+        table_columns.update(delivery_dispatches=('lease_token','job_id'),
+                             delivery_dispatch_results=('lease_token','outcome'))
+        table_columns['ai_jobs'] += ('lease_token',)
+        table_columns['delivery_jobs'] += ('lease_token',)
+        required_triggers |= {('delivery_dispatches','delivery_dispatches_immutable'),
+                              ('delivery_dispatch_results','delivery_dispatch_results_immutable')}
+        update_columns['delivery_jobs'] = ('state','attempts','next_attempt_at','lease_until','last_error_code')
+    if push_enabled:
+        table_columns['push_subscriptions'] = ('employee_id','session_hash','endpoint_hash','endpoint','p256dh','auth',
+            'expires_at','generation','active','updated_at','last_error_code')
+        update_columns['push_subscriptions'] = table_columns['push_subscriptions'][1:]
+        insert_tables = (*insert_tables, 'push_subscriptions')
+        required_triggers.add(('push_subscriptions','push_subscription_owner_immutable'))
     try:
         with connect() as db:
             if not db.autocommit:
@@ -123,30 +157,30 @@ def validate_database(connect, *, photo_enabled=False):
                 WHERE n.nspname=current_schema() AND pg_has_role(current_user,c.relowner,'MEMBER')) AS owns''').fetchone()
             if owns['owns']:
                 raise RuntimePrerequisiteError('ROLE_OWNS_OBJECTS')
-            for table, columns in TABLE_COLUMNS.items():
+            for table, columns in table_columns.items():
                 db.execute(sql.SQL('SELECT {} FROM {} LIMIT 0').format(
                     sql.SQL(',').join(map(sql.Identifier,columns)),sql.Identifier(table)))
             found = db.execute('''SELECT c.relname,t.tgname FROM pg_trigger t
                 JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace
                 WHERE n.nspname=current_schema() AND t.tgenabled IN ('O','A')''').fetchall()
-            if not REQUIRED_TRIGGERS <= {(r['relname'],r['tgname']) for r in found}:
+            if not required_triggers <= {(r['relname'],r['tgname']) for r in found}:
                 raise RuntimePrerequisiteError('REQUIRED_GUARD_MISSING')
-            for table in TABLE_COLUMNS:
+            for table in table_columns:
                 for privilege in ('DELETE','TRUNCATE','TRIGGER'):
                     if db.execute('SELECT has_table_privilege(%s,%s) AS ok',(table,privilege)).fetchone()['ok']:
                         raise RuntimePrerequisiteError('FORBIDDEN_GRANT')
                 if table not in insert_tables and db.execute("SELECT has_table_privilege(%s,'INSERT') AS ok",(table,)).fetchone()['ok']:
                     raise RuntimePrerequisiteError('FORBIDDEN_GRANT')
-                if table not in ('orders','delivery_jobs'):
+                if table != 'orders' and (table != 'delivery_jobs' or notification_enabled):
                     columns = db.execute("SELECT attname FROM pg_attribute WHERE attrelid=%s::regclass AND attnum>0 AND NOT attisdropped",(table,)).fetchall()
                     for column in columns:
                         name = column['attname']
-                        if name not in UPDATE_COLUMNS.get(table, ()) and db.execute("SELECT has_column_privilege(%s,%s,'UPDATE') AS ok",(table,name)).fetchone()['ok']:
+                        if name not in update_columns.get(table, ()) and db.execute("SELECT has_column_privilege(%s,%s,'UPDATE') AS ok",(table,name)).fetchone()['ok']:
                             raise RuntimePrerequisiteError('FORBIDDEN_GRANT')
             for table in insert_tables:
                 if not db.execute("SELECT has_table_privilege(%s,'INSERT') AS ok",(table,)).fetchone()['ok']:
                     raise RuntimePrerequisiteError('REQUIRED_GRANT_MISSING')
-            for table, columns in UPDATE_COLUMNS.items():
+            for table, columns in update_columns.items():
                 for column in columns:
                     if not db.execute("SELECT has_column_privilege(%s,%s,'UPDATE') AS ok",(table,column)).fetchone()['ok']:
                         raise RuntimePrerequisiteError('REQUIRED_GRANT_MISSING')

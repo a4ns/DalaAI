@@ -141,3 +141,24 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+# Explicit separate worker-capable first-start plan. The legacy migration set,
+# v1 marker and apply_fresh behavior above remain byte-for-byte unchanged.
+WORKER_EXTENSIONS = (
+    ('db/proposals/005_web_push_subscriptions.sql', '152c4bada41b8ca7eddd25d8aa06a2cfe0b9b0bed578555fa70a0f265e064477'),
+    ('db/migrations/011_durable_job_leases.sql', 'e517a44d247b20f00133f93627ddf43109d5a8a610e39273ef74ffcde6c11495'),
+    ('db/migrations/012_delivery_dispatch_attempts.sql', '14351dc30aaec1fd517d5db47644961dbf1982a54ce7af4cb1b0a98def0b49e1'),
+)
+
+
+def worker_migration_plan(backend):
+    """Exact seven files, no directory glob, renumbering or partial upgrade."""
+    result = migration_plan(backend)
+    if (backend / 'db/migrations/005_web_push_subscriptions.sql').exists():
+        raise ValueError('Migration 005 is duplicated or moved; use a reviewed explicit plan')
+    for relative, expected in WORKER_EXTENSIONS:
+        path = backend / relative
+        if not path.is_file() or sha256(path.read_bytes()).hexdigest() != expected:
+            raise ValueError(f'Accepted worker migration file/hash mismatch: {relative}')
+        result.append({'path': relative, 'sha256': expected})
+    return result

@@ -10,6 +10,7 @@ from app.core.auth_boundary import RequestProtection, SystemRealClock, authentic
 from app.core.auth_policy import OrderAction, require_create_order, require_order_access
 from app.integration.principal_bridge import actor_from_auth_context
 from app.orders.models import Action, Decision, DomainError
+from app.notify.priority_notice import reschedule_priority_notice
 from app.orders.rules import is_overdue, prepare_new_command
 from app.orders.validation import parse_command, uid
 from app.scheduler import SchedulePolicy, ScheduleSnapshot, plan_assignment_notice
@@ -167,6 +168,8 @@ class CommandService:
                 if plan.review:
                     repo.persist_review(plan.review)
                 repo.persist_events(plan.events, real_now)
+                if command.action == Action.CHANGE_PRIORITY and self.policy.channel != 'synthetic':
+                    reschedule_priority_notice(repo, plan.order, channel=self.policy.channel, real_now=real_now)
                 repo.invalidate_jobs(plan.order)
                 self._outbox(repo, plan, command.action, real_now)
                 body = {"order": order_wire(plan.order, now),

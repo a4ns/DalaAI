@@ -118,5 +118,9 @@ jobs:
         run: python ops/run_photo_closure_tests.py
       - name: Explicit demo provisioning and photo capability PostgreSQL gate
         run: python ops/run_provisioning_tests.py
+      - name: Frozen worker and provider source PostgreSQL gates
+        run: python ops/run_worker_source_gates.py
+      - name: Full worker bootstrap and restricted runtime integration
+        run: DALA_ACCEPTANCE_DISPOSABLE=1 python ops/run_worker_runtime_tests.py
       - name: Aggregate with real PostgreSQL configured
         run: make check

@@ -6,9 +6,11 @@ the production service, never a test flag, establishes its initial file_valid.
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import timedelta
+from hashlib import sha256
 from pathlib import Path
 import tempfile
 from threading import Barrier
+import time
 import unittest
 from unittest.mock import patch
 from uuid import uuid4
@@ -24,7 +26,7 @@ from app.persistence.postgres import PostgresRepository
 from app.photos.http import create_photo_router
 from app.photos.service import PhotoService
 from app.photos.storage import PrivateFileStore
-from app.photos.validation import PhotoUnavailable, decode_raster
+from app.photos.validation import MAX_BYTES, PhotoUnavailable, decode_raster
 from test_photos_unit import image_bytes
 
 
@@ -169,11 +171,24 @@ class PhotoPostgresTests(unittest.TestCase):
                 call()
             self.assertEqual(error.exception.code, "PHOTO_EXPIRED")
         self.assertIsNone(self.query("SELECT attached_at FROM photos")[0]["attached_at"])
+        # Logical expiry never frees retained bytes from the storage budget.
+        row = self.query("SELECT * FROM photos")[0]
+        self.store = PrivateFileStore(self.root, max_total_bytes=MAX_BYTES)
+        self.service = self.new_service(max_outstanding_stages=1)
+        (self.root / ".pending-budget-fixture").write_bytes(b"x" * (MAX_BYTES - row["bytes"]))
+        with self.assertRaises(PhotoUnavailable):
+            self.upload()
+        self.assertEqual(len(self.query("SELECT * FROM photos")), 1)
+        self.assertEqual(len(self.query("SELECT * FROM operation_receipts")), 1)
+        self.assertEqual(self.query("SELECT * FROM photos")[0], row)
 
     def test_actual_before_attachment_and_attached_ttl_ignored(self):
+        self.service = self.new_service(max_outstanding_stages=1)
         form = self.form()
         photo = self.upload(form).body["id"]
         self.fixture.create([photo])
+        # Attached evidence no longer occupies a stage slot, even before expiry.
+        self.upload()
         self.fixture.real.value += timedelta(days=2)
         for actor in (fixtures.MASTER, fixtures.EXECUTOR):
             self.assertTrue(self.get(photo, actor)[0])
@@ -278,23 +293,72 @@ class PhotoPostgresTests(unittest.TestCase):
     def test_owner_quota_serializes_competing_new_operations(self):
         self.service = self.new_service(max_outstanding_stages=1)
         raster = decode_raster(image_bytes())
-        barrier = Barrier(2)
-        def checked_decode(*args):
-            barrier.wait(timeout=10)
-            return raster
-        def attempt():
+        def attempt(form):
             try:
-                return self.upload().status
+                return self.upload(form)
             except DomainError as error:
                 return error.code
-        with patch("app.photos.service.decode_raster", side_effect=checked_decode), ThreadPoolExecutor(max_workers=2) as pool:
-            outcomes = [future.result(timeout=20) for future in [pool.submit(attempt), pool.submit(attempt)]]
-        self.assertCountEqual(outcomes, [201, "RATE_LIMITED"])
-        self.fixture.real.value += timedelta(days=2)
-        with self.assertRaises(DomainError) as error:
-            self.upload()
-        self.assertEqual(error.exception.code, "RATE_LIMITED")
-        self.assertEqual(len(self.query("SELECT * FROM operation_receipts")), 1)
+        def race(expire_while_waiting=None):
+            forms = [self.form(), self.form()]
+            barrier = Barrier(2)
+            original_connection = self.service._connection
+            pids = []
+            def connection():
+                db = original_connection()
+                pids.append(db.info.backend_pid)
+                return db
+            def checked_decode(*args):
+                barrier.wait(timeout=10)
+                return raster
+            with patch.object(self.service, "_connection", side_effect=connection), \
+                 patch("app.photos.service.decode_raster", side_effect=checked_decode), \
+                 ThreadPoolExecutor(max_workers=2) as pool:
+                # Release the real lock before joining the workers, even when
+                # an assertion fails, so the test cannot strand its own uploads.
+                with self.fixture.connect() as blocker, blocker.transaction():
+                    if expire_while_waiting is not None:
+                        quota_key = int.from_bytes(sha256(("photo-quota:" + fixtures.MASTER).encode()).digest()[:8], "big", signed=True)
+                        blocker.execute("SELECT pg_advisory_xact_lock(%s)", (quota_key,))
+                    futures = [pool.submit(attempt, form) for form in forms]
+                    if expire_while_waiting is not None:
+                        deadline = time.monotonic() + 8
+                        while time.monotonic() < deadline:
+                            waiting = self.query("""SELECT count(*) AS n FROM pg_stat_activity
+                                WHERE pid=ANY(%s) AND wait_event_type='Lock' AND wait_event='advisory'""", (list(pids),))[0]["n"]
+                            if waiting == 2:
+                                break
+                            time.sleep(0.02)
+                        else:
+                            self.fail("Both uploads must reach a real PostgreSQL owner-quota lock wait")
+                        self.fixture.real.value = expire_while_waiting
+                results = [future.result(timeout=20) for future in futures]
+            self.assertCountEqual([r if isinstance(r, str) else r.status for r in results], [201, "RATE_LIMITED"])
+            winner = next(i for i, result in enumerate(results) if not isinstance(result, str))
+            return forms[winner], results[winner]
+
+        form, first = race()
+        original = self.query("SELECT * FROM photos")[0]
+        receipt = self.query("SELECT * FROM operation_receipts")[0]
+        stored = self.store.get(original["storage_key"])
+        self.fixture.real.value = original["expires_at"] - timedelta(microseconds=1)
+        self.assertEqual(attempt(self.form()), "RATE_LIMITED")
+        replay = self.upload(form)
+        self.assertTrue(replay.replayed)
+        self.assertEqual(replay.body, first.body)
+
+        # Exactly at expiry, old evidence is unusable and releases the slot.
+        # A restart plus competing new operations still permits only one stage.
+        self.service = self.new_service(max_outstanding_stages=1)
+        _, fresh = race(expire_while_waiting=original["expires_at"])
+        self.assertNotEqual(fresh.body["id"], first.body["id"])
+        self.assertEqual(attempt(self.form()), "RATE_LIMITED")
+        self.assertEqual(attempt(form), "PHOTO_EXPIRED")
+        self.assertEqual(self.query("SELECT * FROM photos WHERE id=%s", (first.body["id"],))[0], original)
+        self.assertEqual(self.query("SELECT * FROM operation_receipts WHERE operation_id=%s", (form["operation_id"],))[0], receipt)
+        self.assertEqual(self.store.get(original["storage_key"]), stored)
+        self.assertEqual(len(self.query("SELECT * FROM photos")), 2)
+        self.assertEqual(len(self.query("SELECT * FROM operation_receipts")), 2)
+        self.assertEqual(len(list(self.root.glob("*.img"))), 2)
 
     def test_expiry_after_storage_wait_rolls_back_and_keeps_blob(self):
         original = self.store.put

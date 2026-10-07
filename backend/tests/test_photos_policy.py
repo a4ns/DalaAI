@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from app.core.auth_boundary import AuthContext, AuthenticationRequired, SessionRecord
 from app.core.auth_policy import AccessDenied, OrderScope, Principal, Role
@@ -13,8 +13,8 @@ from app.orders.models import DomainError
 from app.photos.integrity import PhotoIntegrityVerifier
 from app.photos.service import PhotoService, _BindingChanged
 from app.photos.storage import PrivateFileStore
-from app.photos.validation import MAX_BYTES, PhotoUnavailable, decode_raster
-from test_photos_unit import image_bytes, SECTION, OPERATION, ORDER
+from app.photos.validation import MAX_BYTES, PhotoUnavailable, decode_raster, parse_fields
+from test_photos_unit import fields, image_bytes, SECTION, OPERATION, ORDER
 
 NOW = datetime(2026, 10, 7, 17, tzinfo=timezone.utc)
 OWNER = "00000000-0000-4000-8000-000000000011"
@@ -77,6 +77,33 @@ class PhotoPolicyTests(unittest.TestCase):
         self.clock.now = lambda: auth.session.expires_at
         with patch("app.photos.service.authenticate_session", return_value=auth), self.assertRaises(AuthenticationRequired):
             self.service._auth(Mock(), "synthetic-session")
+
+    def test_quota_samples_real_time_after_owner_lock(self):
+        # SQL-shape and clock-order probe only; real races are in the PG suite.
+        db = MagicMock()
+        db.__enter__.return_value = db
+        repo = Mock()
+        repo.receipt.return_value = None
+        after_wait = NOW + timedelta(hours=24)
+        quota_queries = []
+        def execute(sql, params=()):
+            if "pg_advisory_xact_lock" in sql:
+                self.clock.now = lambda: after_wait
+            if "SELECT count(*)" in sql:
+                quota_queries.append((" ".join(sql.split()), params))
+                return Mock(fetchone=lambda: {"n": 0})
+            return Mock(fetchone=lambda: {"actor_id": OWNER})
+        db.execute.side_effect = execute
+        self.service.store.put.return_value = "a" * 32 + ".img"
+        with patch.object(self.service, "_connection", return_value=db), \
+             patch.object(self.service, "_auth", return_value=context()), \
+             patch("app.photos.service.PostgresRepository", return_value=repo):
+            result = self.service._commit(parse_fields(fields()), "a" * 64,
+                decode_raster(image_bytes()), session_handle="synthetic-session",
+                origin="https://photo.test", csrf_token="synthetic-csrf")
+        self.assertEqual(result.status, 201)
+        self.assertEqual(quota_queries, [("SELECT count(*) AS n FROM photos "
+            "WHERE owner_id=%s AND attached_at IS NULL AND expires_at>%s", (OWNER, after_wait))])
 
     def test_read_locks_order_before_photo(self):
         db = Mock()
