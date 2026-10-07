@@ -1,0 +1,876 @@
+{
+  "coverage": {
+    "as_of": "2026-09-30T19:00:00Z",
+    "kind": "frozen_complete_synthetic",
+    "scope_section_ids": [
+      "0b98c23e-26c0-5b24-92b9-bbeb62eaa14b",
+      "cede5c80-487d-5f05-88f5-a8cc39b50a36",
+      "1e860089-d211-5ad2-bcfc-7ad5f45a0798",
+      "f8b5d3bf-8c2b-5a03-9abc-f9d0e219d1d9"
+    ]
+  },
+  "order": {
+    "actors": [
+      {
+        "active": true,
+        "brigade_id": null,
+        "employee_code": "SYN-M-01",
+        "id": "85a89eb2-cc46-5796-916d-f03291e6ef66",
+        "role": "master",
+        "section_ids": [
+          "0b98c23e-26c0-5b24-92b9-bbeb62eaa14b",
+          "cede5c80-487d-5f05-88f5-a8cc39b50a36"
+        ]
+      },
+      {
+        "active": true,
+        "brigade_id": "1cb397bc-1c77-51b3-8201-2a4f945634d6",
+        "employee_code": "SYN-E-04",
+        "id": "a60d21c1-081c-54ce-a094-b37d0027750f",
+        "role": "executor",
+        "section_ids": [
+          "0b98c23e-26c0-5b24-92b9-bbeb62eaa14b",
+          "f8b5d3bf-8c2b-5a03-9abc-f9d0e219d1d9"
+        ]
+      }
+    ],
+    "materials": [
+      {
+        "code": "SYN-MATERIAL-015",
+        "id": "99d1433a-4328-53a5-a03b-eda1721b231a",
+        "label": "Синтетический материал 15",
+        "unit": "л"
+      }
+    ],
+    "order": {
+      "assignment": {
+        "brigade_id": "1cb397bc-1c77-51b3-8201-2a4f945634d6",
+        "executor_id": "a60d21c1-081c-54ce-a094-b37d0027750f"
+      },
+      "assignment_revision": 1,
+      "before_photo_ids": [],
+      "comment": "Синтетический учебный наряд",
+      "created_by": "85a89eb2-cc46-5796-916d-f03291e6ef66",
+      "current_submission_id": "5b5b5450-3fe7-5332-aacf-ca9804b85700",
+      "description": "Проверить агрегат и устранить неисправность по шифру SYN-WORK_CODE-013",
+      "domain_now": "2026-09-30T19:00:00Z",
+      "due_at": "2026-09-27T11:00:00Z",
+      "equipment_id": "b0e5ac50-9d43-5d95-855d-0042b6374fb1",
+      "id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+      "is_overdue": false,
+      "issued_at": "2026-09-27T08:00:00Z",
+      "norm_minutes": 60,
+      "number": "521",
+      "priority": "normal",
+      "scheduling_revision": 1,
+      "section_id": "0b98c23e-26c0-5b24-92b9-bbeb62eaa14b",
+      "status": "closed",
+      "type": "unplanned",
+      "updated_at": "2026-09-27T10:28:00Z",
+      "version": 9
+    },
+    "order_events": [
+      {
+        "actor_id": "85a89eb2-cc46-5796-916d-f03291e6ef66",
+        "assignment_revision": 1,
+        "details": {},
+        "from_status": null,
+        "id": "1d53921e-d0ca-50a4-8a5f-a5097e481c4b",
+        "kind": "order.created",
+        "occurred_at": "2026-09-27T08:00:00Z",
+        "operation_id": "65935c59-5ac5-537a-a103-c2dbad84c7e0",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "order_version": 1,
+        "reason": null,
+        "recorded_at": "2026-09-27T08:00:00Z",
+        "scheduling_revision": 1,
+        "sequence": 1,
+        "submission_id": null,
+        "to_status": "issued"
+      },
+      {
+        "actor_id": "a60d21c1-081c-54ce-a094-b37d0027750f",
+        "assignment_revision": 1,
+        "details": {},
+        "from_status": "issued",
+        "id": "c118108b-75cc-5e19-ae1f-1178b60f5b94",
+        "kind": "order.queued",
+        "occurred_at": "2026-09-27T08:02:00Z",
+        "operation_id": "4fed9f14-5e48-5155-accc-e7b7ac764b7e",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "order_version": 2,
+        "reason": null,
+        "recorded_at": "2026-09-27T08:02:00Z",
+        "scheduling_revision": 1,
+        "sequence": 2,
+        "submission_id": null,
+        "to_status": "queued"
+      },
+      {
+        "actor_id": "a60d21c1-081c-54ce-a094-b37d0027750f",
+        "assignment_revision": 1,
+        "details": {},
+        "from_status": "queued",
+        "id": "6bdece5a-c5ce-5bd5-bd60-bb172dd43eb0",
+        "kind": "order.accepted",
+        "occurred_at": "2026-09-27T08:05:00Z",
+        "operation_id": "495e5a75-efa0-51a7-9b8a-735d04ce1f93",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "order_version": 3,
+        "reason": null,
+        "recorded_at": "2026-09-27T08:05:00Z",
+        "scheduling_revision": 1,
+        "sequence": 3,
+        "submission_id": null,
+        "to_status": "accepted"
+      },
+      {
+        "actor_id": "a60d21c1-081c-54ce-a094-b37d0027750f",
+        "assignment_revision": 1,
+        "details": {},
+        "from_status": "accepted",
+        "id": "4d2d3702-f7fa-5546-a2ca-fb17d2a1c86e",
+        "kind": "order.started",
+        "occurred_at": "2026-09-27T08:10:00Z",
+        "operation_id": "dac17987-64cd-5fc0-a802-bf04151de396",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "order_version": 4,
+        "reason": null,
+        "recorded_at": "2026-09-27T08:10:00Z",
+        "scheduling_revision": 1,
+        "sequence": 4,
+        "submission_id": null,
+        "to_status": "in_progress"
+      },
+      {
+        "actor_id": "a60d21c1-081c-54ce-a094-b37d0027750f",
+        "assignment_revision": 1,
+        "details": {},
+        "from_status": "in_progress",
+        "id": "ee8b86fd-dc03-547a-8407-db48f911b852",
+        "kind": "order.done",
+        "occurred_at": "2026-09-27T09:33:00Z",
+        "operation_id": "3006a265-b031-537c-a923-a850256d584e",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "order_version": 5,
+        "reason": null,
+        "recorded_at": "2026-09-27T09:33:00Z",
+        "scheduling_revision": 1,
+        "sequence": 5,
+        "submission_id": "3e0652f6-8480-5661-a29f-69a94778af12",
+        "to_status": "done"
+      },
+      {
+        "actor_id": null,
+        "assignment_revision": 1,
+        "details": {},
+        "from_status": "done",
+        "id": "0ccf5d04-75a7-5e01-b21b-c4b7d1dcf275",
+        "kind": "order.ai_review_requested",
+        "occurred_at": "2026-09-27T09:33:00Z",
+        "operation_id": "3006a265-b031-537c-a923-a850256d584e",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "order_version": 5,
+        "reason": null,
+        "recorded_at": "2026-09-27T09:33:00Z",
+        "scheduling_revision": 1,
+        "sequence": 6,
+        "submission_id": "3e0652f6-8480-5661-a29f-69a94778af12",
+        "to_status": "ai_review"
+      },
+      {
+        "actor_id": "85a89eb2-cc46-5796-916d-f03291e6ef66",
+        "assignment_revision": 1,
+        "details": {
+          "decision": "rework"
+        },
+        "from_status": "ai_review",
+        "id": "f2af22e0-584b-55d9-9b81-e9b271f0f53f",
+        "kind": "order.reviewed",
+        "occurred_at": "2026-09-27T09:43:00Z",
+        "operation_id": "e3cc487e-9a92-5430-888d-9e7578874ba9",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "order_version": 6,
+        "reason": "Нужен шифр выполненных работ",
+        "recorded_at": "2026-09-27T09:43:00Z",
+        "scheduling_revision": 1,
+        "sequence": 7,
+        "submission_id": "3e0652f6-8480-5661-a29f-69a94778af12",
+        "to_status": "rework"
+      },
+      {
+        "actor_id": "a60d21c1-081c-54ce-a094-b37d0027750f",
+        "assignment_revision": 1,
+        "details": {},
+        "from_status": "rework",
+        "id": "bcc895ed-d0c3-5107-b6a4-da1e535e58e8",
+        "kind": "order.started",
+        "occurred_at": "2026-09-27T09:48:00Z",
+        "operation_id": "75c30fd6-80e5-5854-8956-d2c23efd0cc9",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "order_version": 7,
+        "reason": null,
+        "recorded_at": "2026-09-27T09:48:00Z",
+        "scheduling_revision": 1,
+        "sequence": 8,
+        "submission_id": null,
+        "to_status": "in_progress"
+      },
+      {
+        "actor_id": "a60d21c1-081c-54ce-a094-b37d0027750f",
+        "assignment_revision": 1,
+        "details": {},
+        "from_status": "in_progress",
+        "id": "5129c67f-d384-5a2e-b861-a69c969a777f",
+        "kind": "order.done",
+        "occurred_at": "2026-09-27T10:18:00Z",
+        "operation_id": "effd5e63-72fe-52dd-8ca6-c7160341c14b",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "order_version": 8,
+        "reason": null,
+        "recorded_at": "2026-09-27T10:18:00Z",
+        "scheduling_revision": 1,
+        "sequence": 9,
+        "submission_id": "5b5b5450-3fe7-5332-aacf-ca9804b85700",
+        "to_status": "done"
+      },
+      {
+        "actor_id": null,
+        "assignment_revision": 1,
+        "details": {},
+        "from_status": "done",
+        "id": "62adedc1-d14d-584a-987c-1b6a6e1ec831",
+        "kind": "order.ai_review_requested",
+        "occurred_at": "2026-09-27T10:18:00Z",
+        "operation_id": "effd5e63-72fe-52dd-8ca6-c7160341c14b",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "order_version": 8,
+        "reason": null,
+        "recorded_at": "2026-09-27T10:18:00Z",
+        "scheduling_revision": 1,
+        "sequence": 10,
+        "submission_id": "5b5b5450-3fe7-5332-aacf-ca9804b85700",
+        "to_status": "ai_review"
+      },
+      {
+        "actor_id": "85a89eb2-cc46-5796-916d-f03291e6ef66",
+        "assignment_revision": 1,
+        "details": {
+          "decision": "close"
+        },
+        "from_status": "ai_review",
+        "id": "d557e2f4-481c-5dc5-a437-7bb3ddaaae2c",
+        "kind": "order.reviewed",
+        "occurred_at": "2026-09-27T10:28:00Z",
+        "operation_id": "90c68ca0-d8a4-5ba1-9ec9-19e2ae8de83d",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "order_version": 9,
+        "reason": "Учебный результат принят мастером",
+        "recorded_at": "2026-09-27T10:28:00Z",
+        "scheduling_revision": 1,
+        "sequence": 11,
+        "submission_id": "5b5b5450-3fe7-5332-aacf-ca9804b85700",
+        "to_status": "closed"
+      }
+    ],
+    "photo_placeholders": [
+      {
+        "artifact_available": false,
+        "assignment_revision": 1,
+        "evidence_kind": "synthetic_metadata_placeholder",
+        "id": "299d290e-fce7-5974-b4df-b3609427f926",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "owner_id": "a60d21c1-081c-54ce-a094-b37d0027750f",
+        "purpose": "after",
+        "submission_id": "3e0652f6-8480-5661-a29f-69a94778af12",
+        "uploaded_at": "2026-09-27T09:32:00Z"
+      },
+      {
+        "artifact_available": false,
+        "assignment_revision": 1,
+        "evidence_kind": "synthetic_metadata_placeholder",
+        "id": "8ed6c1d6-dd0a-57aa-ba3c-432bfc9172e9",
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "owner_id": "a60d21c1-081c-54ce-a094-b37d0027750f",
+        "purpose": "after",
+        "submission_id": "5b5b5450-3fe7-5332-aacf-ca9804b85700",
+        "uploaded_at": "2026-09-27T10:17:00Z"
+      }
+    ],
+    "submissions": [
+      {
+        "assessments": [],
+        "assignment_revision": 1,
+        "attempt_number": 1,
+        "completeness": "incomplete",
+        "done_late": false,
+        "id": "3e0652f6-8480-5661-a29f-69a94778af12",
+        "missing_evidence": [
+          "WORK_CODE_REQUIRED"
+        ],
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "payload": {
+          "after_photo_ids": [
+            "299d290e-fce7-5974-b4df-b3609427f926"
+          ],
+          "comment": "Синтетический результат",
+          "materials": [
+            {
+              "material_id": "99d1433a-4328-53a5-a03b-eda1721b231a",
+              "quantity": 1
+            }
+          ],
+          "work_code_id": null,
+          "work_description": "Выполнены проверка узла, регулировка и контрольный осмотр"
+        },
+        "reviews": [
+          {
+            "created_at": "2026-09-27T09:43:00Z",
+            "decision": "rework",
+            "final_score": null,
+            "id": "d9a1233e-14eb-5bed-8f23-30231d6330bb",
+            "reason": "Нужен шифр выполненных работ",
+            "reviewer_id": "85a89eb2-cc46-5796-916d-f03291e6ef66",
+            "submission_id": "3e0652f6-8480-5661-a29f-69a94778af12"
+          }
+        ],
+        "submitted_at": "2026-09-27T09:33:00Z",
+        "submitted_by": "a60d21c1-081c-54ce-a094-b37d0027750f"
+      },
+      {
+        "assessments": [],
+        "assignment_revision": 1,
+        "attempt_number": 2,
+        "completeness": "complete",
+        "done_late": false,
+        "id": "5b5b5450-3fe7-5332-aacf-ca9804b85700",
+        "missing_evidence": [],
+        "order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+        "payload": {
+          "after_photo_ids": [
+            "8ed6c1d6-dd0a-57aa-ba3c-432bfc9172e9"
+          ],
+          "comment": "Синтетический результат",
+          "materials": [
+            {
+              "material_id": "99d1433a-4328-53a5-a03b-eda1721b231a",
+              "quantity": 1
+            }
+          ],
+          "work_code_id": "b9c9dc99-53d4-5aad-b4e2-3a01de791654",
+          "work_description": "Выполнены проверка узла, регулировка и контрольный осмотр"
+        },
+        "reviews": [
+          {
+            "created_at": "2026-09-27T10:28:00Z",
+            "decision": "close",
+            "final_score": null,
+            "id": "34610b09-82a5-59a3-ac82-5b05b1d3ecc1",
+            "reason": "Учебный результат принят мастером",
+            "reviewer_id": "85a89eb2-cc46-5796-916d-f03291e6ef66",
+            "submission_id": "5b5b5450-3fe7-5332-aacf-ca9804b85700"
+          }
+        ],
+        "submitted_at": "2026-09-27T10:18:00Z",
+        "submitted_by": "a60d21c1-081c-54ce-a094-b37d0027750f"
+      }
+    ]
+  },
+  "period": {
+    "display_offset": "+05:00",
+    "end": "2026-09-30T19:00:00Z",
+    "start": "2026-09-26T19:00:00Z"
+  },
+  "shift_summary": {
+    "close_review_ids": [
+      "04e08cc9-3896-5c51-822c-c9368f0d7e99",
+      "0c56c18e-9c61-5d66-addc-e42a4d63a643",
+      "14d2753b-b73c-500f-a6b7-2b364e58187b",
+      "1fcb0518-01e2-5ca7-8bc9-f217901f2088",
+      "20e371f4-ba79-5bd7-bf10-00a07d0b1c05",
+      "28cc8e33-b5ef-5698-b100-725b053e3f2a",
+      "34610b09-82a5-59a3-ac82-5b05b1d3ecc1",
+      "383f95a3-8ad4-56bb-aa52-42e6609bb084",
+      "3960398a-0709-572f-b93d-480e969ac19f",
+      "42ee20e2-1177-56b7-9097-abba56453efa",
+      "6a387b24-51d4-5f05-b073-c0b84a727fb3",
+      "6ab16107-3ba9-576b-8c48-ecbbd563a61d",
+      "6c44a06f-61ab-5864-a9a7-37b88c2e6af6",
+      "6eca9122-500a-503e-93f3-773de1c07a23",
+      "7299340d-afd1-5843-b94b-f38d6f59fb41",
+      "81f38e41-6d48-51a6-a60c-4967f385bd3a",
+      "85f7f472-91af-5d53-8055-d035e1e1a830",
+      "9ab4a3d4-97e4-5fcf-984c-7d9e2a2cf7b1",
+      "a0f1d9cd-2354-5694-835f-c386d9017214",
+      "a538c197-0b13-5a23-b006-ec872d5d0269",
+      "c425454f-2ba0-5b33-9d8d-019cf8ba613a",
+      "d638fc7e-fb26-5f35-8976-747d9333a3dc",
+      "ebe5a637-abb6-5815-a699-9b60372a8cc3"
+    ],
+    "closed_materials": [
+      {
+        "material_id": "13c8a32e-4fe1-5690-b233-cf3608255be3",
+        "order_ids": [
+          "99e381fd-72ed-5265-af03-236859acb5a2"
+        ],
+        "quantity": "2",
+        "review_ids": [
+          "42ee20e2-1177-56b7-9097-abba56453efa"
+        ],
+        "submission_ids": [
+          "46f84825-3afd-5623-8ef4-90ca848bb6cd"
+        ],
+        "unit": "кг"
+      },
+      {
+        "material_id": "1508a500-0aad-54d3-b4aa-e30d00eaa305",
+        "order_ids": [
+          "4e02b802-7ad6-5a52-a4fa-0b97ba87c535",
+          "67e389eb-4bf8-5fb7-ada2-56aa0d14d64c",
+          "77fca157-7420-5482-b309-b6bd8d8b8543",
+          "90c3e592-2f44-5d76-a037-7aea1542d56d"
+        ],
+        "quantity": "48",
+        "review_ids": [
+          "3960398a-0709-572f-b93d-480e969ac19f",
+          "6a387b24-51d4-5f05-b073-c0b84a727fb3",
+          "85f7f472-91af-5d53-8055-d035e1e1a830",
+          "ebe5a637-abb6-5815-a699-9b60372a8cc3"
+        ],
+        "submission_ids": [
+          "357e2c81-e5d7-5bb3-9d1d-30276421cc27",
+          "41712974-307e-54b9-8f84-f2d202e1e6c4",
+          "98f1b5af-0d20-5ec2-8803-e361223066ec",
+          "b59d786b-34c5-5155-8009-545dbea3b75e"
+        ],
+        "unit": "шт"
+      },
+      {
+        "material_id": "24eac58e-3d57-5d90-928f-43d31714e6a5",
+        "order_ids": [
+          "ede09d10-1218-52fc-b689-6304869252b0"
+        ],
+        "quantity": "1",
+        "review_ids": [
+          "6eca9122-500a-503e-93f3-773de1c07a23"
+        ],
+        "submission_ids": [
+          "8f7658b2-5f82-5979-8418-2da128440012"
+        ],
+        "unit": "л"
+      },
+      {
+        "material_id": "3c724ffd-0a6c-5e84-827d-882341bc88c7",
+        "order_ids": [
+          "061bdae5-e672-54bf-a505-849019c0a42a"
+        ],
+        "quantity": "2",
+        "review_ids": [
+          "20e371f4-ba79-5bd7-bf10-00a07d0b1c05"
+        ],
+        "submission_ids": [
+          "559db60e-103d-5583-9804-b5a5a365038a"
+        ],
+        "unit": "м"
+      },
+      {
+        "material_id": "482796bf-d223-517a-98d7-94143ed540cc",
+        "order_ids": [
+          "a29d8c38-5fb2-546c-a96f-fe605593901a"
+        ],
+        "quantity": "2",
+        "review_ids": [
+          "a538c197-0b13-5a23-b006-ec872d5d0269"
+        ],
+        "submission_ids": [
+          "2402c96f-236d-5f17-95b3-d21ab91b76df"
+        ],
+        "unit": "м"
+      },
+      {
+        "material_id": "5932d4cf-2553-5fdc-811c-a07b6b9ee481",
+        "order_ids": [
+          "9e53b248-eeb9-5ecc-8a4f-c10f9eff2592"
+        ],
+        "quantity": "1",
+        "review_ids": [
+          "28cc8e33-b5ef-5698-b100-725b053e3f2a"
+        ],
+        "submission_ids": [
+          "78895258-f844-553c-9082-1ea66b074942"
+        ],
+        "unit": "кг"
+      },
+      {
+        "material_id": "65549fd0-d22e-506f-93b4-0b7dc8fe49b6",
+        "order_ids": [
+          "e9091c9a-fde9-594f-a620-97e772854a81"
+        ],
+        "quantity": "3",
+        "review_ids": [
+          "6c44a06f-61ab-5864-a9a7-37b88c2e6af6"
+        ],
+        "submission_ids": [
+          "9122619d-cffd-501a-987e-d8af0914ee1e"
+        ],
+        "unit": "шт"
+      },
+      {
+        "material_id": "6dbca19f-b5bf-57b1-86f7-fb8dbb4789dd",
+        "order_ids": [
+          "9f03b3c2-fad5-5fc6-99fb-6b3bc09f267c"
+        ],
+        "quantity": "2",
+        "review_ids": [
+          "d638fc7e-fb26-5f35-8976-747d9333a3dc"
+        ],
+        "submission_ids": [
+          "241dc51c-469f-5234-ac79-8ea90c94184f"
+        ],
+        "unit": "л"
+      },
+      {
+        "material_id": "7039b75d-b1b7-5eee-9a05-f1c60118bf79",
+        "order_ids": [
+          "6816b4a0-b834-5d90-9ad9-4848c91c73b3"
+        ],
+        "quantity": "2",
+        "review_ids": [
+          "7299340d-afd1-5843-b94b-f38d6f59fb41"
+        ],
+        "submission_ids": [
+          "a32eda2a-aa34-562e-b247-45e4ed420020"
+        ],
+        "unit": "кг"
+      },
+      {
+        "material_id": "7575fb88-4c76-52b2-b4f9-a9cdc62b87ae",
+        "order_ids": [
+          "64864f72-614e-5b85-bc2b-ac1bd5160bab"
+        ],
+        "quantity": "1",
+        "review_ids": [
+          "9ab4a3d4-97e4-5fcf-984c-7d9e2a2cf7b1"
+        ],
+        "submission_ids": [
+          "acff3c72-8fa7-504c-be04-cbc84d660bbc"
+        ],
+        "unit": "л"
+      },
+      {
+        "material_id": "81f82a24-852a-5121-8962-f29a045f2dd6",
+        "order_ids": [
+          "1099efe6-13bc-564c-9aba-2407c09b1acb"
+        ],
+        "quantity": "2",
+        "review_ids": [
+          "04e08cc9-3896-5c51-822c-c9368f0d7e99"
+        ],
+        "submission_ids": [
+          "63d61c11-887f-52b5-8bd9-1f6a4b272320"
+        ],
+        "unit": "кг"
+      },
+      {
+        "material_id": "8bb1ae04-8f1a-535b-8b35-a88c586115c8",
+        "order_ids": [
+          "addcc5b1-e984-5384-91d4-de69e39fe0eb"
+        ],
+        "quantity": "3",
+        "review_ids": [
+          "c425454f-2ba0-5b33-9d8d-019cf8ba613a"
+        ],
+        "submission_ids": [
+          "26fb760d-8532-5f71-98e7-6d3e9fb0f6bd"
+        ],
+        "unit": "кг"
+      },
+      {
+        "material_id": "99d1433a-4328-53a5-a03b-eda1721b231a",
+        "order_ids": [
+          "a6ee1c96-9473-5998-bd83-476b161be6eb"
+        ],
+        "quantity": "1",
+        "review_ids": [
+          "34610b09-82a5-59a3-ac82-5b05b1d3ecc1"
+        ],
+        "submission_ids": [
+          "5b5b5450-3fe7-5332-aacf-ca9804b85700"
+        ],
+        "unit": "л"
+      },
+      {
+        "material_id": "a6e1cdc5-a920-5a17-a99a-4a83edfe45fd",
+        "order_ids": [
+          "accad4cf-6774-54a2-8392-591d492fb3a7"
+        ],
+        "quantity": "3",
+        "review_ids": [
+          "6ab16107-3ba9-576b-8c48-ecbbd563a61d"
+        ],
+        "submission_ids": [
+          "d1851a84-019d-5f1e-a244-1148d8e62d8e"
+        ],
+        "unit": "м"
+      },
+      {
+        "material_id": "a8cf7d74-2561-5b4c-a706-f3c8e9f31747",
+        "order_ids": [
+          "71a51cdc-b81c-5603-8b53-ed2a9b6f17af"
+        ],
+        "quantity": "2",
+        "review_ids": [
+          "a0f1d9cd-2354-5694-835f-c386d9017214"
+        ],
+        "submission_ids": [
+          "256286bf-3499-5fe3-bf25-232064fe7cdb"
+        ],
+        "unit": "л"
+      },
+      {
+        "material_id": "ab2d397a-9432-512f-a782-60a88ca866b0",
+        "order_ids": [
+          "a808a02a-a72b-5ec9-aa57-8131073c25fb"
+        ],
+        "quantity": "2",
+        "review_ids": [
+          "14d2753b-b73c-500f-a6b7-2b364e58187b"
+        ],
+        "submission_ids": [
+          "a56fd1e1-9b8e-59ec-84ea-771c8908646e"
+        ],
+        "unit": "м"
+      },
+      {
+        "material_id": "d11c9ebb-88e4-50b2-9da6-68243151d2f2",
+        "order_ids": [
+          "07c8a0fc-0649-56e9-87ff-b9b07234d72d"
+        ],
+        "quantity": "1",
+        "review_ids": [
+          "0c56c18e-9c61-5d66-addc-e42a4d63a643"
+        ],
+        "submission_ids": [
+          "b401e6a0-bb88-5a16-8c85-842e7d4bf6fc"
+        ],
+        "unit": "шт"
+      },
+      {
+        "material_id": "e56d6fc3-0d50-54b9-84fb-5651e873e73c",
+        "order_ids": [
+          "5620b5b8-9b2c-524f-87c6-a3da2f4ad87c"
+        ],
+        "quantity": "2",
+        "review_ids": [
+          "1fcb0518-01e2-5ca7-8bc9-f217901f2088"
+        ],
+        "submission_ids": [
+          "acba4592-dad9-565f-b5c1-b50b32b7f1c2"
+        ],
+        "unit": "м"
+      },
+      {
+        "material_id": "e56e9e9a-634b-53f0-9392-72cc13c8a4ae",
+        "order_ids": [
+          "4f012771-dd7c-55f5-87b8-6e887bf9b83e"
+        ],
+        "quantity": "3",
+        "review_ids": [
+          "81f38e41-6d48-51a6-a60c-4967f385bd3a"
+        ],
+        "submission_ids": [
+          "00327e81-f748-53bb-9358-fc41c46d1602"
+        ],
+        "unit": "шт"
+      },
+      {
+        "material_id": "fa591ccd-d42a-549d-a97c-fedf3d4cba6c",
+        "order_ids": [
+          "3b4f19b0-140c-58f9-9fef-5ec47eb7c91f"
+        ],
+        "quantity": "3",
+        "review_ids": [
+          "383f95a3-8ad4-56bb-aa52-42e6609bb084"
+        ],
+        "submission_ids": [
+          "722dce77-752f-5a20-aad9-953889ec8ed8"
+        ],
+        "unit": "шт"
+      }
+    ],
+    "closed_order_ids": [
+      "061bdae5-e672-54bf-a505-849019c0a42a",
+      "07c8a0fc-0649-56e9-87ff-b9b07234d72d",
+      "1099efe6-13bc-564c-9aba-2407c09b1acb",
+      "3b4f19b0-140c-58f9-9fef-5ec47eb7c91f",
+      "4e02b802-7ad6-5a52-a4fa-0b97ba87c535",
+      "4f012771-dd7c-55f5-87b8-6e887bf9b83e",
+      "5620b5b8-9b2c-524f-87c6-a3da2f4ad87c",
+      "64864f72-614e-5b85-bc2b-ac1bd5160bab",
+      "67e389eb-4bf8-5fb7-ada2-56aa0d14d64c",
+      "6816b4a0-b834-5d90-9ad9-4848c91c73b3",
+      "71a51cdc-b81c-5603-8b53-ed2a9b6f17af",
+      "77fca157-7420-5482-b309-b6bd8d8b8543",
+      "90c3e592-2f44-5d76-a037-7aea1542d56d",
+      "99e381fd-72ed-5265-af03-236859acb5a2",
+      "9e53b248-eeb9-5ecc-8a4f-c10f9eff2592",
+      "9f03b3c2-fad5-5fc6-99fb-6b3bc09f267c",
+      "a29d8c38-5fb2-546c-a96f-fe605593901a",
+      "a6ee1c96-9473-5998-bd83-476b161be6eb",
+      "a808a02a-a72b-5ec9-aa57-8131073c25fb",
+      "accad4cf-6774-54a2-8392-591d492fb3a7",
+      "addcc5b1-e984-5384-91d4-de69e39fe0eb",
+      "e9091c9a-fde9-594f-a620-97e772854a81",
+      "ede09d10-1218-52fc-b689-6304869252b0"
+    ],
+    "human_scores": {
+      "cohort_count": 23,
+      "mean": "87.0952380952380952380952381",
+      "scored_count": 21,
+      "scored_review_ids": [
+        "04e08cc9-3896-5c51-822c-c9368f0d7e99",
+        "0c56c18e-9c61-5d66-addc-e42a4d63a643",
+        "14d2753b-b73c-500f-a6b7-2b364e58187b",
+        "1fcb0518-01e2-5ca7-8bc9-f217901f2088",
+        "20e371f4-ba79-5bd7-bf10-00a07d0b1c05",
+        "28cc8e33-b5ef-5698-b100-725b053e3f2a",
+        "383f95a3-8ad4-56bb-aa52-42e6609bb084",
+        "3960398a-0709-572f-b93d-480e969ac19f",
+        "42ee20e2-1177-56b7-9097-abba56453efa",
+        "6a387b24-51d4-5f05-b073-c0b84a727fb3",
+        "6ab16107-3ba9-576b-8c48-ecbbd563a61d",
+        "6c44a06f-61ab-5864-a9a7-37b88c2e6af6",
+        "6eca9122-500a-503e-93f3-773de1c07a23",
+        "7299340d-afd1-5843-b94b-f38d6f59fb41",
+        "85f7f472-91af-5d53-8055-d035e1e1a830",
+        "9ab4a3d4-97e4-5fcf-984c-7d9e2a2cf7b1",
+        "a0f1d9cd-2354-5694-835f-c386d9017214",
+        "a538c197-0b13-5a23-b006-ec872d5d0269",
+        "c425454f-2ba0-5b33-9d8d-019cf8ba613a",
+        "d638fc7e-fb26-5f35-8976-747d9333a3dc",
+        "ebe5a637-abb6-5815-a699-9b60372a8cc3"
+      ],
+      "unscored_count": 2,
+      "unscored_review_ids": [
+        "34610b09-82a5-59a3-ac82-5b05b1d3ecc1",
+        "81f38e41-6d48-51a6-a60c-4967f385bd3a"
+      ]
+    },
+    "issued_order_ids": [
+      "061bdae5-e672-54bf-a505-849019c0a42a",
+      "07c8a0fc-0649-56e9-87ff-b9b07234d72d",
+      "1099efe6-13bc-564c-9aba-2407c09b1acb",
+      "3b4f19b0-140c-58f9-9fef-5ec47eb7c91f",
+      "4e02b802-7ad6-5a52-a4fa-0b97ba87c535",
+      "4f012771-dd7c-55f5-87b8-6e887bf9b83e",
+      "5620b5b8-9b2c-524f-87c6-a3da2f4ad87c",
+      "64864f72-614e-5b85-bc2b-ac1bd5160bab",
+      "67e389eb-4bf8-5fb7-ada2-56aa0d14d64c",
+      "6816b4a0-b834-5d90-9ad9-4848c91c73b3",
+      "71a51cdc-b81c-5603-8b53-ed2a9b6f17af",
+      "77fca157-7420-5482-b309-b6bd8d8b8543",
+      "90c3e592-2f44-5d76-a037-7aea1542d56d",
+      "99e381fd-72ed-5265-af03-236859acb5a2",
+      "9e53b248-eeb9-5ecc-8a4f-c10f9eff2592",
+      "9f03b3c2-fad5-5fc6-99fb-6b3bc09f267c",
+      "a29d8c38-5fb2-546c-a96f-fe605593901a",
+      "a6ee1c96-9473-5998-bd83-476b161be6eb",
+      "a808a02a-a72b-5ec9-aa57-8131073c25fb",
+      "accad4cf-6774-54a2-8392-591d492fb3a7",
+      "addcc5b1-e984-5384-91d4-de69e39fe0eb",
+      "e9091c9a-fde9-594f-a620-97e772854a81",
+      "ede09d10-1218-52fc-b689-6304869252b0"
+    ],
+    "overdue_order_ids": [],
+    "rework_review_ids": [
+      "bd2e1267-51ff-509c-afd2-26d12bb613e5",
+      "d9a1233e-14eb-5bed-8f23-30231d6330bb"
+    ],
+    "submitted_order_ids": [
+      "061bdae5-e672-54bf-a505-849019c0a42a",
+      "07c8a0fc-0649-56e9-87ff-b9b07234d72d",
+      "1099efe6-13bc-564c-9aba-2407c09b1acb",
+      "3b4f19b0-140c-58f9-9fef-5ec47eb7c91f",
+      "4e02b802-7ad6-5a52-a4fa-0b97ba87c535",
+      "4f012771-dd7c-55f5-87b8-6e887bf9b83e",
+      "5620b5b8-9b2c-524f-87c6-a3da2f4ad87c",
+      "64864f72-614e-5b85-bc2b-ac1bd5160bab",
+      "67e389eb-4bf8-5fb7-ada2-56aa0d14d64c",
+      "6816b4a0-b834-5d90-9ad9-4848c91c73b3",
+      "71a51cdc-b81c-5603-8b53-ed2a9b6f17af",
+      "77fca157-7420-5482-b309-b6bd8d8b8543",
+      "90c3e592-2f44-5d76-a037-7aea1542d56d",
+      "99e381fd-72ed-5265-af03-236859acb5a2",
+      "9e53b248-eeb9-5ecc-8a4f-c10f9eff2592",
+      "9f03b3c2-fad5-5fc6-99fb-6b3bc09f267c",
+      "a29d8c38-5fb2-546c-a96f-fe605593901a",
+      "a6ee1c96-9473-5998-bd83-476b161be6eb",
+      "a808a02a-a72b-5ec9-aa57-8131073c25fb",
+      "accad4cf-6774-54a2-8392-591d492fb3a7",
+      "addcc5b1-e984-5384-91d4-de69e39fe0eb",
+      "e9091c9a-fde9-594f-a620-97e772854a81",
+      "ede09d10-1218-52fc-b689-6304869252b0"
+    ],
+    "submitted_submission_ids": [
+      "00327e81-f748-53bb-9358-fc41c46d1602",
+      "2402c96f-236d-5f17-95b3-d21ab91b76df",
+      "241dc51c-469f-5234-ac79-8ea90c94184f",
+      "256286bf-3499-5fe3-bf25-232064fe7cdb",
+      "26fb760d-8532-5f71-98e7-6d3e9fb0f6bd",
+      "357e2c81-e5d7-5bb3-9d1d-30276421cc27",
+      "3e0652f6-8480-5661-a29f-69a94778af12",
+      "41712974-307e-54b9-8f84-f2d202e1e6c4",
+      "46f84825-3afd-5623-8ef4-90ca848bb6cd",
+      "559db60e-103d-5583-9804-b5a5a365038a",
+      "5b5b5450-3fe7-5332-aacf-ca9804b85700",
+      "63d61c11-887f-52b5-8bd9-1f6a4b272320",
+      "722dce77-752f-5a20-aad9-953889ec8ed8",
+      "78895258-f844-553c-9082-1ea66b074942",
+      "8f7658b2-5f82-5979-8418-2da128440012",
+      "9122619d-cffd-501a-987e-d8af0914ee1e",
+      "98f1b5af-0d20-5ec2-8803-e361223066ec",
+      "a32eda2a-aa34-562e-b247-45e4ed420020",
+      "a56fd1e1-9b8e-59ec-84ea-771c8908646e",
+      "acba4592-dad9-565f-b5c1-b50b32b7f1c2",
+      "acff3c72-8fa7-504c-be04-cbc84d660bbc",
+      "b401e6a0-bb88-5a16-8c85-842e7d4bf6fc",
+      "b59d786b-34c5-5155-8009-545dbea3b75e",
+      "d1851a84-019d-5f1e-a244-1148d8e62d8e",
+      "e6f26ce1-9374-5b18-9999-73e94a65bb7c"
+    ],
+    "timeliness": {
+      "denominator": 23,
+      "late_submission_ids": [
+        "241dc51c-469f-5234-ac79-8ea90c94184f",
+        "256286bf-3499-5fe3-bf25-232064fe7cdb",
+        "63d61c11-887f-52b5-8bd9-1f6a4b272320",
+        "a32eda2a-aa34-562e-b247-45e4ed420020"
+      ],
+      "numerator": 19,
+      "on_time_submission_ids": [
+        "00327e81-f748-53bb-9358-fc41c46d1602",
+        "2402c96f-236d-5f17-95b3-d21ab91b76df",
+        "26fb760d-8532-5f71-98e7-6d3e9fb0f6bd",
+        "357e2c81-e5d7-5bb3-9d1d-30276421cc27",
+        "41712974-307e-54b9-8f84-f2d202e1e6c4",
+        "46f84825-3afd-5623-8ef4-90ca848bb6cd",
+        "559db60e-103d-5583-9804-b5a5a365038a",
+        "5b5b5450-3fe7-5332-aacf-ca9804b85700",
+        "722dce77-752f-5a20-aad9-953889ec8ed8",
+        "78895258-f844-553c-9082-1ea66b074942",
+        "8f7658b2-5f82-5979-8418-2da128440012",
+        "9122619d-cffd-501a-987e-d8af0914ee1e",
+        "98f1b5af-0d20-5ec2-8803-e361223066ec",
+        "a56fd1e1-9b8e-59ec-84ea-771c8908646e",
+        "acba4592-dad9-565f-b5c1-b50b32b7f1c2",
+        "acff3c72-8fa7-504c-be04-cbc84d660bbc",
+        "b401e6a0-bb88-5a16-8c85-842e7d4bf6fc",
+        "b59d786b-34c5-5155-8009-545dbea3b75e",
+        "d1851a84-019d-5f1e-a244-1148d8e62d8e"
+      ]
+    }
+  },
+  "source_commit": "5775d6f6aa8e1bbf8796e7ba36c9ada6f1edd6e7",
+  "source_history_sha256": "7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1",
+  "synthetic": true
+}

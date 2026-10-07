@@ -1,0 +1,118 @@
+{
+  "artifacts": {
+    "order-521.html": {
+      "bytes": 6927,
+      "sha256": "3ccde84d4cea1260a1dbd668a3e4e3c311e34e193c7d3dfc95be936133367471"
+    },
+    "period-september-27-30.html": {
+      "bytes": 25929,
+      "sha256": "b768b1a91061d46c064ff7069af8425b7655012368769a4bb02fdc6566f773ce"
+    },
+    "report-source-trace.json": {
+      "bytes": 30477,
+      "sha256": "074b2e955f1ae3057a5300298d43824e688809da6225e4158c1f0503e834ada6"
+    }
+  },
+  "evidence_level": "offline_report_from_pinned_synthetic_history",
+  "full_period": {
+    "end": "2026-09-30T19:00:00Z",
+    "start": "2026-06-30T19:00:00Z"
+  },
+  "full_period_totals": {
+    "close_review_count": 540,
+    "closed_order_count": 540,
+    "human_score": {
+      "cohort_count": 540,
+      "denominator": 486,
+      "mean": "86.12962962962962962962962963",
+      "numerator": 41859,
+      "scored_count": 486,
+      "unscored_count": 54
+    },
+    "issued_order_count": 540,
+    "on_time": {
+      "denominator": 540,
+      "numerator": 492
+    },
+    "overdue_order_count": 0,
+    "rework_review_count": 28,
+    "source_id_sha256": {
+      "close_review_ids": "0e542a0f569e76d9b7d0ebb7e0953adbd43b4dfb9b8adaca8634b27f23b5e8f3",
+      "closed_order_ids": "ee0308a73ac40d2908b87d74d7a425bbde4101c324960f310c673f1408656d16",
+      "issued_order_ids": "ee0308a73ac40d2908b87d74d7a425bbde4101c324960f310c673f1408656d16",
+      "overdue_order_ids": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "rework_review_ids": "64f0d0a61cf04fcea3b53b24366abc4cb204ce194425587d371b7c823dac4c15",
+      "submitted_order_ids": "ee0308a73ac40d2908b87d74d7a425bbde4101c324960f310c673f1408656d16",
+      "submitted_submission_ids": "06adbf860e3cef9531c2b14a055ab372e01703a9b1689fe5b19b8004eb925e85"
+    },
+    "submitted_order_count": 540,
+    "submitted_submission_count": 568
+  },
+  "generated_at_real_utc": "2026-10-07T20:22:37.009019+00:00",
+  "input_as_of": "2026-09-30T19:00:00Z",
+  "not_run": [
+    "DB import",
+    "HTTP/report API",
+    "runtime authorization",
+    "real model",
+    "image bytes",
+    "phone",
+    "visual browser/PDF/print"
+  ],
+  "report_code_sha": "101db24b00d743529a746097e4949afce57f77ab",
+  "sample_period": {
+    "display_offset": "+05:00",
+    "end": "2026-09-30T19:00:00Z",
+    "start": "2026-09-26T19:00:00Z"
+  },
+  "sample_totals": {
+    "close_review_count": 23,
+    "closed_order_count": 23,
+    "human_score": {
+      "cohort_count": 23,
+      "denominator": 21,
+      "mean": "87.0952380952380952380952381",
+      "numerator": 1829,
+      "scored_count": 21,
+      "unscored_count": 2
+    },
+    "issued_order_count": 23,
+    "on_time": {
+      "denominator": 23,
+      "numerator": 19
+    },
+    "overdue_order_count": 0,
+    "rework_review_count": 2,
+    "source_id_sha256": {
+      "close_review_ids": "94a1edc46a77262e7f6a65204a9e597a919f7d5e6d11510a6cf32265742ec70f",
+      "closed_order_ids": "130d7a085c44db23ef54a34ec5df611286ecfee94eebdb5fc74b2017c18b3e81",
+      "issued_order_ids": "130d7a085c44db23ef54a34ec5df611286ecfee94eebdb5fc74b2017c18b3e81",
+      "overdue_order_ids": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "rework_review_ids": "e81c3856df8d821687464e0aa0e2deba78fe6388e61a2377be9d4f86962e606b",
+      "submitted_order_ids": "130d7a085c44db23ef54a34ec5df611286ecfee94eebdb5fc74b2017c18b3e81",
+      "submitted_submission_ids": "b6cf1e0b52172ab205d7dca7f866046871e9d6ee5424b0106cca67f221b8adc4"
+    },
+    "submitted_order_count": 23,
+    "submitted_submission_count": 25
+  },
+  "selected_order_id": "a6ee1c96-9473-5998-bd83-476b161be6eb",
+  "source_commit": "5775d6f6aa8e1bbf8796e7ba36c9ada6f1edd6e7",
+  "source_counts": {
+    "ai_assessments": 0,
+    "brigades": 3,
+    "employees": 17,
+    "equipment": 25,
+    "material_writeoffs": 568,
+    "materials": 40,
+    "order_events": 3510,
+    "orders": 540,
+    "photos": 444,
+    "reviews": 568,
+    "sections": 4,
+    "submissions": 568,
+    "work_codes": 20
+  },
+  "source_history_sha256": "7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1",
+  "source_path": "data/synthetic/v1/history.json",
+  "synthetic": true
+}

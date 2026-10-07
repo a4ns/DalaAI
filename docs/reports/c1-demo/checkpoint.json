@@ -1,0 +1,51 @@
+{
+  "task": "C-104 C1 offline report extension",
+  "base_report_commit": "fd1f1dfab90e3e37c40986d5e265a3f68d4fd052",
+  "implementation_commit": "101db24b00d743529a746097e4949afce57f77ab",
+  "artifact_tested_commit": "3e9ba24aeced8602b137a3b76aad72f7727a68ea",
+  "source_commit": "5775d6f6aa8e1bbf8796e7ba36c9ada6f1edd6e7",
+  "source_history_sha256": "7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1",
+  "author_test": {
+    "executed_at": "2026-10-07T20:24:13Z",
+    "result": "PASS",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s docs/reports -p 'test_*.py' -q",
+    "test_count": 31,
+    "level": "offline synthetic data, mapping, arithmetic, artifact hashes and HTML text"
+  },
+  "independent_review": {
+    "reviewer": "C3",
+    "reported_at": "2026-10-07T20:24:00Z",
+    "result": "PASS",
+    "reviewed_sha": "3e9ba24aeced8602b137a3b76aad72f7727a68ea",
+    "checks": [
+      "31 tests",
+      "artifact SHA-256 and length",
+      "generator/source pins",
+      "order 521 two attempts, null human close, absent AI, unavailable photo bytes",
+      "HTML markers and no active/external content",
+      "full-quarter/month/sample cohorts and exact score/timeliness cross-check"
+    ]
+  },
+  "reciprocal_review": {
+    "reviewer": "C4",
+    "reviewed_c3_sha": "c9d52edaaa074f78b07f2f320a51a9dcd73d8dd6",
+    "executed_at": "2026-10-07T20:23:40Z",
+    "result": "PASS",
+    "checks": [
+      "C3 manifest --check",
+      "7 new and 15 original tests",
+      "independent raw-source quarter/month sums, scored/null counts, timely counts, eligible review UUID lists"
+    ]
+  },
+  "not_run": [
+    "DB import",
+    "HTTP/report API",
+    "runtime RBAC",
+    "real model",
+    "real photo bytes",
+    "visual browser/PDF/print",
+    "physical device"
+  ],
+  "scope": "docs/reports/** only; evidence-only receipt added after artifact test; no application/contract/schema/dependency changes",
+  "publication": "Parent owned; no child publication or deployment"
+}

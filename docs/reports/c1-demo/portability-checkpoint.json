@@ -1,0 +1,60 @@
+{
+  "task": "C-104 portable C1 report inputs",
+  "tested_implementation_commit": "f3116b34f0d2b698f2ded02be1a442849b7bb24e",
+  "public_generator_commit": "8af3897f03aa2f41f0af07ec74ec2c807a4a535a",
+  "historical_export_commit": "5775d6f6aa8e1bbf8796e7ba36c9ada6f1edd6e7",
+  "historical_export_required": false,
+  "history_sha256": "7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1",
+  "default_input": "data/synthetic/generated/v1/history.json",
+  "alternate_input": "--history <file> or C4_HISTORY=<file>, exact hash required",
+  "author_run": {
+    "executed_at": "2026-10-07T20:31:04Z",
+    "status": "PASS",
+    "environment": "source-only archive, no .git; public generator produced canonical bytes",
+    "checks": [
+      "33 stdlib tests",
+      "default input and explicit --history CLI",
+      "PATH-empty source-only CLI regression",
+      "explicit input without adjacent manifest",
+      "tampered bytes rejected",
+      "existing checked-in sample bytes unchanged"
+    ]
+  },
+  "independent_review": {
+    "reviewer": "C3",
+    "reported_at": "2026-10-07T20:31:48Z",
+    "status": "PASS",
+    "sha": "f3116b34f0d2b698f2ded02be1a442849b7bb24e",
+    "checks": [
+      "fresh public generator source archive + exact C4 docs, no .git",
+      "33 tests",
+      "default and explicit generated-file CLI",
+      "generated artifact hashes/bytes",
+      "report source-file hashes",
+      "code SHA null and explicit provenance modes",
+      "canonical input and score41859/486"
+    ]
+  },
+  "reciprocal_c3_review": {
+    "reviewer": "C4",
+    "sha": "a95e5fe52e7a9c0e7607b5e32dc0d07f7f0ca26e",
+    "executed_at": "2026-10-07T20:31:44Z",
+    "status": "PASS",
+    "checks": [
+      "public generator source-only archive",
+      "exact canonical history hash",
+      "no .git and empty PATH default/explicit --check",
+      "8 C1 tests +15 original tests"
+    ]
+  },
+  "code_provenance": "No Git process or object lookup in builder. Optional caller-supplied --code-sha, otherwise null with reason; report source-file SHA-256 always recorded.",
+  "unchanged": "Original reviewed HTML, source trace, manifest and numeric results are preserved. Their historical provenance remains valid; old Git object is no longer a runtime dependency.",
+  "not_run": [
+    "DB/API integration",
+    "runtime RBAC",
+    "real model or photos",
+    "physical device",
+    "visual browser/PDF/print"
+  ],
+  "receipt_scope": "Evidence-only addition after tested implementation; only docs/reports/** changed"
+}
