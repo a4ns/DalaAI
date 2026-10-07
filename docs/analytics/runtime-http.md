@@ -48,7 +48,7 @@ API. C111 intentionally depends on its existing private `_connection()` and
 `_auth(db, handle)` seams and its real security `clock`. These remain owned by A2;
 a shared seam change requires A2/A5 coordination. Do not replace them with client
 claims, a bearer-token fallback, a dummy principal or `me()` on another connection.
-The synchronous service accepts a server-owned `project(facts, format)` callback
+The synchronous service accepts a server-owned `project(facts, format, historical_evidence)` callback
 so rendering and response-size validation finish before its final auth check.
 This callback is never populated from HTTP content.
 
@@ -65,7 +65,7 @@ additive runtime surface when mounting. All routes are GET only:
 
 Every route requires `start` and `end`: aware ISO-8601 timestamps with `T`, UTC
 `Z` or an explicit offset. Period is half-open `[start,end)` with
-`start < end <= server domain_as_of` and at most 31 days by default. Snapshot
+`start < end <= server domain_as_of` and at most 93 days by default. Snapshot
 stocks use `domain_as_of`; this is not historical state reconstruction at `end`.
 `format=json` is the default. Only report routes accept `format=html`.
 
@@ -113,9 +113,11 @@ A5/shared responsibilities.
    for the selected parents, including pre-period history. Selection by issuance
    period alone would corrupt independent close/rework/stock cohorts. Related
    material references must be complete. Before-photo references must match the
-   selected parent section; after-photo manifests must exactly match attached
-   rows for the same order/submission/revision/section. No physical blob validity
-   or safety claim follows from these binding checks.
+   selected parent section; live after-photo manifests must exactly match attached
+   rows for the same order/submission/revision/section. The narrowly recognized
+   canonical historical exception below permits missing metadata-only references,
+   with explicit unavailable counts. Contradictory attached rows still fail. No
+   physical blob validity or safety claim follows from either path.
 7. Validate/project via immutable C3; incomplete/corrupt data or unavailable
    totals fail the entire request. Render via immutable C4, enforce output byte
    bound, reauthenticate again, then leave the transaction. No partial body is
@@ -127,6 +129,12 @@ only SELECT and local transaction settings; it does not write business rows,
 sessions, events, deliveries, seed data or grants. It can temporarily block writers
 through its locks. The existing runtime role/connection/prerequisite checks remain
 necessary. It never retries a serialization conflict at a weaker isolation level.
+
+The default and hard maximum period are 93 days, accepted in
+[A0 comment 6048212078](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6048212078).
+An exact 93-day window is allowed; an additional second fails. This supports the
+full canonical history without introducing an unlimited range or a pattern-detection
+claim. All existing scope, row, byte, auth and completeness safeguards remain.
 
 Default limits: 2,000 orders, 20,000 total rows across all captured tables,
 64 authorized sections, 8 MiB SQL-estimated captured data, 128 KiB per selected
@@ -147,6 +155,81 @@ C3's unsupported metrics and C4's limitations remain visible: no invented
 composite rating, industrial efficacy, downtime, event history or AI-job state.
 Missing human scores remain null and never become AI scores. A smaller authorized
 scope is never labeled whole-enterprise totals.
+
+## Canonical C107 historical evidence exception
+
+A0 accepted this additive JSON/HTML disclosure in
+[comment 6048093481](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6048093481).
+The reviewed C107 loader `2836cec1c5351544c286e72503ad4b5b7590d847`
+intentionally preserves 444 after-photo manifest references in 568 submissions
+for 540 historical orders, while importing **zero photo rows or image bytes**.
+Treating those immutable historical references as verified live attachments is
+wrong; rejecting every historical report also prevents the accepted demo history
+from being inspected. This exception recognizes that one source and does not
+change shared auth, upload, CLOSE, C3 cohort math or the immutable C4 renderer.
+
+The repository reads bounded creation-event rows through selected parent IDs in
+the same snapshot. Recognition requires all of the following together:
+
+- A server-configured synthetic dataset; this flag alone grants no exception
+- The exact immutable `order.created` provenance for C107 loader 1.1.0, source
+  `8af3897f03aa2f41f0af07ec74ec2c807a4a535a`, history SHA-256
+  `7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1`,
+  exact metadata-only photo policy, disabled historical-actor policy and explicit
+  statement that historical completeness is not verified evidence
+- The canonical 17-actor mapping checksum
+  `56ec343e53e4f44208dfd5d5910e235b4626cda7c89f6b642e195c78945a5a64`.
+  Noncanonical remapped actors remain 503 because the stored checksum alone cannot
+  reconstruct/verify their mapping. No account credential fields are read
+- Canonical C1 UUID5 bindings for order ordinal 1..540, creation event/operation,
+  submission attempt and photo descriptor; correct source/runtime numbers,
+  section/equipment/brigade/master/executor relationships, closed parent,
+  revision 1, contiguous attempts and no before-photo references
+- Exact creation-event shape and timestamps, unique complete placeholder sets,
+  descriptor owner equal to the canonical stored submitter, uploaded time one
+  minute before submission, `artifact_available=false`, and the exact
+  `synthetic_metadata_placeholder` kind. Every descriptor must match its stored
+  order/submission/revision/manifest. Extra, duplicate or contradictory rows fail
+
+Public hashes and deterministic IDs are not authentication capabilities. This
+mapping also relies on the existing immutable, server-authored audit boundary and
+A5's runtime prerequisite/grant validation. Clients cannot supply creation-event
+metadata through these report routes or the current shared create command.
+Copying a marker onto an ordinary live order, changing a pin/descriptor/binding,
+omitting a canonical history marker, or merely setting `synthetic=true` fails
+closed. Recognized canonical IDs without provenance are not silently relabeled
+as live, including planned orders with empty photo manifests. Privileged database
+owner forgery is outside the trusted repository model; the public checksum is
+not a cryptographic attestation of a compromised database.
+
+For recognized rows, metadata-only missing references are retained verbatim;
+C3's historical `complete`/closed facts remain past synthetic narrative. JSON
+adds `provenance.historical_evidence`, scoped to exactly the captured order(s):
+
+- `status: synthetic_historical_evidence_unavailable`
+- `historical_order_count`, `historical_submission_count`
+- `historical_after_photo_reference_count`, `missing_after_photo_row_count`
+- `physical_evidence_verified: false`
+- `historical_completeness_is_verified_evidence: false`
+- `source_commit`, `history_sha256`, `loader_version`, `identity_mapping_sha256`
+
+The field is absent for ordinary live-only captures. Counts cover recognized
+historical rows only; missing-row count reconciles to referenced IDs minus validly
+bound attached rows. A present row still does not prove available image bytes,
+physical validity or successful live CLOSE. Every recognized-history capture also
+retains an explicit unavailable reason. Both HTML renderers visibly show counts
+and explain that historical completeness proves neither photo verification, AI
+execution nor successful live closing. The full C3/C4 data models are unchanged.
+
+Author offline verification additionally projected the exact pinned C1 bytes
+through the real C107 `read_history`/`prepare_rows`, deliberately changed runtime
+order numbers, and exercised all three JSON endpoints and both HTML formats over
+recording transport: 540 historical orders, 568 submissions, 444 unavailable
+photo references, zero image rows. The exact 93-day window
+`2026-06-30T19:00:00Z` through `2026-10-01T19:00:00Z` includes all 540 closed
+orders, independently counted from source reviews. This is source/mock-HTTP integration evidence,
+not an actual DB import, browser or live workflow. The focused committed tests
+also contain independent loader-shaped fixtures and forged/live regression cases.
 
 ## Reproduction and evidence levels
 
@@ -193,7 +276,8 @@ After A5 supplies its authorized isolated seam:
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend python3 -m unittest discover -s backend/tests/integration -p test_c_runtime_reports_postgres.py -v
 ```
 
-The actual-PG suite covers full-history reports, current membership/role/active
+The actual-PG suite includes a canonical loader-shaped missing-photo report
+fixture over actual DB transport, plus full-history reports, current membership/role/active
 state/revocation, byte and row limits, concurrent child commits excluded by the
 snapshot, order-lock expiry, order-change serialization failure, and revocation
 waiting behind held auth locks. It is not proof of production-role least privilege,

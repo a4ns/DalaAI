@@ -13,7 +13,7 @@ from pathlib import Path
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -81,6 +81,7 @@ class MockDatabase:
                 evidence_ids=[], fallback_reason='Provider not configured', stale=False,
                 created_at=NOW-timedelta(days=2))],
             'materials': [dict(id=uid(6), label='Synthetic material', unit='kg')],
+            'order_events': [],
         }
 
     def __enter__(self):
@@ -114,7 +115,7 @@ class MockDatabase:
             return Cursor([dict(id=uid(3), role=self.role, active=self.active)])
         if 'FROM employee_sections' in statement:
             return Cursor([dict(section_id=section) for section in self.sections])
-        tables = ('orders', 'submissions', 'photos', 'material_writeoffs', 'reviews', 'ai_assessments', 'materials')
+        tables = ('orders', 'submissions', 'photos', 'material_writeoffs', 'reviews', 'ai_assessments', 'materials', 'order_events')
         table = next(name for name in tables if 'FROM ' + name + ' ' in statement)
         rows = deepcopy(self.tables[table])
         if table == 'orders':
@@ -122,9 +123,11 @@ class MockDatabase:
             if 'AND id=%s::uuid' in statement:
                 rows = [r for r in rows if r['id'] == params[1]]
         else:
-            key = ('order_id' if table == 'submissions' or table == 'photos' and "purpose='before'" in statement
+            key = ('order_id' if table in ('submissions','order_events') or table == 'photos' and "purpose='before'" in statement
                    else 'id' if table == 'materials' else 'submission_id')
             rows = [r for r in rows if r[key] in params[0]]
+            if table == 'order_events' and "kind='order.created'" in statement:
+                rows = [r for r in rows if r['kind'] == 'order.created']
             if table == 'photos':
                 purpose = 'before' if "purpose='before'" in statement else 'after'
                 rows = [r for r in rows if r['purpose'] == purpose and r['attached_at'] is not None]
@@ -136,6 +139,43 @@ class MockDatabase:
             return Cursor([self.size_override or dict(row_count=len(rows), byte_count=sum(sizes),
                                                       largest_row=max(sizes, default=0))])
         return Cursor(rows)
+
+
+def canonical_history_fixture(db):
+    """Independent C107-shaped source fixture, not built with runtime helpers."""
+    namespace = UUID('716a1c94-5fd0-5c11-a9e9-13d12b739639')
+    identifier = lambda kind, n: str(uuid5(namespace, f'1.0.0/20261008/{kind}/{n}'))
+    order_id, sub_id, photo_id = (identifier('order', 1), identifier('submission', '1/1'), identifier('photo', '1/1'))
+    order = db.tables['orders'][0]
+    order.update(id=order_id, number=37, section_id=identifier('section',1), equipment_id=identifier('equipment',1),
+        executor_id=identifier('executor',1), brigade_id=identifier('brigade',1), created_by=identifier('master',1),
+        current_submission_id=sub_id, type='unplanned')
+    sub = db.tables['submissions'][0]
+    sub.update(id=sub_id, order_id=order_id, submitted_by=identifier('executor',1), after_photo_ids=[photo_id])
+    db.tables['reviews'][0].update(submission_id=sub_id, reviewer_id=identifier('master',1))
+    db.tables['material_writeoffs'][0]['submission_id'] = sub_id
+    db.tables['ai_assessments'] = []
+    db.sections = [order['section_id']]
+    descriptor = dict(id=photo_id, order_id=order_id, submission_id=sub_id, assignment_revision=1,
+        owner_id=identifier('executor',1), purpose='after',
+        uploaded_at=(sub['submitted_at']-timedelta(minutes=1)).isoformat().replace('+00:00','Z'),
+        evidence_kind='synthetic_metadata_placeholder', artifact_available=False)
+    marker = dict(synthetic=True, loader_version='1.1.0',
+        source_commit='8af3897f03aa2f41f0af07ec74ec2c807a4a535a',
+        history_sha256='7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1',
+        identity_mapping_sha256='56ec343e53e4f44208dfd5d5910e235b4626cda7c89f6b642e195c78945a5a64',
+        source_order_number='1', runtime_order_number=37,
+        watermark='Синтетические данные — не история предприятия',
+        photo_policy='metadata_only_no_image_bytes_no_file_valid_claim',
+        historical_completeness_not_verified_evidence=True, historical_actor_state='disabled_no_login',
+        source_photo_placeholders=[descriptor])
+    event = dict(id=identifier('event','1/1'), order_id=order_id, sequence=1, order_version=1,
+        assignment_revision=1, scheduling_revision=1, kind='order.created', actor_id=order['created_by'],
+        operation_id=identifier('operation','1/1'), reason=None,
+        from_status=None, to_status='issued', submission_id=None,
+        occurred_at=order['issued_at'], recorded_at=order['issued_at'], details={'synthetic_import':marker})
+    db.tables['order_events'] = [event]
+    return order_id, sub_id, photo_id, marker
 
 
 class RuntimeReportTests(unittest.TestCase):
@@ -234,12 +274,21 @@ class RuntimeReportTests(unittest.TestCase):
     def test_period_and_identifier_bounds(self):
         bad = ({}, {'start':'2026-10-07', 'end':self.query['end']},
                {**self.query, 'start':'2026-10-07T00:00:00'},
-               {**self.query, 'start':(NOW-timedelta(days=32)).isoformat()},
+               {**self.query, 'start':(NOW-timedelta(days=94)).isoformat()},
                {**self.query, 'end':(NOW+timedelta(seconds=1)).isoformat()},
                {**self.query, 'start':self.query['end']})
         for query in bad:
             self.assertEqual(self.get(query=query).status_code, 422, query)
         self.assertEqual(self.get('/reports/orders/not-an-id').status_code, 422)
+
+    def test_exact_93_day_window_allowed_and_larger_window_rejected(self):
+        query = {**self.query,'start':(NOW-timedelta(days=93)).isoformat()}
+        self.assertEqual(self.service.limits.max_period_days,93)
+        self.assertEqual(self.get(query=query).status_code,200)
+        query['start'] = (NOW-timedelta(days=93,seconds=1)).isoformat()
+        self.assertEqual(self.get(query=query).status_code,422)
+        with self.assertRaises(ValueError):
+            CaptureLimits(max_period_days=94)
 
     def test_order_limit_related_row_limit_and_byte_limit_fail_whole_capture(self):
         other = {**self.db.tables['orders'][0], 'id':uid(11)}
@@ -378,6 +427,133 @@ class RuntimeReportTests(unittest.TestCase):
         self.service.synthetic = False
         self.assertFalse(self.get().json()['provenance']['synthetic'])
         self.assertNotIn(self.db.handle, self.get().text)
+
+    def test_canonical_history_mapping_validated_without_waiving_live_mismatch(self):
+        # Exercise recognition independently; route regressions below verify
+        # actual provenance propagation and fail-closed behavior.
+        from app.analytics.c3_repository import _historical_placeholders
+        order_id, sub_id, photo_id, _ = canonical_history_fixture(self.db)
+        from app.orders.models import Order, Assignment, Status, OrderType, Priority
+        row = self.db.tables['orders'][0]
+        order = Order(row['id'],str(row['number']),row['version'],1,1,Status.CLOSED,OrderType.UNPLANNED,
+            row['description'],row['section_id'],row['equipment_id'],Assignment(row['executor_id'],row['brigade_id']),
+            row['created_by'],row['issued_at'],row['due_at'],row['norm_minutes'],Priority.NORMAL,'',(),sub_id,row['updated_at'])
+        result = _historical_placeholders(order,self.db.tables['submissions'],self.db.tables['order_events'][0],synthetic=True)
+        self.assertEqual(result,{sub_id:{photo_id}})
+        self.db.tables['order_events'][0]['details']['synthetic_import']['identity_mapping_sha256'] = '0'*64
+        from app.orders.models import DomainError
+        with self.assertRaises(DomainError):
+            _historical_placeholders(order,self.db.tables['submissions'],self.db.tables['order_events'][0],synthetic=True)
+
+    def test_loader_shaped_missing_history_photos_are_explicit_in_all_outputs(self):
+        order_id, _, photo_id, _ = canonical_history_fixture(self.db)
+        for path in ('/analytics/shift','/reports/shift','/reports/orders/'+order_id):
+            with self.subTest(path=path):
+                response = self.get(path)
+                self.assertEqual(response.status_code,200,response.text)
+                data = response.json()
+                evidence = data['provenance']['historical_evidence']
+                self.assertEqual(evidence['status'],'synthetic_historical_evidence_unavailable')
+                self.assertEqual(evidence['historical_order_count'],1)
+                self.assertEqual(evidence['historical_submission_count'],1)
+                self.assertEqual(evidence['historical_after_photo_reference_count'],1)
+                self.assertEqual(evidence['missing_after_photo_row_count'],1)
+                self.assertFalse(evidence['physical_evidence_verified'])
+                self.assertFalse(evidence['historical_completeness_is_verified_evidence'])
+                self.assertIn('historical_evidence:unavailable:missing_photo_rows=1',data['unavailable_reasons'])
+        data = self.get('/reports/orders/'+order_id).json()
+        self.assertEqual(data['order']['attempts'][0]['submission']['payload']['after_photo_ids'],[photo_id])
+        self.assertEqual(data['order']['attempts'][0]['assessments'],[])
+        for path in ('/reports/shift','/reports/orders/'+order_id):
+            response = self.get(path,{**self.query,'format':'html'})
+            self.assertEqual(response.status_code,200,response.text)
+            self.assertIn('отсутствующих записей фото 1',response.text)
+            self.assertIn('Историческая полнота не подтверждает проверку фото, работу ИИ или успешное живое закрытие',response.text)
+
+    def test_forged_or_remapped_canonical_markers_fail_closed(self):
+        canonical_history_fixture(self.db)
+        baseline = deepcopy(self.db.tables)
+        changes = [
+            ('loader_version','1.2.0'), ('history_sha256','0'*64), ('source_commit','0'*40),
+            ('identity_mapping_sha256','0'*64), ('synthetic',1), ('runtime_order_number',999),
+            ('source_order_number','0540'), ('source_order_number','541'),
+            ('photo_policy','file_valid'), ('historical_completeness_not_verified_evidence',False),
+            ('historical_actor_state','active'), ('watermark','copied unverified comment'),
+        ]
+        for field, value in changes:
+            self.db.tables = deepcopy(baseline)
+            self.db.tables['order_events'][0]['details']['synthetic_import'][field] = value
+            with self.subTest(field=field):
+                self.assertEqual(self.get().status_code,503)
+        self.db.tables = deepcopy(baseline)
+        self.service.synthetic = False
+        self.assertEqual(self.get().status_code,503)
+        self.service.synthetic = True
+        self.db.tables['order_events'] = []
+        self.assertEqual(self.get().status_code,503)
+        # Copy every pinned marker onto an ordinary live order: still no waiver.
+        self.db.tables = deepcopy(baseline)
+        self.db.tables['orders'][0]['id'] = uid(999)
+        self.db.tables['submissions'][0]['order_id'] = uid(999)
+        self.db.tables['order_events'][0]['order_id'] = uid(999)
+        self.db.tables['order_events'][0]['details']['synthetic_import']['source_photo_placeholders'][0]['order_id'] = uid(999)
+        self.assertEqual(self.get().status_code,503)
+
+    def test_canonical_descriptor_contradictions_and_event_forgery_rejected(self):
+        canonical_history_fixture(self.db)
+        baseline = deepcopy(self.db.tables)
+        descriptor_changes = [('id',uid(999)),('submission_id',uid(999)),('owner_id',uid(999)),
+            ('order_id',uid(999)),('assignment_revision',2),('artifact_available',True),
+            ('evidence_kind','verified'),('purpose','before'),('uploaded_at',NOW.isoformat())]
+        for field,value in descriptor_changes:
+            self.db.tables = deepcopy(baseline)
+            self.db.tables['order_events'][0]['details']['synthetic_import']['source_photo_placeholders'][0][field] = value
+            with self.subTest(descriptor=field):
+                self.assertEqual(self.get().status_code,503)
+        for field,value in [('id',uid(999)),('operation_id',uid(999)),('reason','Forged'),
+                            ('sequence',2),('actor_id',uid(999)),('recorded_at',NOW)]:
+            self.db.tables = deepcopy(baseline)
+            self.db.tables['order_events'][0][field] = value
+            with self.subTest(event=field):
+                self.assertEqual(self.get().status_code,503)
+        self.db.tables = deepcopy(baseline)
+        marker = self.db.tables['order_events'][0]['details']['synthetic_import']
+        marker['source_photo_placeholders'] *= 2
+        self.assertEqual(self.get().status_code,503)
+        marker['source_photo_placeholders'] = []
+        self.assertEqual(self.get().status_code,503)
+        self.db.tables = deepcopy(baseline)
+        self.db.tables['order_events'].append(deepcopy(self.db.tables['order_events'][0]))
+        self.assertEqual(self.get().status_code,503)
+
+    def test_historical_attached_rows_cannot_override_unverified_provenance(self):
+        order_id, sub_id, photo_id, _ = canonical_history_fixture(self.db)
+        section = self.db.tables['orders'][0]['section_id']
+        self.db.tables['photos'] = [dict(id=photo_id,order_id=order_id,section_id=section,
+            submission_id=sub_id,assignment_revision=1,purpose='after',attached_at=NOW,file_valid=True)]
+        data = self.get().json()
+        evidence = data['provenance']['historical_evidence']
+        self.assertEqual(evidence['missing_after_photo_row_count'],0)
+        self.assertFalse(evidence['physical_evidence_verified'])
+        self.db.tables['photos'][0]['section_id'] = uid(999)
+        self.assertEqual(self.get().status_code,503)
+
+    def test_historical_metadata_is_scoped_to_selected_order_and_live_is_unchanged(self):
+        live = deepcopy(self.db.tables)
+        historical_id, _, _, _ = canonical_history_fixture(self.db)
+        for table in ('orders','submissions','reviews','material_writeoffs'):
+            if table=='reviews':
+                live[table][0]['id'] = uid(31)
+            self.db.tables[table].extend(live[table])
+        self.db.sections.append(uid(1))
+        self.assertEqual(self.get().json()['provenance']['historical_evidence']['historical_order_count'],1)
+        selected = self.get('/reports/orders/'+historical_id).json()
+        self.assertEqual(selected['provenance']['historical_evidence']['missing_after_photo_row_count'],1)
+        ordinary = self.get('/reports/orders/'+uid(10))
+        self.assertEqual(ordinary.status_code,200,ordinary.text)
+        self.assertNotIn('historical_evidence',ordinary.json()['provenance'])
+        self.db.tables['submissions'][-1]['after_photo_ids'] = [uid(999)]
+        self.assertEqual(self.get('/reports/orders/'+uid(10)).status_code,503)
 
     def test_response_size_is_bounded_without_partial_response(self):
         with patch('app.reports.c4_routes.MAX_RESPONSE_BYTES', 1):

@@ -24,15 +24,20 @@ def create_c_runtime_router(service):
     router = APIRouter(prefix="/api/v1")
 
     def render(query, *, session_handle, kind, order_id):
-        def project(facts, output):
+        def project(facts, output, historical_evidence):
             selected_id = facts.orders[0].order.id if order_id is not None else None
             if kind == "analytics":
-                response = JSONResponse(facts_to_dict(facts), headers=HEADERS)
+                data = facts_to_dict(facts)
+                if historical_evidence is not None:
+                    data["provenance"]["historical_evidence"] = historical_evidence
+                response = JSONResponse(data, headers=HEADERS)
             elif output == "html":
                 html = render_order_html(facts, selected_id) if selected_id else render_shift_html(facts)
                 response = HTMLResponse(html, headers=HTML_HEADERS)
             else:
                 data = order_report_data(facts, selected_id) if selected_id else shift_report_data(facts)
+                if historical_evidence is not None:
+                    data["provenance"]["historical_evidence"] = historical_evidence
                 response = JSONResponse(data, headers=HEADERS)
             if len(response.body) > MAX_RESPONSE_BYTES:
                 raise DomainError("REPORT_LIMIT_EXCEEDED", "Report output exceeds capture limits")

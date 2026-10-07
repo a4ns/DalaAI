@@ -8,12 +8,13 @@ No owner-role fixture can prove deployment least-privilege grants.
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
+import json
 import os
 from pathlib import Path
 from threading import Event
 import unittest
 from unittest.mock import patch
-from uuid import uuid4
+from uuid import UUID, uuid4, uuid5
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -130,6 +131,65 @@ class RuntimeReportsPostgresTests(unittest.TestCase):
         with self.connect() as db:
             after = {table:db.execute('SELECT count(*) AS n FROM '+table).fetchone()['n'] for table in before}
         self.assertEqual(before,after)
+
+    def test_canonical_historical_manifest_without_photo_rows_reports_unavailable(self):
+        # Independent loader-shaped data, real PostgreSQL transport. No real
+        # loader/import or fixture helper can substitute for these DB reads.
+        namespace = UUID('716a1c94-5fd0-5c11-a9e9-13d12b739639')
+        cid = lambda kind,n: str(uuid5(namespace,f'1.0.0/20261008/{kind}/{n}'))
+        section,equipment,brigade = cid('section',1),cid('equipment',1),cid('brigade',1)
+        master,executor = cid('master',1),cid('executor',1)
+        order,submission,photo = cid('order',1),cid('submission','1/1'),cid('photo','1/1')
+        issued,submitted,reviewed = NOW-timedelta(days=40),NOW-timedelta(days=2),NOW-timedelta(hours=1)
+        with self.connect() as db:
+            with db.transaction():
+                db.execute("INSERT INTO sections VALUES (%s,'H-S','Synthetic history')",(section,))
+                db.execute("INSERT INTO brigades VALUES (%s,%s,'H-B','Synthetic history')",(brigade,section))
+                db.execute("INSERT INTO equipment VALUES (%s,%s,'H-E','Synthetic history')",(equipment,section))
+                for identifier,role,code in ((master,'master','SYN-M-01'),(executor,'executor','SYN-E-01')):
+                    db.execute("""INSERT INTO employees(id,employee_code,role,active,on_shift,pin_hash)
+                        VALUES (%s,%s,%s,false,false,'disabled-not-a-credential')""",(identifier,code,role))
+                    db.execute('INSERT INTO employee_sections VALUES (%s,%s)',(identifier,section))
+                # A separate authenticated test viewer, never the disabled actors.
+                db.execute('INSERT INTO employee_sections VALUES (%s,%s)',(self.master,section))
+                number = db.execute("""INSERT INTO orders(id,version,assignment_revision,scheduling_revision,
+                    status,type,description,section_id,equipment_id,executor_id,brigade_id,created_by,
+                    issued_at,due_at,norm_minutes,priority,updated_at) VALUES (%s,5,1,1,'closed','unplanned',
+                    'Synthetic history',%s,%s,%s,%s,%s,%s,%s,60,'normal',%s) RETURNING number""",
+                    (order,section,equipment,executor,brigade,master,issued,submitted,reviewed)).fetchone()['number']
+                db.execute("""INSERT INTO submissions(id,order_id,assignment_revision,attempt_number,submitted_by,
+                    submitted_at,done_late,work_description,work_code_id,completeness,missing_evidence,after_photo_ids)
+                    VALUES (%s,%s,1,1,%s,%s,false,'Synthetic history',%s,'complete','[]',%s::uuid[])""",
+                    (submission,order,executor,submitted,self.code,[photo]))
+                db.execute("""INSERT INTO reviews(id,submission_id,reviewer_id,decision,reason,final_score,created_at)
+                    VALUES (%s,%s,%s,'close','Synthetic narrative',NULL,%s)""",
+                    (cid('review','1/1'),submission,master,reviewed))
+                db.execute('UPDATE orders SET current_submission_id=%s WHERE id=%s',(submission,order))
+                descriptor = dict(id=photo,order_id=order,submission_id=submission,assignment_revision=1,
+                    owner_id=executor,purpose='after',uploaded_at=(submitted-timedelta(minutes=1)).isoformat(),
+                    evidence_kind='synthetic_metadata_placeholder',artifact_available=False)
+                marker = dict(synthetic=True,loader_version='1.1.0',
+                    source_commit='8af3897f03aa2f41f0af07ec74ec2c807a4a535a',
+                    history_sha256='7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1',
+                    identity_mapping_sha256='56ec343e53e4f44208dfd5d5910e235b4626cda7c89f6b642e195c78945a5a64',
+                    source_order_number='1',runtime_order_number=number,
+                    watermark='Синтетические данные — не история предприятия',
+                    photo_policy='metadata_only_no_image_bytes_no_file_valid_claim',
+                    historical_completeness_not_verified_evidence=True,historical_actor_state='disabled_no_login',
+                    source_photo_placeholders=[descriptor])
+                db.execute("""INSERT INTO order_events(id,order_id,sequence,order_version,assignment_revision,
+                    scheduling_revision,kind,details,actor_id,operation_id,from_status,to_status,occurred_at,recorded_at)
+                    VALUES (%s,%s,1,1,1,1,'order.created',%s::jsonb,%s,%s,NULL,'issued',%s,%s)""",
+                    (cid('event','1/1'),order,json.dumps({'synthetic_import':marker}),master,cid('operation','1/1'),issued,issued))
+        response = self.get('/reports/orders/'+order)
+        self.assertEqual(response.status_code,200,response.text)
+        evidence = response.json()['provenance']['historical_evidence']
+        self.assertEqual(evidence['historical_order_count'],1)
+        self.assertEqual(evidence['missing_after_photo_row_count'],1)
+        self.assertFalse(evidence['physical_evidence_verified'])
+        html = self.get('/reports/orders/'+order,{**self.query,'format':'html'})
+        self.assertEqual(html.status_code,200,html.text)
+        self.assertIn('отсутствующих записей фото 1',html.text)
 
     def test_current_membership_role_active_and_revocation_are_reloaded(self):
         self.assertEqual(self.get().status_code,200)
