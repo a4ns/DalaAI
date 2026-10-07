@@ -138,7 +138,7 @@ test('synchronous double click reserves only one intent; unknown retry uses sepa
   const h = harness(props({ onIntent: (intent) => { intents.push(intent); return first; }, onRetry: async () => { retries++; return { kind: 'confirmed' }; } }));
   const click = h.button('Принять').props.onClick;
   click(); click(); assert.equal(intents.length, 1);
-  assert.deepEqual(intents[0], { orderId: 'order-1', expectedVersion: 3, action: 'accept', payload: {} });
+  assert.deepEqual(intents[0], { orderId: 'order-1', expectedVersion: 3, expectedAssignmentRevision: 1, action: 'accept', payload: {} });
   resolve({ kind: 'unknown', message: 'Ответ потерян' }); await settle(); h.render();
   assert.equal(h.button('Принять').props.disabled, true);
   h.button('Повторить исходное действие').props.onClick(); await settle(); h.render();
@@ -282,4 +282,96 @@ test('unknown response keeps old DOM callbacks locked before the next render com
   // Deliberately invoke the previously rendered callback before simulating React's next commit.
   oldClick(); assert.equal(intents, 1);
   h.render(); assert.equal(h.button('Принять').props.disabled, true);
+});
+
+test('scoped unknown A stays frozen while selecting authorized B remains available', () => {
+  const selections = []; const edits = [];
+  const aDraft = { ...model.emptyExecutorDraft(), workDescription: 'Сохранённый результат A' };
+  const base = props({ operationScopeKey: 'order-1:1', orders: ready([order('in_progress'), order('issued', { id: 'order-2', number: 'Н-002' })]), drafts: { 'order-1': aDraft }, mutation: { status: 'unknown_result', error: 'Ответ A не подтверждён' }, pendingIntent: { orderId: 'order-1', expectedVersion: 3, action: 'submit' }, onSelectOrder: (id) => selections.push(id), onDraftChange: (...args) => edits.push(args) });
+  const h = harness(base);
+  assert.equal(h.button('Отправить неполный результат на проверку').props.disabled, true);
+  h.element((node) => node.type === 'textarea' && node.props.id === ':test:-work').props.onChange({ target: { value: 'Не менять A' } });
+  assert.deepEqual(edits, []);
+  const bCard = h.element((node) => node.type === 'button' && node.props.className?.includes('executor-order-card') && node.props['aria-pressed'] === false);
+  assert.equal(bCard.props.disabled, false); bCard.props.onClick(); assert.deepEqual(selections, ['order-2']);
+  h.render({ ...base, selectedOrderId: 'order-2', operationScopeKey: 'order-2:1', mutation: { status: 'idle', error: null }, pendingIntent: null });
+  assert.equal(h.button('Принять').props.disabled, false);
+  assert.equal(base.drafts['order-1'], aDraft, 'original controlled draft is retained, not cleared');
+});
+
+test('lost A then reassignment and late retry403 cannot overwrite B feedback or release its pending latch', async () => {
+  let finishRetryA; let finishB; const retryA = new Promise((resolve) => { finishRetryA = resolve; }); const responseB = new Promise((resolve) => { finishB = resolve; });
+  const calls = []; let retries = 0;
+  const unknownA = { kind: 'unknown', message: 'A: исходный результат неизвестен' };
+  const aDraft = { ...model.emptyExecutorDraft(), reason: 'Сохранённый черновик A' };
+  const base = props({ operationScopeKey: 'order-1:1', orders: ready([order(), order('issued', { id: 'order-2', number: 'Н-002' })]), drafts: { 'order-1': aDraft }, onIntent: (intent) => { calls.push(intent); return intent.orderId === 'order-1' ? Promise.resolve(unknownA) : responseB; }, onRetry: () => { retries++; return retryA; } });
+  const h = harness(base); h.button('Принять').props.onClick(); await settle(); h.render();
+  assert.equal(calls.length, 1); assert.match(h.text(), /исходный результат неизвестен/);
+  h.button('Повторить исходное действие').props.onClick(); h.render(); assert.equal(retries, 1);
+  const bProps = { ...base, selectedOrderId: 'order-2', operationScopeKey: 'order-2:1', orders: ready([order('issued', { id: 'order-2', number: 'Н-002' })]), drafts: {}, mutation: { status: 'idle', error: null }, pendingIntent: null, quarantinedIntentCount: 1, onRetry: async () => { throw new Error('B has no retry'); } };
+  h.render(bProps); assert.equal(h.button('Принять').props.disabled, false);
+  const bClick = h.button('Принять').props.onClick; bClick(); assert.equal(calls.length, 2);
+  finishRetryA({ kind: 'unknown', message: '403: доступ A изменился, исходный результат всё ещё неизвестен' }); await settle();
+  bClick(); assert.equal(calls.length, 2, 'late A finally must not clear B in-flight latch');
+  h.render(bProps); assert.match(h.text(), /Отправляем действие/); assert.doesNotMatch(h.text(), /403: доступ A/);
+  assert.equal(h.button('Принять').props.disabled, true);
+  finishB({ kind: 'confirmed' }); await settle();
+  h.render({ ...bProps, orders: ready([order('accepted', { id: 'order-2', number: 'Н-002', version: 4 })]) });
+  assert.match(h.text(), /Действие подтверждено сервером/); assert.equal(h.button('Начать работу').props.disabled, false);
+  assert.deepEqual(calls.map((intent) => intent.orderId), ['order-1', 'order-2']);
+  assert.equal(base.drafts['order-1'], aDraft); assert.equal(retries, 1);
+});
+
+test('quarantined missing A renders only a generic notice, never its old draft or error details', () => {
+  const html = markup({ operationScopeKey: 'none', quarantinedIntentCount: 1, selectedOrderId: 'order-1', orders: ready([order('issued', { id: 'order-2', number: 'Н-002' })]), drafts: { 'order-1': { ...model.emptyExecutorDraft(), workDescription: 'PRIVATE_OLD_WORK' } }, mutation: { status: 'unknown_result', error: 'PRIVATE_OLD_ERROR' }, pendingIntent: { orderId: 'order-1', expectedVersion: 3, action: 'submit' } });
+  assert.match(html, /Исходная попытка сохранена отдельно/);
+  assert.doesNotMatch(html, /PRIVATE_OLD_WORK|PRIVATE_OLD_ERROR/);
+  assert.match(html, /Н-002/);
+  assert.doesNotMatch(html, /Повторить исходное действие/);
+});
+
+test('stale A form and photo callbacks cannot act on B after a scoped selection change', () => {
+  const edits = []; const intents = []; const photoContexts = [];
+  const base = props({ operationScopeKey: 'order-1:1', orders: ready([order('in_progress')]), drafts: { 'order-1': { ...model.emptyExecutorDraft(), workDescription: 'Готовая работа A' } }, onDraftChange: (...args) => edits.push(args), onIntent: async (intent) => { intents.push(intent); return { kind: 'confirmed' }; }, renderPhotoPicker: (context) => { photoContexts.push(context); return null; } });
+  const h = harness(base); const oldForm = h.form(); const oldInput = h.element((node) => node.type === 'textarea' && node.props.id === ':test:-work'); const oldPhoto = photoContexts[0];
+  h.render({ ...base, selectedOrderId: 'order-2', operationScopeKey: 'order-2:4', orders: ready([order('in_progress', { id: 'order-2', number: 'Н-002', assignmentRevision: 4 })]), drafts: { 'order-2': { ...model.emptyExecutorDraft(), workDescription: 'Работа B' } } });
+  oldInput.props.onChange({ target: { value: 'Устаревшее изменение A' } }); oldPhoto.onConfirmedPhotoIdsChange(['photo-A']); oldForm.props.onSubmit({ preventDefault() {} });
+  assert.deepEqual(edits, []); assert.deepEqual(intents, []); assert.doesNotMatch(h.text(), /Устаревшее изменение A/);
+});
+
+test('draft edits and emitted intents carry the selected assignment revision', async () => {
+  const edits = []; const intents = [];
+  const h = harness(props({ operationScopeKey: 'order-1:7', orders: ready([order('in_progress', { assignmentRevision: 7 })]), drafts: { 'order-1': { ...model.emptyExecutorDraft(), workDescription: 'Работа' } }, onDraftChange: (...args) => edits.push(args), onIntent: async (intent) => { intents.push(intent); return { kind: 'rejected', message: 'Synthetic result' }; } }));
+  h.element((node) => node.type === 'textarea' && node.props.id === ':test:-work').props.onChange({ target: { value: 'Уточнение' } });
+  assert.equal(edits[0][0], 'order-1'); assert.equal(edits[0][2], 7);
+  h.form().props.onSubmit({ preventDefault() {} }); await settle();
+  assert.equal(intents[0].expectedAssignmentRevision, 7); assert.equal(intents[0].expectedVersion, 3);
+});
+
+test('retained A submit cannot clear B validation feedback before scope rejection', () => {
+  const intents = [];
+  const base = props({ operationScopeKey: 'order-1:1', orders: ready([order('in_progress')]), drafts: { 'order-1': { ...model.emptyExecutorDraft(), workDescription: 'Валидный результат A' } }, onIntent: async (intent) => { intents.push(intent); return { kind: 'confirmed' }; } });
+  const h = harness(base); const oldFormA = h.form();
+  const bProps = { ...base, operationScopeKey: 'order-2:1', selectedOrderId: 'order-2', orders: ready([order('in_progress', { id: 'order-2', number: 'Н-002' })]), drafts: { 'order-2': model.emptyExecutorDraft() } };
+  h.render(bProps); h.form().props.onSubmit({ preventDefault() {} }); h.render(bProps);
+  assert.match(h.text(), /Опишите выполненные работы/);
+  oldFormA.props.onSubmit({ preventDefault() {} }); h.render(bProps);
+  assert.match(h.text(), /Опишите выполненные работы/);
+  assert.deepEqual(intents, []);
+});
+
+test('retained A mode refresh selection filter and add-row callbacks leave B feedback unchanged', () => {
+  const selections = []; const edits = []; let refreshes = 0;
+  const other = order('in_progress', { id: 'order-2', number: 'Н-002' });
+  const closed = order('closed', { id: 'order-3', number: 'PRIVATE_CLOSED_NUMBER' });
+  const base = props({ operationScopeKey: 'order-1:1', orders: ready([order('in_progress'), other, closed]), drafts: { 'order-1': { ...model.emptyExecutorDraft(), workDescription: 'Работа A' } }, onSelectOrder: (id) => selections.push(id), onDraftChange: (...args) => edits.push(args), onRefresh: () => { refreshes++; } });
+  const h = harness(base);
+  const stale = [h.button('Приостановить').props.onClick, h.button('Обновить').props.onClick, h.button('Все').props.onClick, h.button('Добавить материал').props.onClick, h.element((node) => node.type === 'button' && node.props.className?.includes('executor-order-card') && node.props['aria-pressed'] === true).props.onClick];
+  const bProps = { ...base, operationScopeKey: 'order-2:1', selectedOrderId: 'order-2', orders: ready([other, closed]), drafts: { 'order-2': model.emptyExecutorDraft() } };
+  h.render(bProps); h.form().props.onSubmit({ preventDefault() {} }); h.render(bProps);
+  const before = h.text();
+  for (const callback of stale) callback();
+  h.render(bProps);
+  assert.equal(h.text(), before); assert.match(h.text(), /Опишите выполненные работы/); assert.doesNotMatch(h.text(), /PRIVATE_CLOSED_NUMBER/);
+  assert.equal(refreshes, 0); assert.deepEqual(selections, []); assert.deepEqual(edits, []);
 });

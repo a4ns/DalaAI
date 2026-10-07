@@ -51,6 +51,8 @@ export interface ExecutorSubmitPayload {
 export type ExecutorIntent = {
   orderId: string;
   expectedVersion: number;
+  /** UI-only assignment fence; the shared mapper must not add it to the wire body. */
+  expectedAssignmentRevision: number;
 } & (
   | { action: 'queue' | 'accept' | 'start' | 'resume'; payload: Record<string, never> }
   | { action: 'reject' | 'pause'; payload: { reason: string } }
@@ -72,6 +74,10 @@ export interface ExecutorPhotoContext {
 export interface ExecutorScreenProps {
   /** Non-secret identity/session generation. Change on every login or identity reset. */
   sessionKey: string;
+  /** Opt-in: existing mutation/intent/retry/resolve props belong to this opaque order/assignment scope. */
+  operationScopeKey?: string;
+  /** Retained inaccessible unknown operations. Only a generic notice is rendered. */
+  quarantinedIntentCount?: number;
   orders: ResourceState<ExecutorOrderViewModel[]>;
   dictionaries: ResourceState<ExecutorDictionaries>;
   selectedOrderId: string | null;
@@ -79,7 +85,7 @@ export interface ExecutorScreenProps {
   mutation: MutationState;
   pendingIntent: ExecutorIntentSummary | null;
   onSelectOrder: (id: string) => void;
-  onDraftChange: (orderId: string, draft: ExecutorDraft) => void;
+  onDraftChange: (orderId: string, draft: ExecutorDraft, assignmentRevision: number) => void;
   /** Parent must synchronously reserve one intent, then allocate one operation ID. */
   onIntent: (intent: ExecutorIntent) => Promise<MutationOutcome>;
   /** Replay parent's exact original operation ID/body, never current form values. */
