@@ -28,6 +28,8 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     from app.persistence.service import CommandService
     from app.sessions.http import create_router as session_router
     from app.sessions.service import SessionService
+    from app.order_events.http import create_order_events_router
+    from app.order_events.service import OrderEventService
     from app.discovery.http import create_discovery_router
     from app.discovery.service import DiscoveryService
     from app.discovery.workload import POLICY_NAME, WorkloadPolicy
@@ -79,6 +81,7 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
                        references_factory=UnavailablePhotoReferences)))
     app.include_router(create_discovery_router(DiscoveryService(connector, domain_clock=clock,
                        real_clock=clock, dictionary_policy=WorkloadPolicy(POLICY_NAME))))
+    app.include_router(create_order_events_router(OrderEventService(connector, real_clock=clock)))
     return app
 
 

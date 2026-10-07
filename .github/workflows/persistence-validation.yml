@@ -1,7 +1,7 @@
 name: PostgreSQL persistence validation
 'on':
   push:
-    branches: ['main', 'pod-a/A-009-persistence-runtime', 'pod-a/A-010-reference-key-hardening', 'pod-a/A-011-discovery-runtime', 'pod-a/A-012-session-runtime', 'pod-a/A-013-mounted-runtime']
+    branches: ['main', 'pod-a/A-009-persistence-runtime', 'pod-a/A-010-reference-key-hardening', 'pod-a/A-011-discovery-runtime', 'pod-a/A-012-session-runtime', 'pod-a/A-013-mounted-runtime', 'pod-a/A-014-events-runtime']
 permissions:
   contents: read
 concurrency:
@@ -98,5 +98,15 @@ jobs:
         run: python ops/run_mounted_runtime_tests.py
       - name: Actual app.main non-owner lifecycle and process restart
         run: python ops/run_actual_runtime_acceptance.py
+      - name: Events independent local boundary probes
+        run: PYTHONPATH=backend python backend/review/events/probes/test_independent_events.py
+      - name: Events author PostgreSQL gate
+        run: scripts/run_order_events_postgres_tests.sh
+      - name: Events independent PostgreSQL gate
+        run: python ops/run_events_review.py
+      - name: Restricted-login events PostgreSQL gate
+        run: python ops/run_events_role.py
+      - name: Events HTTP lifecycle and process restart
+        run: python ops/run_events_acceptance.py
       - name: Aggregate with real PostgreSQL configured
         run: make check

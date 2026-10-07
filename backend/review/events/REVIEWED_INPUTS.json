@@ -1,0 +1,15 @@
+{
+  "source_hashes": {
+    "backend/app/order_events/__init__.py": "b643fc6ce944fc3ea89806e8be940d650bf5b8af3fb4235129c19c6c92764eb6",
+    "backend/app/order_events/http.py": "faccf10a71bb9afc5b6381480bf762ea9a708ccfa11672ec752c361e7d2142d0",
+    "backend/app/order_events/postgres.py": "bb45a915b9250a987124f3e499c7e4a0dbeaea5f5b0c300bdc9b4779c6c4a0e8",
+    "backend/app/order_events/query.py": "c2b6b5c94aa45cacfee988f8b6ef7e8c7361b3fcb1cc0810ea81a19eafba1867",
+    "backend/app/order_events/serialization.py": "02e80b7bbd9caa65781948bc83f77a0ab321d77430bc054f326ac79013f60ae3",
+    "backend/app/order_events/service.py": "ad6e629050487effb22b0d22e3f060ab1fc1275616d13f7cd3f294c163d3471c"
+  },
+  "probe_hashes": {
+    "probes/test_independent_events.py": "6ab09c56fb8bdc5f504d861435c9b9ecf475839b47fc13baf710c7c4112b73b7",
+    "probes/test_independent_events_postgres.py": "ca6c5e46cca6b2b903ad7df30e5dff20c60e607356a17f676e34c57edd092092",
+    "run_postgres_gate.sh": "fed7426954bbdf9055e0e1a95e2773d64be861cedd8d856ae87dd91c74d290ef"
+  }
+}

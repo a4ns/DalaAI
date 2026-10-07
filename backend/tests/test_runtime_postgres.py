@@ -130,3 +130,20 @@ class MountedRuntimeTests(unittest.TestCase):
         self.assertEqual(f.query('SELECT status,version FROM orders')[0],{'status':'ai_review','version':4})
         self.assertEqual(f.query('SELECT * FROM reviews'),[])
         self.assertEqual(len(f.query('SELECT * FROM operation_receipts')),before)
+
+
+    def test_actual_factory_event_pages_are_ordered_and_authorized(self):
+        f=self.fixture
+        order=f.start()
+        f.submit(order)
+        with TestClient(self.app(),base_url=data.ORIGIN) as client:
+            client.cookies.set(SESSION_COOKIE_NAME,data.MASTER)
+            response=client.get(f'/api/v1/orders/{order}/events',params={'limit':2})
+            self.assertEqual(response.status_code,200)
+            self.assertEqual([row['sequence'] for row in response.json()['items']],[1,2])
+            self.assertTrue(response.json()['has_more'])
+            self.assertIn('no-store',response.headers['cache-control'])
+            client.cookies.set(SESSION_COOKIE_NAME,data.OTHER)
+            denied=client.get(f'/api/v1/orders/{order}/events')
+            self.assertEqual(denied.status_code,403)
+            self.assertEqual(denied.json()['current_version'],None)
