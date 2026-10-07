@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "НарядAI — производственные наряды",
+  "short_name": "НарядAI",
+  "description": "Демо производственных нарядов команды DalaAI. Для работы с сервером требуется соединение.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f7f6",
+  "theme_color": "#173e43",
+  "icons": [
+    { "src": "icons/naryadai.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/naryadai-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

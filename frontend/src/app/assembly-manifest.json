@@ -1,0 +1,58 @@
+{
+  "run_id": "DalaAI-20261008-night",
+  "assembly_base": "c2fbe6a5ce5dd584a6edbdb8e3abf3501e7d1bfd",
+  "contract_sha256": "b8b5b855eb8fffd4607473a4e878a3c64820030820cabb1b0c92d70928730f97",
+  "sources": [
+    {
+      "lane": "B-101",
+      "sha": "3544f9fc809a1dcecfc5fbbaf66798e62b3bc9ef",
+      "paths": [
+        "frontend"
+      ]
+    },
+    {
+      "lane": "B-103",
+      "sha": "32f33aed32317eb9e59bbf6de3929d2a667150ec",
+      "paths": [
+        "frontend/src/mobile/executor"
+      ]
+    },
+    {
+      "lane": "B-104",
+      "sha": "c45f21f9d34993101006a8bfad95541ec5f112ad",
+      "paths": [
+        "frontend/src/panel"
+      ]
+    },
+    {
+      "lane": "B-105",
+      "sha": "37adf547fad970e625ebe294de8fdd920f0c411f",
+      "paths": [
+        "frontend/src/pwa",
+        "frontend/public/manifest.webmanifest",
+        "frontend/public/icons"
+      ]
+    },
+    {
+      "lane": "B-106",
+      "sha": "f0a76a3ce8ea3df815c97ab1fc65566016e462f3",
+      "paths": [
+        "frontend/tests",
+        "frontend/playwright.config.ts"
+      ]
+    },
+    {
+      "lane": "B-102",
+      "sha": "3ad7dba8622c852d9abef2be76e31f9a3f01e4e5",
+      "paths": [
+        "frontend/src/mobile/master"
+      ]
+    }
+  ],
+  "composition_edits": [
+    "frontend/src/shared/api/client.ts: same-user session and authorization fencing",
+    "frontend/vite.config.ts: reserved assembly port 4172",
+    "frontend/src/app/assembly-manifest.json: imported sources and composition record",
+    "frontend/src/shared/api/orderStore.ts: explicit list access state without inferring authorization from network errors"
+  ]
+}
