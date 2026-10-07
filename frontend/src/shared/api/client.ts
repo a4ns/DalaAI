@@ -4,7 +4,8 @@ import { assertWire, isWire } from './validation';
 const BASE = '/api/v1';
 type SchemaName = 'Session' | 'Order' | 'Dictionaries' | 'OrderPage' | 'EventPage' | 'Submission' | 'StagedPhoto' | 'CommandResult';
 export interface PreparedMutation<T> { readonly operationId: string; readonly __resultType?: T }
-type Prepared = { epoch: number; path: string; body: string | Blob; contentType: string; schema: SchemaName; successStatus: number; inFlight?: Promise<unknown>; confirmed?: unknown; retryAt?: number; retryError?: ApiError; expectedOrderId?: string };
+type PhotoReceiptContext = Readonly<Pick<StagedPhoto, 'owner_id' | 'section_id' | 'purpose' | 'order_id' | 'assignment_revision'>>;
+type Prepared = { epoch: number; path: string; body: string | Blob; contentType: string; schema: SchemaName; successStatus: number; inFlight?: Promise<unknown>; confirmed?: unknown; retryAt?: number; retryError?: ApiError; expectedOrderId?: string; expectedPhoto?: PhotoReceiptContext };
 export type StagePhotoInput = { sectionId: string; file: File } & ({ purpose: 'before' } | { purpose: 'after'; orderId: string; assignmentRevision: number });
 type WithoutOperation<T> = T extends unknown ? Omit<T, 'operation_id'> : never;
 export type OrderCommandIntent = WithoutOperation<OrderCommand>;
@@ -45,6 +46,9 @@ function retryDelay(value: string | null): number | null {
 function authorityKey(session: Session): string {
   const principal = session.principal;
   return JSON.stringify([principal.user_id, principal.role, principal.active, [...new Set(principal.section_ids)].sort()]);
+}
+function sameUuid(left: string | null, right: string | null): boolean {
+  return left === null || right === null ? left === right : left.toLowerCase() === right.toLowerCase();
 }
 function id(value: string): string {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) throw new Error('Invalid resource ID');
@@ -174,10 +178,10 @@ export class ApiClient {
     const body = { ...command, operation_id: crypto.randomUUID() };
     assertWire('OrderCommand', body); return this.#prepare(body.operation_id, `/orders/${id(orderId)}/commands`, JSON.stringify(body), 'CommandResult', 200, 'application/json', orderId);
   }
-  #prepare<T>(operationId: string, path: string, body: string | Blob, schema: SchemaName, successStatus: number, contentType = 'application/json', expectedOrderId?: string): PreparedMutation<T> {
+  #prepare<T>(operationId: string, path: string, body: string | Blob, schema: SchemaName, successStatus: number, contentType = 'application/json', expectedOrderId?: string, expectedPhoto?: PhotoReceiptContext): PreparedMutation<T> {
     if (!this.#session) throw new ApiError('Сначала войдите в систему.', 401);
     const token = Object.freeze({ operationId });
-    this.#prepared.set(token, { epoch: this.#epoch, path, body, contentType, schema, successStatus, expectedOrderId });
+    this.#prepared.set(token, { epoch: this.#epoch, path, body, contentType, schema, successStatus, expectedOrderId, expectedPhoto });
     return token;
   }
   async preparePhoto(input: StagePhotoInput): Promise<PreparedMutation<StagedPhoto>> {
@@ -186,16 +190,23 @@ export class ApiClient {
       id(input.orderId);
       if (!Number.isSafeInteger(input.assignmentRevision) || input.assignmentRevision < 1) throw new ApiError('Некорректная версия назначения. Фото не отправлено.');
     }
+    if (!this.#session) throw new ApiError('Сначала войдите в систему.', 401);
     const epoch = this.#epoch;
+    // Snapshot primitives before serialization yields: later caller edits must not alter receipt binding.
+    const expectedPhoto: PhotoReceiptContext = Object.freeze({
+      owner_id: this.#session.principal.user_id, section_id: input.sectionId, purpose: input.purpose,
+      order_id: input.purpose === 'after' ? input.orderId : null,
+      assignment_revision: input.purpose === 'after' ? input.assignmentRevision : null,
+    });
     const operationId = crypto.randomUUID();
     const form = new FormData();
-    form.set('section_id', input.sectionId); form.set('operation_id', operationId); form.set('expected_version', '0'); form.set('purpose', input.purpose);
-    if (input.purpose === 'after') { form.set('order_id', input.orderId); form.set('assignment_revision', String(input.assignmentRevision)); }
+    form.set('section_id', expectedPhoto.section_id); form.set('operation_id', operationId); form.set('expected_version', '0'); form.set('purpose', expectedPhoto.purpose);
+    if (expectedPhoto.purpose === 'after') { form.set('order_id', expectedPhoto.order_id!); form.set('assignment_revision', String(expectedPhoto.assignment_revision)); }
     form.set('file', input.file);
     // Capture the encoded body once, including boundary and immutable original file bytes.
     const request = new Request('https://same-origin.invalid/api/v1/photos/stage', { method: 'POST', body: form });
     const body = await request.blob(); this.#assertEpoch(epoch);
-    return this.#prepare(operationId, '/photos/stage', body, 'StagedPhoto', 201, request.headers.get('content-type')!);
+    return this.#prepare(operationId, '/photos/stage', body, 'StagedPhoto', 201, request.headers.get('content-type')!, undefined, expectedPhoto);
   }
   execute<T>(token: PreparedMutation<T>): Promise<T> {
     const prepared = this.#prepared.get(token);
@@ -206,6 +217,12 @@ export class ApiClient {
     if (prepared.inFlight) return prepared.inFlight as Promise<T>;
     const promise = this.#request<T>(prepared.path, { ...prepared, method: 'POST', mutation: true }).then(result => {
       if (prepared.expectedOrderId && (result as CommandResult).order.id.toLowerCase() !== prepared.expectedOrderId.toLowerCase()) throw new ApiError('Ответ операции относится к другому наряду. Результат не подтверждён.', 200, null, true);
+      if (prepared.expectedPhoto) {
+        const photo = result as StagedPhoto; const expected = prepared.expectedPhoto;
+        if (!sameUuid(photo.owner_id, expected.owner_id) || !sameUuid(photo.section_id, expected.section_id) || photo.purpose !== expected.purpose || !sameUuid(photo.order_id, expected.order_id) || photo.assignment_revision !== expected.assignment_revision) {
+          throw new ApiError('Ответ загрузки относится к другому контексту. Результат не подтверждён.', prepared.successStatus, null, true);
+        }
+      }
       prepared.confirmed = result; return result;
     }).catch((error: unknown) => {
       if (error instanceof ApiError && error.retryAfterSeconds !== null) { prepared.retryAt = Date.now() + error.retryAfterSeconds * 1000; prepared.retryError = error; }
