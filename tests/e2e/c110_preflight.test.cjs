@@ -41,9 +41,9 @@ function proof(now) {
 test('proof is bound to exact source hashes version freshness count and zero leaks', () => {
   const now = Date.parse('2026-10-07T21:00:00Z'); const p = proof(now);
   assert.equal(validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now, FRONTEND_SHA), p);
-  assert.throws(() => validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now, '2beb2244c4639c09004e4cdb5a7598d447ad68f6'));
+  assert.throws(() => validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now, 'ca320bf692c01d89dd79496fe18d1bc2742052df'));
   assert.throws(() => validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now));
-  for (const patch of [{ frontend_sha: '2beb2244c4639c09004e4cdb5a7598d447ad68f6' }, { source_sha: 'd'.repeat(40) }, { source_files: { helper: 'd'.repeat(64) } }, { playwright: '1.62.0' },
+  for (const patch of [{ frontend_sha: 'ca320bf692c01d89dd79496fe18d1bc2742052df' }, { source_sha: 'd'.repeat(40) }, { source_files: { helper: 'd'.repeat(64) } }, { playwright: '1.62.0' },
     { sentinel_matches: 1 }, { observed_dummy_failures: 0 }, { scanned_outputs: 2 }, { result: 'NOT_RUN' },
     { created_at: new Date(now - 31 * 60_000).toISOString() }, { created_at: new Date(now + 1).toISOString() }]) {
     assert.throws(() => validateProof({ ...p, ...patch }, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now, FRONTEND_SHA));
