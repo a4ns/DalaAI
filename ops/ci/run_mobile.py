@@ -20,7 +20,7 @@ from uuid import uuid4
 from startup_diagnostics import collect as startup_diagnostics
 from core_diagnostics import python_environment
 from fixtures import ORIGIN, prepare_private, prepare_credentials, prepare_tls, write_private
-from c110_driver import C110Error, verify_service_inventory, verify_started_inventory, verify_source_blobs, verify_frontend_provenance, secrecy_preflight, observer_dsn, execute_core, TITLE
+from c110_driver import C110Error, verify_service_inventory, verify_started_inventory, verify_source_blobs, verify_frontend_provenance, secrecy_preflight, observer_dsn, execute_core, readonly_observer_probe, TITLE
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
@@ -176,7 +176,7 @@ def run_gate(report: dict, contract: dict) -> None:
         private = Path(temp) / "private"
         prepare_private(private, credentials=False)
         prepare_tls(private)
-        env.update(DALA_CI_PRIVATE_DIR=str(private), DALA_CI_SOURCE_DIR=str(HERE),
+        env.update(DALA_CI_PRIVATE_DIR=str(private), DALA_CI_SOURCE_DIR=str(HERE), DALA_CI_ROOT_DIR=str(ROOT), DALA_CI_COMPOSE_PROJECT=project,
                    DALA_DOMAIN="localhost", DALA_ALLOWED_ORIGIN=ORIGIN,
                    DALA_BIND_ADDRESS="127.0.0.1", DALA_HTTP_PORT="18080", DALA_HTTPS_PORT="18443")
         browser_env = dict(env)
@@ -212,7 +212,7 @@ def run_gate(report: dict, contract: dict) -> None:
             report["worker_absence_service_inventory"] = verify_service_inventory(json.loads(config.stdout))
             report["stage"] = "compose_build_start"
             attempted_start = True
-            start = subprocess.run([*compose, "up", "--build", "--detach", "--wait", "--wait-timeout", "180", "api", "web"],
+            start = subprocess.run([*compose, "up", "--build", "--detach", "--wait", "--wait-timeout", "180", "api", "web", "observer"],
                                    cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=900, check=False)
             if start.returncode:
                 report["startup_diagnostic"] = startup_diagnostics(compose, env, ROOT, start.stdout)
@@ -236,6 +236,9 @@ def run_gate(report: dict, contract: dict) -> None:
                 report["browser_transport_probe"]={"status":"FAIL","code":code if code in allowed_probe_codes else "PUBLIC_TLS_HEALTH_PROBE_FAILED"}
                 raise GateError("C110_PUBLIC_BROWSER_TLS_PROBE_FAILED")
             report["browser_transport_probe"]={"status":"PASS","scope":"public_health_browser_and_node_tls_only"}
+            observer_launcher=private/"observer-python"
+            write_private(observer_launcher,(HERE/"observer_python.py").read_text())
+            os.chmod(observer_launcher,0o700)
             browser_env.update(
                 DALA_E2E_BASE_URL=ORIGIN,
                 DALA_E2E_FIXTURE_FILE=str(private / "fixture.json"),
@@ -248,9 +251,18 @@ def run_gate(report: dict, contract: dict) -> None:
                 DALA_C110_WORKERS_DISABLED="ai,delivery,providers",
                 DALA_C110_OBSERVER_DATABASE_URL=observer_dsn(private),
                 DALA_C110_DATABASE_SCHEMA="dalaai_demo",
-                DALA_C110_PYTHON=sys.executable,
+                DALA_C110_PYTHON=str(observer_launcher),
                 DALA_C110_RUN_ID="c110-" + uuid4().hex,
             )
+            report["stage"] = "readonly_observer_probe"
+            mapping = subprocess.run([*compose,"port","db","5432"],cwd=ROOT,env=env,capture_output=True,timeout=15,check=False)
+            if mapping.returncode==0 and mapping.stdout.strip():
+                raise GateError("C110_DATABASE_UNEXPECTEDLY_PUBLISHED")
+            report["observer_connection"] = "READONLY_SIDECAR_DB_LOOPBACK_NO_HOST_PORT"
+            observer_probe = readonly_observer_probe(ROOT,browser_env,str(observer_launcher))
+            report["readonly_observer_probe"] = observer_probe
+            if observer_probe["status"] != "PASS":
+                raise GateError("C110_READONLY_OBSERVER_PROBE_FAILED")
             report["stage"] = "c110_android_browser"
             core = execute_core(ROOT, browser_env, private, cli)
             report.update(core["summary"])

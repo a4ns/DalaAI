@@ -1,10 +1,29 @@
 # CI-only overlay. Base runtime/Dockerfiles/seed remain owned by A5.
 # Use only through ops/ci/run_mobile.py, which supplies fresh private inputs.
 services:
-  db:
-    # CI-only observer access: never a public DB bind or a demo deployment change.
-    ports:
-      - '127.0.0.1:15432:5432'
+  observer:
+    build:
+      context: ../..
+      dockerfile: ops/demo/Dockerfile.api
+    # Run the unchanged C observer against loopback in the DB network namespace.
+    # No host port, external network, owner secret or Docker socket is attached.
+    network_mode: service:db
+    user: '10001:10001'
+    command: [python, -c, 'import time; time.sleep(3600)']
+    environment:
+      DALA_C110_AUTHORIZED: operator-provisioned-synthetic-only
+      DALA_C110_DATABASE_SCHEMA: dalaai_demo
+    secrets: [runtime_dsn]
+    volumes:
+      - ${DALA_CI_ROOT_DIR:?Use run_mobile.py}/tests/e2e/c110_observe.py:/ci/c110_observe.py:ro
+      - ${DALA_CI_SOURCE_DIR:?Use run_mobile.py}/observer_in_container.py:/ci/observer_in_container.py:ro
+    depends_on:
+      db: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
   api:
     environment:
       DALA_DOMAIN: localhost

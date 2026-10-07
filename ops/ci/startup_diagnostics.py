@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import subprocess
 
-SERVICES = {"api", "db", "web", "prepare", "photo-directory"}
+SERVICES = {"api", "db", "web", "prepare", "photo-directory", "observer"}
 STATES = {"running", "exited", "created", "restarting", "dead", "paused", "removing"}
 HEALTH = {"healthy", "unhealthy", "starting", ""}
 

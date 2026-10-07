@@ -13,8 +13,15 @@ import c110_driver as driver
 
 class C110IntegrationTests(unittest.TestCase):
     def model(self):
-        return {'services': {name: ({'ports': [{'host_ip': '127.0.0.1', 'published': '15432', 'target': 5432}]} if name == 'db' else {})
-                             for name in driver.SERVICES}}
+        root=Path(driver.__file__).resolve().parents[2]
+        services={name:{} for name in driver.SERVICES}
+        services['db']={'networks':{'backend':{}}}
+        services['observer']={'network_mode':'service:db','user':'10001:10001','read_only':True,
+            'cap_drop':['ALL'],'security_opt':['no-new-privileges:true'],'secrets':[{'source':'runtime_dsn'}],
+            'build':{'context':str(root),'dockerfile':'ops/demo/Dockerfile.api'},
+            'volumes':[{'type':'bind','read_only':True,'source':str(root/'tests/e2e/c110_observe.py'),'target':'/ci/c110_observe.py'},
+                       {'type':'bind','read_only':True,'source':str(root/'ops/ci/observer_in_container.py'),'target':'/ci/observer_in_container.py'}]}
+        return {'services':services,'networks':{'backend':{'internal':True}}}
 
     def test_disabled_worker_inventory_passes(self):
         self.assertEqual(driver.verify_service_inventory(self.model()), sorted(driver.SERVICES))
@@ -33,7 +40,7 @@ class C110IntegrationTests(unittest.TestCase):
         with self.assertRaises(driver.C110Error): driver.verify_service_inventory(model)
 
     def test_public_database_bind_fails(self):
-        model = self.model(); model['services']['db']['ports'][0]['host_ip'] = '0.0.0.0'
+        model = self.model(); model['services']['db']['ports']=[{'host_ip':'127.0.0.1','published':'15432','target':5432}]
         with self.assertRaises(driver.C110Error): driver.verify_service_inventory(model)
 
     def test_enabled_worker_flag_fails(self):
@@ -45,7 +52,7 @@ class C110IntegrationTests(unittest.TestCase):
         with self.assertRaises(driver.C110Error): driver.verify_started_inventory(json.dumps(rows).encode())
 
     def test_actual_inventory_json_lines(self):
-        rows = [{'Service': name, 'State': 'running' if name in {'api','web','db'} else 'exited'} for name in driver.SERVICES]
+        rows = [{'Service': name, 'State': 'running' if name in {'api','web','db','observer'} else 'exited'} for name in driver.SERVICES]
         self.assertEqual(driver.verify_started_inventory('\n'.join(map(json.dumps, rows)).encode()), sorted(driver.SERVICES))
 
     def test_private_inputs_cannot_enter_dummy_preflight(self):
@@ -108,6 +115,48 @@ class C110IntegrationTests(unittest.TestCase):
             root=Path(temp)
             with self.assertRaises(driver.C110Error):
                 driver.verify_source_blobs(root,{'tests/e2e/../../outside':'0'*40})
+
+    def test_observer_probe_failure_exports_only_fixed_code_and_class(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(driver.subprocess,'run') as run:
+            run.return_value.returncode=2
+            run.return_value.stdout=json.dumps({'status':'BLOCKED','code':'C110_DB_OBSERVATION_UNAVAILABLE',
+                'error_type':'OperationalError','dsn':'secret-password','rows':['private-token']}).encode()
+            result=driver.readonly_observer_probe(Path(tmp),{},'python')
+            self.assertEqual(result,{'status':'FAIL','code':'C110_DB_OBSERVATION_UNAVAILABLE','error_type':'OperationalError'})
+            self.assertNotIn('secret',json.dumps(result)); self.assertNotIn('private',json.dumps(result))
+            self.assertEqual(run.call_args.args[0][-1],'00000000-0000-0000-0000-000000000000')
+
+    def test_observer_probe_does_not_export_success_rows(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(driver.subprocess,'run') as run:
+            run.return_value.returncode=0
+            run.return_value.stdout=json.dumps({'source':'actual_postgresql_read_only','identity':{
+                'direct_login':True,'read_only':True,'isolated_schema':True},'order':{'description':'private-data'}}).encode()
+            result=driver.readonly_observer_probe(Path(tmp),{},'python')
+            self.assertEqual(result,{'status':'PASS','scope':'readonly_zero_uuid_projection_only'})
+
+    def test_observer_probe_rejects_arbitrary_error_fields(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(driver.subprocess,'run') as run:
+            run.return_value.returncode=2
+            run.return_value.stdout=json.dumps({'code':'private-token','error_type':'private-password'}).encode()
+            result=driver.readonly_observer_probe(Path(tmp),{},'python')
+            self.assertEqual(result,{'status':'FAIL','code':'C110_OBSERVER_PROBE_FAILED','error_type':'UNKNOWN'})
+
+    def test_observer_cannot_receive_owner_secret(self):
+        model=self.model(); model['services']['observer']['secrets'].append({'source':'owner_dsn'})
+        with self.assertRaises(driver.C110Error): driver.verify_service_inventory(model)
+
+    def test_observer_frozen_source_mount_is_checked(self):
+        model=self.model(); model['services']['observer']['volumes'][0]['source']='/tmp/replacement.py'
+        with self.assertRaises(driver.C110Error): driver.verify_service_inventory(model)
+
+    def test_database_network_cannot_gain_external_access(self):
+        model=self.model(); model['networks']['backend']['internal']=False
+        with self.assertRaises(driver.C110Error): driver.verify_service_inventory(model)
+
+    def test_observer_cannot_gain_host_network_or_capabilities(self):
+        for field,value in [('network_mode','host'),('cap_add',['SYS_ADMIN']),('user','0:0')]:
+            model=self.model(); model['services']['observer'][field]=value
+            with self.assertRaises(driver.C110Error): driver.verify_service_inventory(model)
 
 
 if __name__ == '__main__': unittest.main()

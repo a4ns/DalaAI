@@ -73,17 +73,27 @@ never printed or uploaded.
 ## Actual runtime, worker exclusion and observer
 
 A5 owns the real `ops/demo` Dockerfiles/runtime/provisioning. The CI overlay adds
-only test inputs, a loopback trusted HTTPS endpoint and a CI-only PostgreSQL bind
-`127.0.0.1:15432`. The API is never exposed directly; the ordinary demo Compose
-remains unchanged. The observer uses existing `naryadai_api` direct LOGIN and
-C's read-only repeatable-read transaction, not an owner credential or new grant.
+only test inputs, a loopback trusted HTTPS endpoint and an isolated read-only
+observer sidecar. PostgreSQL keeps its internal-only network and has no host port.
+The sidecar shares `service:db` network namespace, runs as UID10001 with dropped
+capabilities/read-only root filesystem, and gets only the existing runtime DSN
+secret. A fixed launcher converts its service hostname to DB-namespace loopback,
+then executes the unchanged mounted C observer. C's read-only repeatable-read
+transaction uses restricted `naryadai_api`, not an owner credential or new grant.
+The ordinary demo Compose and backend image remain unchanged.
 
 CI inspects the resolved Compose model before setting C's worker-disabled marker.
-The five core services must exist. Any extra worker service must be profile-gated
+The five core services and the explicitly isolated observer must exist. Any extra worker service must be profile-gated
 and cannot be a dependency of a core service. Enabled worker flags/provider keys
-fail. The command starts only `api web` and their approved dependencies, with no
+fail. The command starts only `api web observer` and their approved dependencies, with no
 inherited `COMPOSE_PROFILES`. The actual started service inventory is checked
-again. Workers/provider delivery are therefore not merely declared disabled.
+again. The observer's exact C source and fixed launcher mounts, runtime-secret-only
+assignment, API-image build context, nonroot/capability restrictions and internal
+network namespace are validated. Workers/provider delivery are therefore not
+merely declared disabled. A zero-UUID read-only observer probe runs before the
+journey; only its fixed code/exception class can enter diagnostics. Its rows and
+DSN never enter logs. The private host interpreter adapter validates the exact
+observer script path, disposable project and UUID, and passes no credential argv.
 
 The manual journey queues AI jobs but expects no assessment because workers are
 disabled. This gate does not exercise or claim rules fallback. The absent model

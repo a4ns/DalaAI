@@ -12,7 +12,7 @@ from urllib.parse import urlsplit
 from core_diagnostics import failure_projection
 
 TITLE = "C110 real composed master executor lifecycle"
-SERVICES = {"db", "photo-directory", "prepare", "api", "web"}
+SERVICES = {"db", "photo-directory", "prepare", "api", "web", "observer"}
 
 
 class C110Error(RuntimeError):
@@ -41,9 +41,30 @@ def verify_service_inventory(model: dict) -> list[str]:
             raise C110Error("C110_WORKER_ENABLE_FLAG_PRESENT")
     if services["api"].get("environment", {}).get("OPENAI_API_KEY"):
         raise C110Error("C110_PROVIDER_KEY_PRESENT")
-    ports = services["db"].get("ports", [])
-    if len(ports) != 1 or ports[0].get("host_ip") != "127.0.0.1" or str(ports[0].get("published")) != "15432" or ports[0].get("target") != 5432:
-        raise C110Error("C110_OBSERVER_MUST_BIND_LOOPBACK_ONLY")
+    root=Path(__file__).resolve().parents[2]
+    if model.get("networks",{}).get("backend",{}).get("internal") is not True or set(services["db"].get("networks",{}))!={"backend"}:
+        raise C110Error("C110_DATABASE_NETWORK_MUST_REMAIN_INTERNAL")
+    if services["db"].get("ports"):
+        raise C110Error("C110_DATABASE_MUST_REMAIN_UNPUBLISHED")
+    observer=services["observer"]
+    if (observer.get("network_mode")!="service:db" or observer.get("user")!="10001:10001"
+            or observer.get("read_only") is not True or observer.get("ports") or observer.get("networks")
+            or observer.get("cap_drop")!=["ALL"] or observer.get("cap_add") or observer.get("privileged")
+            or observer.get("security_opt")!=["no-new-privileges:true"]):
+        raise C110Error("C110_OBSERVER_ISOLATION_INVALID")
+    assigned={item.get("source") if isinstance(item,dict) else item for item in observer.get("secrets",[])}
+    if assigned!={"runtime_dsn"}:
+        raise C110Error("C110_OBSERVER_SECRET_SCOPE_INVALID")
+    volumes=observer.get("volumes",[])
+    if len(volumes)!=2 or {item.get("target") for item in volumes}!={"/ci/c110_observe.py","/ci/observer_in_container.py"} or any(item.get("type")!="bind" or item.get("read_only") is not True for item in volumes):
+        raise C110Error("C110_OBSERVER_SOURCE_MOUNTS_INVALID")
+    expected_mounts={"/ci/c110_observe.py":root/"tests/e2e/c110_observe.py",
+                     "/ci/observer_in_container.py":root/"ops/ci/observer_in_container.py"}
+    if any(Path(item.get("source","")).resolve()!=expected_mounts[item["target"]].resolve() for item in volumes):
+        raise C110Error("C110_OBSERVER_MOUNT_SOURCE_MISMATCH")
+    build=observer.get("build",{})
+    if build.get("dockerfile")!="ops/demo/Dockerfile.api" or Path(build.get("context","")).resolve()!=root:
+        raise C110Error("C110_OBSERVER_MUST_REUSE_PINNED_API_IMAGE")
     return sorted(SERVICES)
 
 
@@ -58,7 +79,7 @@ def verify_started_inventory(raw: bytes) -> list[str]:
     names = {row.get("Service") for row in data}
     if names != SERVICES:
         raise C110Error("C110_UNEXPECTED_ACTUAL_COMPOSE_SERVICE")
-    if any(row.get("Service") in {"api", "db", "web"} and row.get("State") != "running" for row in data):
+    if any(row.get("Service") in {"api", "db", "web", "observer"} and row.get("State") != "running" for row in data):
         raise C110Error("C110_CORE_SERVICE_NOT_RUNNING")
     return sorted(names)
 
@@ -136,7 +157,7 @@ def observer_dsn(private: Path) -> str:
     parsed = urlsplit((private / "runtime_dsn").read_text().strip())
     if parsed.scheme != "postgresql" or parsed.hostname != "db" or parsed.username != "naryadai_api" or not parsed.password or parsed.path != "/naryadai":
         raise C110Error("C110_RUNTIME_FIXTURE_DSN_INVALID")
-    return f"postgresql://naryadai_api:{parsed.password}@127.0.0.1:15432/naryadai"
+    return f"postgresql://naryadai_api:{parsed.password}@127.0.0.1:5432/naryadai"
 
 
 def extract_evidence(report: Path, artifact_root: Path, private: Path) -> Path | None:
@@ -203,3 +224,24 @@ def execute_core(root: Path, env: dict, private: Path, cli: Path) -> dict:
     finally:
         # Created by this invocation only; never clean up a preexisting output tree.
         shutil.rmtree(artifact_root)
+
+
+def readonly_observer_probe(root: Path, env: dict, python: str) -> dict:
+    """Exercise the unchanged C projection on a nonexistent sentinel order; emit no rows."""
+    allowed_types={"OperationalError","ProgrammingError","InsufficientPrivilege","UndefinedColumn",
+                   "UndefinedTable","InvalidPassword","InvalidAuthorizationSpecification",
+                   "ConnectionTimeout","Blocked","ValueError","ImportError","ModuleNotFoundError",
+                   "SyntaxError","TypeError","KeyError","InterfaceError","ObserverRunnerError"}
+    process=subprocess.run([python,str(root/"tests/e2e/c110_observe.py"),"00000000-0000-0000-0000-000000000000"],
+                           cwd=root,env=env,capture_output=True,timeout=20,check=False)
+    try:
+        data=json.loads(process.stdout)
+    except Exception:
+        return {"status":"FAIL","code":"C110_OBSERVER_PROBE_NO_SAFE_JSON"}
+    identity=data.get("identity",{})
+    if process.returncode==0 and data.get("source")=="actual_postgresql_read_only" and all(identity.get(k) is True for k in ("direct_login","read_only","isolated_schema")):
+        return {"status":"PASS","scope":"readonly_zero_uuid_projection_only"}
+    code=data.get("code")
+    kind=data.get("error_type")
+    return {"status":"FAIL","code":code if code=="C110_DB_OBSERVATION_UNAVAILABLE" else "C110_OBSERVER_PROBE_FAILED",
+            "error_type":kind if kind in allowed_types else "UNKNOWN"}
