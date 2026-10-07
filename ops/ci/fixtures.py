@@ -106,6 +106,12 @@ subjectAltName = DNS:localhost,IP:127.0.0.1
                  "-extensions", "server", "-out", str(tls / "server.crt")])
     for path in tls.iterdir():
         os.chmod(path, 0o600)
+    # These two files alone are mounted into cap-dropped Caddy, whose UID differs
+    # from the CI host owner. Its read-only mounts need readable file modes.
+    # Host access remains protected by both enclosing0700 directories. The root
+    # CA private key stays0600 and is never mounted into any container.
+    for name in ("server.crt", "server.key"):
+        os.chmod(tls / name, 0o444)
     home = directory / "browser-home"
     # Existing legacy NSS path is supported by both pre- and post-M146 Chromium.
     # Chromium chooses it when present, so no global or existing user DB is used.

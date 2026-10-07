@@ -66,13 +66,22 @@ class FixturesTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "private"
             fixtures.prepare_private(root)
-            with patch.object(fixtures, "run_private") as run:
+            def fake_tool(argv):
+                for flag in ("-out", "-keyout"):
+                    if flag in argv:
+                        Path(argv[argv.index(flag) + 1]).write_text("synthetic fixture bytes")
+            with patch.object(fixtures, "run_private", side_effect=fake_tool) as run:
                 fixtures.prepare_tls(root)
             calls = [call.args[0] for call in run.call_args_list]
             certificate_calls = [call for call in calls if call[0] == "certutil"]
             self.assertEqual(len(certificate_calls), 2)
             for command in certificate_calls:
                 self.assertIn(f"sql:{root}/browser-home/.pki/nssdb", command)
+            for name in ("server.crt", "server.key"):
+                self.assertEqual((root / "tls" / name).stat().st_mode & 0o777, 0o444)
+            self.assertEqual((root / "tls/root.key").stat().st_mode & 0o777, 0o600)
+            self.assertEqual((root / "tls").stat().st_mode & 0o777, 0o700)
+            self.assertEqual(root.stat().st_mode & 0o777, 0o700)
             config = (root / "tls" / "root.cnf").read_text()
             self.assertIn("nameConstraints = critical", config)
             self.assertIn("permitted;DNS:localhost", config)

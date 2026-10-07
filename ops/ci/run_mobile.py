@@ -17,6 +17,7 @@ import time
 import urllib.request
 from uuid import uuid4
 
+from startup_diagnostics import collect as startup_diagnostics
 from fixtures import ORIGIN, prepare_private, prepare_credentials, prepare_tls, write_private
 from c110_driver import C110Error, verify_service_inventory, verify_started_inventory, verify_source_blobs, verify_frontend_provenance, secrecy_preflight, observer_dsn, execute_core, TITLE
 
@@ -205,8 +206,11 @@ def run_gate(report: dict, contract: dict) -> None:
             report["worker_absence_service_inventory"] = verify_service_inventory(json.loads(config.stdout))
             report["stage"] = "compose_build_start"
             attempted_start = True
-            require_success([*compose, "up", "--build", "--detach", "--wait", "--wait-timeout", "180", "api", "web"],
-                            env=env, code="COMPOSE_BUILD_OR_START_FAILED", timeout=900)
+            start = subprocess.run([*compose, "up", "--build", "--detach", "--wait", "--wait-timeout", "180", "api", "web"],
+                                   cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=900, check=False)
+            if start.returncode:
+                report["startup_diagnostic"] = startup_diagnostics(compose, env, ROOT, start.stdout)
+                raise GateError("COMPOSE_BUILD_OR_START_FAILED")
             inventory = subprocess.run([*compose, "ps", "--all", "--format", "json"], cwd=ROOT, env=env, capture_output=True, check=False)
             if inventory.returncode:
                 raise GateError("C110_ACTUAL_COMPOSE_INVENTORY_UNAVAILABLE")
