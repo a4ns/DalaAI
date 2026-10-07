@@ -1,0 +1,27 @@
+{
+  "accepted": true,
+  "c112_source_sha": "13d8d9f572f257186b0a6428178d180a15583559",
+  "frontend_sha": "9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c",
+  "required_test_title": "C112 real history analytics and protected reports",
+  "project": "c112-android-chromium",
+  "config_path": "tests/e2e/c112_playwright.config.cjs",
+  "expected_test_count": 1,
+  "source_blobs": {
+    "tests/e2e/c112_README.md": "b6d1752e8d3f986e940a27ac1591c8be8c59e6a0",
+    "tests/e2e/c112_analytics.spec.cjs": "ef4a2d223e1a1ee567fd7e4ab1ac966b159bb4a2",
+    "tests/e2e/c112_contract.cjs": "568e71aea51ce396ead180d7c271fb32cd2fe606",
+    "tests/e2e/c112_contract.test.cjs": "2c85cec06e089da4b8f59f11fcb7679b1d7408c5",
+    "tests/e2e/c112_gate.cjs": "eea6598d31a142b7d929b23f923147f7252ff90d",
+    "tests/e2e/c112_observe.py": "95ba024c01a1bff3121f2ff958db13e4e534d5cf",
+    "tests/e2e/c112_observe_test.py": "6a99c9e51dd19a33dc41f7f444758977bf57cb5c",
+    "tests/e2e/c112_playwright.config.cjs": "0d1eea38e11ecbc7595a2fa5b1b4cca073b10167",
+    "tests/e2e/c112_preflight.config.cjs": "2b93e80b65c134928b705c1116e07fcf225ba0e3",
+    "tests/e2e/c112_preflight.spec.cjs": "46edfb63de9178098fbd26b3a3acbbb0e290bd25",
+    "tests/e2e/c112_preflight.test.cjs": "9deb69765c308fead1dfb41cdb61a1a56a94b512",
+    "tests/e2e/c112_preflight_proof.cjs": "103a917d394f6dc0f303ef55ebded79efd83fbe6",
+    "tests/e2e/c112_private_boundary.cjs": "08b4a6b11182a344e555c963303fa39caf72708d",
+    "tests/e2e/c112_secrecy_preflight.cjs": "57f2c76ef3ec2f985cc82c7e4fc95063d11c582b",
+    "tests/e2e/package-lock.json": "97052d6834b4c84b10cf9e4687f744db83dba3ca",
+    "tests/e2e/package.json": "fc39640391959bc5afc93c06b0f7bec3dfe724e6"
+  }
+}

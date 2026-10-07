@@ -1,0 +1,130 @@
+# C112 history/analytics Android CI seam (source preparation)
+
+Source-ready binding: C112 `13d8d9f572f257186b0a6428178d180a15583559` against frontend
+`9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`. Actual C112 execution is pending. Existing
+C110 remains an independent exact-one-journey gate; its prior green results do
+not establish this new history journey.
+
+## Reserved ownership
+
+- `.github/workflows/history-mobile-e2e.yml`
+- New `ops/ci/history_*` files only
+- C owns new `tests/e2e/c112_*` and corresponding evidence documents
+- A5 owns shared demo Compose, bootstrap/runtime and remote publication
+
+## Accepted historical setup to reuse
+
+The reviewed operator path is `DALA_DEMO_FIXTURE_MODE=history ops/demo/run.sh`.
+For this disposable CI job, use the same unchanged preparation and full bootstrap:
+
+1. Install exact existing dependencies and official matching Playwright Chromium
+2. Create a new private directory and isolated browser HOME/NSS/TLS fixture
+3. Run C112's own exact-config, source/frontend-bound dummy-secret failure preflight
+4. Only after it passes, invoke unchanged `ops/demo/prepare.py --workers
+   --fixture-mode history` for the new directory and loopback domain/ports
+5. Use `ops/demo/compose.yaml` + `ops/demo/compose.workers.yaml` + the new history
+   CI overlay, explicitly starting only API/web and approved setup/observer services
+6. Validate declared and actual service inventory; no worker/provider process runs
+7. Run C112's unchanged configuration and its distinct strict evidence gate
+8. Remove only this invocation's disposable stack and private fixture artifacts
+
+The ordinary full-profile preparation creates its normal named model-policy file.
+That file is unused in this read-only gate: no worker service is started, provider
+keys stay absent and model/push enablement is forced off. Do not replace the
+reviewed bootstrap, change grants, adopt an existing fixture or start the human
+launcher (which would start the worker too).
+
+The API image/provisioning helpers and seven-migration grants remain A5's existing
+reviewed history profile. PostgreSQL must stay internal/unpublished. If C112 needs
+direct DB corroboration, a nonroot read-only observer sharing `service:db` may
+receive only the runtime DSN and exact reviewed observer source; no owner secret.
+Its fixed interpreter adapter must allow only that observer and bounded inputs.
+
+## Public fixture contract
+
+Use the unchanged OBJECT returned by `ops/provision/history_demo.py:public_manifest()`.
+Do not substitute the minimal C110 fixture or wrap it in a dry-run response.
+
+- `fixture_version`: `dalaai-canonical-history-live-demo-v1`
+- `fixture_mode`: `history`; `synthetic`: true
+- `history_sha256`: `7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1`
+- `history_orders`: 540
+- `history_period_utc`: July 1, 2026 00:00Z through October 1, 2026 00:00Z, exclusive end
+- `users`: the same stable DALA-DEMO-MASTER / DALA-DEMO-EXECUTOR identities
+- Master has all four canonical sections; executor only SYN-SECTION-001
+- All 17 historical actors remain disabled and cannot authenticate
+- `live_path` supplies existing section/equipment/executor/work-code/material IDs
+- No new live orders, sessions or physical photos are seeded
+- Historical photo metadata remains missing physical evidence, never verified bytes
+
+Known reviewed API/report expectations for the full period are 540 issued orders,
+568 submission attempts and 444 missing historical after-photo rows, with
+`physical_evidence_verified=false`. The existing public manifest does not invent
+extra fields for those latter counts; C112 can bind its expectations explicitly.
+The clock/history dates are never shifted to make today's view look populated.
+
+## Exact C112 process interface
+
+Reuse the already agreed file-based names where appropriate:
+
+- `DALA_E2E_BASE_URL=https://localhost:18443`
+- `DALA_E2E_FIXTURE_FILE`: exact public history manifest object
+- `DALA_E2E_MASTER_PIN_FILE`, `DALA_E2E_EXECUTOR_PIN_FILE`: private files
+- `DALA_E2E_FRONTEND_SHA`, `DALA_E2E_BACKEND_SHA`: exact accepted identities
+- A unique C112 run ID and a fresh absolute C112 preflight receipt path
+- Optional fixed read-only observer interpreter/schema seam, if required by C
+
+The exact single title is `C112 real history analytics and protected reports`;
+project `c112-android-chromium`, seven required steps, Pixel 7 emulation with two
+contexts. C112 owns `c112_playwright.config.cjs`, `c112_secrecy_preflight.cjs`,
+`c112_preflight_proof.cjs` and `c112_gate.cjs`. The source manifest binds all
+14 C112 files and both existing package/lock files. The C112 proof binds the new
+C112 test/config/capture/observer code and shared login boundary actually used;
+a previous C110 receipt alone cannot authorize unrelated test code. No alternate
+reporter/config, skipped mandatory cases, fake API success or reused proof is a pass.
+
+A C112 PASS may establish only its specified read-only historical UI/API journey
+under Android emulation. It cannot promote physical Android, native permissions,
+live push/provider delivery, model quality or a complete release. Historical
+C110 evidence and the current candidate's other report/history/Compose regressions
+remain separate and must not be relabeled or silently omitted.
+
+
+## Running the isolated job
+
+After A5 assembles exact C112 source and product inputs on a clean commit:
+
+```sh
+python -m unittest discover -s ops/ci/history_tests -v
+python ops/ci/history_runner.py --check-inputs
+npm ci --prefix tests/e2e --ignore-scripts
+python -m pip install -r backend/requirements.lock
+node --test tests/e2e/c112_*.test.cjs
+python -m unittest discover -s tests/e2e -p 'c112_*test.py' -v
+node tests/e2e/node_modules/@playwright/test/cli.js install --with-deps chromium
+python ops/ci/history_runner.py --report history-ci-summary.json
+```
+
+The workflow additionally checks out the exact frontend into
+`.ci-c112-frontend-reference`, installs `libnss3-tools`, and runs the existing CI
+safety suite. Official Ubuntu 24.04, Node 24.21.0, Python 3.12.15 and locked
+Playwright 1.63.0 are the same reviewed runner versions as the existing core job.
+Docker and its Compose plugin must be available; no local browser/DB execution
+is claimed by source-only checks. A5 alone publishes and triggers this workflow.
+
+Preparation explicitly selects history and disables the optional demo clock.
+C's UI inputs are 2026-07-01T05:00:00 to 2026-10-01T05:00:00 at UTC+5, exactly
+mapping to the canonical midnight-UTC interval. The history dates are unchanged.
+The worker and budget-init service are inactive profiles and worker flags are off.
+Declared configuration and actual six-service inventory are checked independently.
+The observer adapter binds its script and both public actor arguments to the
+fresh manifest, with no credential arguments or host database port.
+
+The driver creates no actual PIN/database inputs until C112's own fresh proof
+passes. It runs the frozen gate even when the browser test fails or has no report.
+Only a successful gate permits `history-ci-evidence.json` and the C-owned
+`history-ci-gate.json` receipt; failed runs retain only bounded summary/stage
+counts. Raw Playwright/stdout/Compose outputs are not uploaded. All private
+fixture files, disposable trust and raw artifact trees are removed; stack cleanup
+failure fails the job. Existing profiles, source and other Compose projects are
+never adopted or removed.

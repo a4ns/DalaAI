@@ -1,0 +1,84 @@
+name: Historical analytics (Android emulation)
+'on':
+  push:
+    branches: [main, 'pod-a/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: history-mobile-e2e-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  history-analytics:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Set isolated browser installation path
+        run: printf 'PLAYWRIGHT_BROWSERS_PATH=%s/dalaai-history-playwright\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c
+          path: .ci-c112-frontend-reference
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.15'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Verify distinct history harness and source bindings
+        run: |
+          python -m unittest discover -s ops/ci/tests -v
+          python -m unittest discover -s ops/ci/history_tests -v
+          node --check ops/ci/history_transport_probe.cjs
+          python ops/ci/history_runner.py --check-inputs
+      - name: Install locked C dependencies and official Chromium
+        run: |
+          npm ci --prefix tests/e2e --ignore-scripts
+          python -m pip install -r backend/requirements.lock
+          python -m pip check
+          node --test tests/e2e/c112_*.test.cjs
+          python -m unittest discover -s tests/e2e -p 'c112_*test.py' -v
+          node tests/e2e/node_modules/@playwright/test/cli.js install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libnss3-tools
+          docker compose version
+      - name: Fresh C112 proof, real history stack and exact read-only journey
+        run: python ops/ci/history_runner.py --report history-ci-summary.json
+      - name: Publish bounded history scope summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          file = Path('history-ci-summary.json')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              if file.is_file():
+                  result = json.loads(file.read_text())
+                  out.write('History analytics: ' + result['status'] + '\n\n')
+                  out.write('Stage: ' + result['stage'] + '\n\n')
+                  out.write('Exact source SHA: ' + result.get('source_sha', 'not established') + '\n\n')
+                  out.write('Passed: ' + str(result.get('tests_passed', 0)) + '\n\n')
+              else:
+                  out.write('History analytics: BLOCKED before executable gate\n\n')
+              out.write('Read-only business history under Android emulation. C110 lifecycle and report exports remain separate gates.\n')
+              out.write('Physical Android, real push/provider delivery, worker execution and deployment are not claimed.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: history-android-ci-${{ github.sha }}
+          path: |
+            history-ci-summary.json
+            history-ci-gate.json
+            history-ci-evidence.json
+          if-no-files-found: ignore
+          retention-days: 7
