@@ -1,0 +1,19 @@
+test_active_or_external_html_is_rejected (test_offline_runner.OfflineRunnerTests.test_active_or_external_html_is_rejected) ... ok
+test_complete_exact_source_set (test_offline_runner.OfflineRunnerTests.test_complete_exact_source_set) ... ok
+test_duplicate_ownership_rejected (test_offline_runner.OfflineRunnerTests.test_duplicate_ownership_rejected) ... ok
+test_existing_output_preserved (test_offline_runner.OfflineRunnerTests.test_existing_output_preserved) ... ok
+test_invalid_commit_or_empty_package_rejected (test_offline_runner.OfflineRunnerTests.test_invalid_commit_or_empty_package_rejected) ... ok
+test_missing_package_blocks_before_execution (test_offline_runner.OfflineRunnerTests.test_missing_package_blocks_before_execution) ... ok
+test_missing_package_manifest_rejected (test_offline_runner.OfflineRunnerTests.test_missing_package_manifest_rejected) ... ok
+test_modified_source_is_not_executed (test_offline_runner.OfflineRunnerTests.test_modified_source_is_not_executed) ... ok
+test_output_symlink_rejected (test_offline_runner.OfflineRunnerTests.test_output_symlink_rejected) ... ok
+test_parent_traversal_and_absolute_path_rejected (test_offline_runner.OfflineRunnerTests.test_parent_traversal_and_absolute_path_rejected) ... ok
+test_private_source_paths_redacted_in_logs (test_offline_runner.OfflineRunnerTests.test_private_source_paths_redacted_in_logs) ... ok
+test_symlink_source_rejected (test_offline_runner.OfflineRunnerTests.test_symlink_source_rejected) ... ok
+test_unclosed_style_rejected_at_eof (test_offline_runner.OfflineRunnerTests.test_unclosed_style_rejected_at_eof) ... ok
+test_unit_count_rejects_skips_missing_and_failure (test_offline_runner.OfflineRunnerTests.test_unit_count_rejects_skips_missing_and_failure) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.006s
+
+OK

@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "task": "C-106",
+  "evidence_level": "OFFLINE_SYNTHETIC_ONLY",
+  "tested_checkout_sha": "825966a6d8a3183b5c98cc62c5e56883848c3ab1",
+  "runner_sha256": "de858e18d7662dd198c1db8d174845cc540c5bf24d5f54849d173da74bb63a60",
+  "sources_manifest_path": "docs/demo/offline_sources.json",
+  "sources_manifest_sha256": "d43bcf8d610cd923b59a813fa6625ddf3e3d59fe53b41506ef255a359ed578c1",
+  "published_input_shas": {
+    "C1": "8af3897f03aa2f41f0af07ec74ec2c807a4a535a",
+    "C2": "936e4327337b1aa3683021d3fd12dc9c987363ee",
+    "C3": "c5984436da2b94bf33e61b8a62a2fe54f3657a60",
+    "C4": "4a5184fd5caa3c1be35fea5ff55d534967c191bf"
+  },
+  "public_commit_availability": "All four exact commit IDs independently read through GitHub before source-only assembly; no unpublished Git objects required at runtime",
+  "started_at": "2026-10-07T20:54:03.766244+00:00",
+  "finished_at": "2026-10-07T20:54:20.529177+00:00",
+  "python": "3.12.14",
+  "result": "PASS",
+  "verified_source_files": 63,
+  "execution_environment": {
+    "source_only_no_dot_git": true,
+    "child_path_empty": true,
+    "child_credentials_not_inherited": true,
+    "original_source_bytes_unchanged": true
+  },
+  "command": "python3 docs/demo/offline_runner.py --source-root <source-only-public-packages> --output-dir <new-output-directory>",
+  "stages": [
+    {
+      "id": "c1-generate",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "c1-validate",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "c1-tests",
+      "status": "PASS",
+      "exit_code": 0,
+      "tests_passed": 25
+    },
+    {
+      "id": "c2-tests",
+      "status": "PASS",
+      "exit_code": 0,
+      "tests_passed": 22
+    },
+    {
+      "id": "c2-predict-dev",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "c2-predict-holdout",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "c2-score",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "c3-oracle",
+      "status": "PASS",
+      "exit_code": 0,
+      "tests_passed": 15
+    },
+    {
+      "id": "c3-check",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "c3-export",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "c3-tests",
+      "status": "PASS",
+      "exit_code": 0,
+      "tests_passed": 8
+    },
+    {
+      "id": "c4-tests",
+      "status": "PASS",
+      "exit_code": 0,
+      "tests_passed": 33
+    },
+    {
+      "id": "c4-reports",
+      "status": "PASS",
+      "exit_code": 0
+    }
+  ],
+  "package_unit_tests_passed": 103,
+  "runner_guard_tests_passed": 14,
+  "counts": {
+    "orders": 540,
+    "submissions": 568,
+    "synthetic_eval_episodes": 48,
+    "human_score_sum": 41859,
+    "human_scored": 486,
+    "human_unscored": 54,
+    "on_time": {
+      "denominator": 540,
+      "numerator": 492
+    },
+    "c3_c4_cross_check": "PASS",
+    "html_inert_markup_check": "PASS",
+    "visual_browser_check": "NOT_RUN"
+  },
+  "negative_cli_checks": {
+    "missing_package": "BLOCKED exit 2 before any stage",
+    "existing_output": "BLOCKED exit 2; prior report hash unchanged"
+  },
+  "product_gates": {
+    "live_api": "NOT_RUN",
+    "database": "NOT_RUN",
+    "browser_render": "NOT_RUN",
+    "real_model": "NOT_RUN",
+    "photo_bytes": "NOT_RUN",
+    "push_delivery": "NOT_RUN",
+    "physical_android": "NOT_RUN",
+    "deployment": "NOT_RUN"
+  },
+  "generated_output_hashes": {
+    "c1/history.json": {
+      "sha256": "7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1",
+      "bytes": 3005972
+    },
+    "c1/history.manifest.json": {
+      "sha256": "e4c4e4ae15c06715c830ea9bebd3f8578e9f5d7e79c3c37a1d3349e9b29a3d73",
+      "bytes": 699
+    },
+    "c2/dev.predictions.jsonl": {
+      "sha256": "f14d6e8de7b3aef2b9a807fdbc63832e37b1afdde5ce297d352addf2882c60d6",
+      "bytes": 18666
+    },
+    "c2/holdout.predictions.jsonl": {
+      "sha256": "b5d4d00456c36e840743a6e0045972963aad74ea9f78b5b93df138f4ade58468",
+      "bytes": 18866
+    },
+    "c2/report.json": {
+      "sha256": "75bc0cc82f10a78069fb5086ac48f610ca7275eb35c5eca88d03d7e4d2d6dbb5",
+      "bytes": 12734
+    },
+    "c3/metrics.json": {
+      "sha256": "9416d0cab97ec24f801586abe0b802aeb9983c8fba1f260c374fbcfd596f4c12",
+      "bytes": 34514
+    },
+    "c4/manifest.json": {
+      "sha256": "fb67c2596bc83d0462e7246777ccd5190e99eb90a34ea8b6f17f3c9f08a44ffa",
+      "bytes": 4523
+    },
+    "c4/order-521.html": {
+      "sha256": "bd5175fc8a59644645e45ae077e75dd143bd2ba5d55c5cb0d96654fa46bdc53d",
+      "bytes": 6927
+    },
+    "c4/period-september-27-30.html": {
+      "sha256": "78d7618dbb0a5d96427f44ec4e760d4415dbf2cfe435d1f1cfbecd237d402a0d",
+      "bytes": 25929
+    },
+    "c4/report-source-trace.json": {
+      "sha256": "c6e186b23f8239fa3a2fbf515b4d4a0229c9a5d672d6b53e32830ffe7d0160c0",
+      "bytes": 30477
+    }
+  },
+  "raw_stage_log_hashes": {
+    "logs/c1-generate.txt": {
+      "sha256": "fe37a9f677fcc6317576a22c15a2c37c86683be6d3cc0c0cb1eb1708f80f9322",
+      "bytes": 164
+    },
+    "logs/c1-tests.txt": {
+      "sha256": "76b381d2815f507575c567a2671c873e9c859cd48e539d047707f2e8d12d6c3d",
+      "bytes": 3111
+    },
+    "logs/c1-validate.txt": {
+      "sha256": "c4766306252f1a6c8c9c04d908c033ff8c29e72c737c976fe3006c3cd3140b0e",
+      "bytes": 218
+    },
+    "logs/c2-predict-dev.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "logs/c2-predict-holdout.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "logs/c2-score.txt": {
+      "sha256": "2efa896339f8166bf45561de585ab030b89c22f155b5d4cccc5212acd0727096",
+      "bytes": 72
+    },
+    "logs/c2-tests.txt": {
+      "sha256": "4811fc5f5f63767e1e40bddb00c187da53c99e0591ca038de7df0766d2583568",
+      "bytes": 3339
+    },
+    "logs/c3-check.txt": {
+      "sha256": "8ab654e0c5b2d94c841cc3978a398195258ca00d8837d1458d350220a587a987",
+      "bytes": 57
+    },
+    "logs/c3-export.txt": {
+      "sha256": "9416d0cab97ec24f801586abe0b802aeb9983c8fba1f260c374fbcfd596f4c12",
+      "bytes": 34514
+    },
+    "logs/c3-oracle.txt": {
+      "sha256": "43e524fe1178139197a6b32e3757b435d0dc68e4da87c8dcd140ea1722166cb8",
+      "bytes": 1820
+    },
+    "logs/c3-tests.txt": {
+      "sha256": "c1877a409cf5097a7e487d6385b506a31f89ae71240039b485f74f88c8a31f61",
+      "bytes": 1070
+    },
+    "logs/c4-reports.txt": {
+      "sha256": "a922be123c85138629c5863b9a3259a66c124d637dc66ef6ab76904125f33850",
+      "bytes": 2197
+    },
+    "logs/c4-tests.txt": {
+      "sha256": "e8e0951fc64da28595e6699526223061f3e419654b7091df24d6771332e235cf",
+      "bytes": 4665
+    }
+  },
+  "generated_outputs_committed": false,
+  "reproduction_note": "Full history/HTML/predictions/logs are regenerated by the command; this compact ledger records actual hashes without publishing megabytes",
+  "prior_checks": "Initial zero-test/CSS guard weaknesses were corrected before this tested checkout; one intermediate unit expectation asserted an overly specific error message and was corrected. No failing check is counted as PASS here.",
+  "limitations": [
+    "No live MVP or runtime integration",
+    "No DB import or historical live POST",
+    "Rules mandatory-gate conformance is not semantic/model/industrial accuracy",
+    "Null human scores remain unscored; all scores are synthetic",
+    "No browser rendering, phone, photo bytes, notification delivery, deployment or provider call"
+  ],
+  "committed_test_receipts": {
+    "docs/evidence/run/offline-package-tests.txt": "1adb354d038c2ab05808fd845087992b65367623a1297532e464b1d750ccb2ca",
+    "docs/evidence/run/offline-runner-tests.txt": "43c4a74a1186c30fe1e96ae240a6c0b5d9a2322a80407fd8539721d2625ed091"
+  }
+}

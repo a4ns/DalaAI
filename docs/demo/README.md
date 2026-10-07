@@ -11,6 +11,7 @@
 и задаче C-106, generation 1. Это инструкция и реестр доказательств, а не
 подтверждение готовности продукта, публикации, регистрации или сдачи.
 
+- [Одна команда: offline synthetic evidence, не live MVP](OFFLINE_RUN_RU.md)
 - [Питч 3:00 и вопросы 3:00](PITCH_RU.md)
 - [Отдельный сценарий на устройствах, 7:00](DEVICE_REHEARSAL_RU.md)
 - [Правила evidence](../evidence/run/README.md)

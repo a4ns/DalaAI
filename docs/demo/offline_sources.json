@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "description": "Exact published offline packages and required immutable source bytes; no Git needed at runtime",
+  "packages": {
+    "C1": {
+      "source_sha": "8af3897f03aa2f41f0af07ec74ec2c807a4a535a",
+      "source_url": "https://github.com/a4ns/DalaAI/commit/8af3897f03aa2f41f0af07ec74ec2c807a4a535a",
+      "files": {
+        "backend/app/orders/models.py": "ababb9fece73d33f549f1330d47f59d9453635399e57262ca082fdfc9bd8adbf",
+        "coord/proposals/a6-contract-v1/contracts/openapi.yaml": "b8b5b855eb8fffd4607473a4e878a3c64820030820cabb1b0c92d70928730f97",
+        "data/synthetic/.gitignore": "61110d4d0f97c7a07e66699031047037d49f5d27bb5ded3230306b75dfa9bceb",
+        "data/synthetic/README.md": "fd695ddcd49e1e52e0cbe5bd7a64e16b9519495a99e202776cbbbd4494859bc3",
+        "data/synthetic/evaluator/v1/pattern_truth.manifest.json": "408ede78a17274652d19ca66388c82a1df5749e78b2805d6f6b87b2c386706db",
+        "data/synthetic/evaluator/v1/pattern_truth.schema.json": "5734215e19bd9707053863a1bb2061c3db65acdffb8b42ce2cbd43e441553e11",
+        "data/synthetic/v1/example.json": "39cfd5ede11076e1a38a00c0b2b94b161ed09f2a429a2ae5b0a131437b85c33e",
+        "data/synthetic/v1/history.manifest.json": "e4c4e4ae15c06715c830ea9bebd3f8578e9f5d7e79c3c37a1d3349e9b29a3d73",
+        "data/synthetic/v1/history.schema.json": "c64780655ef13f94210835c75d411211954d2dc7b1f647f5fe410e74e1cef9b5",
+        "scripts/synthetic/generate.py": "02825ee7acf5d9ccccb5e3be016266c9a29f35d63d85bde35588acaed5bc5a99",
+        "scripts/synthetic/schema.py": "4defe6e345b48278b0bc035b63a98e85833abc82b10bc04013494a09d4835a12",
+        "scripts/synthetic/test_export.py": "6db97b7a32c179d2a7a68c33265b7dcb6069e226ba5ee8fb8f3e767466fb9de6",
+        "scripts/synthetic/validate.py": "1473752a9ee43bbedd4a0f482296c7d6671c8e33f4e5b7ae5432b8cc6d18df05"
+      }
+    },
+    "C2": {
+      "source_sha": "936e4327337b1aa3683021d3fd12dc9c987363ee",
+      "source_url": "https://github.com/a4ns/DalaAI/commit/936e4327337b1aa3683021d3fd12dc9c987363ee",
+      "files": {
+        "backend/app/__init__.py": "19fe7235f40325226bebc3f4c5a5f09799f78acaf94f9aabb4ea19e8cfbfe5d2",
+        "backend/app/ai/__init__.py": "3e708b38e7dae4c035ad1772fd57a49c96267329a185ca2380c3bac624e6c397",
+        "backend/app/ai/models.py": "6d02d0bc9df6e1f84bbd35ebd9f4cbf54c19b683613864e6c4d32338cbf12eb9",
+        "backend/app/ai/order_adapter.py": "e616381e6dc265bd0ff0d045150a5bdd2d035a4f4156cd086034f3444d474d2e",
+        "backend/app/ai/providers.py": "c5a5a27a59a2e1deda3ab8f7bf63da12c2292128f225dfa29c0f4d95699a63b5",
+        "backend/app/ai/rules.py": "a699099fdef48e1642c3f296af4c969874cb7f5d65f00ecd68cd258c504cec9e",
+        "eval/.gitignore": "04eacf24034e16056c930902b788e05a389cfb96309044db4bba9d0cbd4f3650",
+        "eval/METHODOLOGY.md": "241f5e8b88776dc8d19b0a8cadead81e4c427a1dc9fd089e98dc4667e8fdc14a",
+        "eval/README.md": "fb107e9bbd4c2e7623a63d0c40c3420193b5f97b1a5e768aed954ef5e3593716",
+        "eval/__init__.py": "b06e6dbb079920acf17e6e7f4926bd8af09345bce4f1da1df9135d56dbee0a13",
+        "eval/data/v1/inputs/dev.jsonl": "fe3167c510be67e8de9ab6bda0b3a2d210d1bbc53c584af850258b0a3993b5e9",
+        "eval/data/v1/inputs/holdout.jsonl": "272e66c55e230bdcf70ee05a4af715cdcc35a6989862322c1b7cd337cdf53d7f",
+        "eval/data/v1/labels/dev.jsonl": "7a1337b1562c5d8d4559d0a4b6b0367f1bfbbb7f914c10f2573b27372a88040e",
+        "eval/data/v1/labels/holdout.jsonl": "407715432ed0628122a9db28b1300e6a712605ba53eede16f3845d90cb708e9b",
+        "eval/data/v1/manifest.json": "d6e9a5f47c7d4c02536c67e9e45423905317e768ee6e87f8a577e3b54727e2ff",
+        "eval/dataset.py": "27492980693d19579a8b5dd0e792cd719bae79db57a485d53033e4de33c8fabd",
+        "eval/io.py": "144f8960b0b5cd3d446daa04e4cd88f98213154b72a84c3b3085938f5e8d934e",
+        "eval/metrics.py": "9c7b72da3cb5f20cf56a87ec91e15da93aeecb122ed4d88b836d60d0166a6e81",
+        "eval/predict.py": "b72f24d51aaf14c4020eada738287a2ebb33e842ae6ad38998a612a7277683fe",
+        "eval/run.py": "5ddcc46c695d5e718f046abe8e9fe115382f8a44eb730bb1d55b8f7aad46a832",
+        "eval/tests/test_isolation.py": "90413233af13ec621e2c520a8ec8bd8024f380f636d65f6eda11ed9ed18653ee",
+        "eval/tests/test_metrics.py": "2f104a6ff57c0b24e0b8a5caf9f1036fb7eadc416f97ae62c8588540e6706584",
+        "eval/tests/test_provider_seam.py": "9e16e59425bdf32ba45950854a08fe6ee5751b5e62f5ed8589e8c3f49f53910a"
+      }
+    },
+    "C3": {
+      "source_sha": "c5984436da2b94bf33e61b8a62a2fe54f3657a60",
+      "source_url": "https://github.com/a4ns/DalaAI/commit/c5984436da2b94bf33e61b8a62a2fe54f3657a60",
+      "files": {
+        "docs/analytics/README.md": "f42a512933d0d970c9b007634b1cf1d729a075ab3a59897aa8275fe68866ff9f",
+        "docs/analytics/acceptance.md": "cfc25bedc6317710e41862af341dde0696de2c85daa8105144d3b320c99a030e",
+        "docs/analytics/c1-metrics-checkpoint.json": "6319b121c8765f1f1b5ce90a4dc8ba83b19f6bb7b47066796111a4ff72df81cf",
+        "docs/analytics/c1-metrics-manifest.json": "9416d0cab97ec24f801586abe0b802aeb9983c8fba1f260c374fbcfd596f4c12",
+        "docs/analytics/c1-metrics.md": "cc6a9f4160fd4635dafc6dfae355072fd374cc64344bc356597f0be34abf8db5",
+        "docs/analytics/c1_metrics.py": "834ec949f210f4dec3d5b6227cb9c2e764a2d9b4a7b38135ee12e1cbfb155df9",
+        "docs/analytics/check_examples.py": "b02f37300630bcd543475c0e83282d478a69857e5ca2c020e1690de055f3c8f9",
+        "docs/analytics/metric-definitions.md": "25315aefa2e91dba35d4aae93099543b6f528448b25c0868d531b378b9294a33",
+        "docs/analytics/test_c1_metrics.py": "aa61aba2929d02405625b28a86881c854da449c94564471122ef16c537490cb1",
+        "docs/analytics/worked-examples.json": "4fc2c2a0b344a418bd465987a6e0d92be9ffb1ab8a4349bbc992adad39dd55e6"
+      }
+    },
+    "C4": {
+      "source_sha": "4a5184fd5caa3c1be35fea5ff55d534967c191bf",
+      "source_url": "https://github.com/a4ns/DalaAI/commit/4a5184fd5caa3c1be35fea5ff55d534967c191bf",
+      "files": {
+        "docs/reports/c1-demo/checkpoint.json": "1f23700bff582f66b1e562dd8471d2e2b72f0556fae8124abef813113b742f5b",
+        "docs/reports/c1-demo/manifest.json": "582b852884996bbaae69ff2c1dd97c4cba0e2dd53f785cc80956db8ce12a4012",
+        "docs/reports/c1-demo/order-521.html": "3ccde84d4cea1260a1dbd668a3e4e3c311e34e193c7d3dfc95be936133367471",
+        "docs/reports/c1-demo/period-september-27-30.html": "b768b1a91061d46c064ff7069af8425b7655012368769a4bb02fdc6566f773ce",
+        "docs/reports/c1-demo/portability-checkpoint.json": "8bc1ac081e66ab47d9b01017e7e76eb701c3724dc249193cf2ca7540d1fcae0f",
+        "docs/reports/c1-demo/report-source-trace.json": "074b2e955f1ae3057a5300298d43824e688809da6225e4158c1f0503e834ada6",
+        "docs/reports/c4-c1-demo.md": "64c5806ad477cabad2d2495972fe44142a7dcc94bc91a4213f35bfb925280d41",
+        "docs/reports/c4-evidence.md": "1b875b37ee44689f2df897a3e7a0a57728a54f7346a81199609064af1d4ff08e",
+        "docs/reports/c4-report-cases.json": "3f4aca32a90311cc6d7bbd9d3112d3787f0d447e7b869444413a7a6942d48b78",
+        "docs/reports/c4-report-definitions.md": "a9fddd883fd8ba974e67e9a98056b01d475ae8f0e66330bc45633a271f9fe924",
+        "docs/reports/c4-report-expected.json": "704c1f7470c9b2c6024f86dcb427f3b8769f69cbc86c0bad4eef264c874d678b",
+        "docs/reports/c4-review-c3.md": "28a40b905bf4296aacf9aa08a47d379333373f7f65994687aa0b82d419b09883",
+        "docs/reports/c4_c1_history_report.py": "42d284d0771940203b5b347f7d8c6dbf1d580f6d9ba33710c2dbbf9fe5a26a13",
+        "docs/reports/c4_report_examples.py": "8030ae8f5db68eb5fedc068cc898367dfe2039b99a335848ce9c28da072a6868",
+        "docs/reports/test_c4_c1_artifacts.py": "a5cbd07738d7175850cf48b3155249ccdd49018ea57c28875e3acac5e7152dd1",
+        "docs/reports/test_c4_c1_history_report.py": "06cce1bcdf9dc928848a0a4b8447bd916f1b43c04e2b9aa97d135732992afccb",
+        "docs/reports/test_c4_report_examples.py": "6bc6a1563a2ce10a70c38f44acee7be90125915d1a6795977a4805a1dc55191e"
+      }
+    }
+  }
+}

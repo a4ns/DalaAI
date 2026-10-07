@@ -1,0 +1,137 @@
+=== c1-tests ===
+test_absent_assessments_null_scores_retained (test_export.ExportTests.test_absent_assessments_null_scores_retained) ... ok
+test_attempts_completeness_and_review_consistency (test_export.ExportTests.test_attempts_completeness_and_review_consistency) ... ok
+test_cli_exports_only_requested_files_and_no_runtime_effects (test_export.ExportTests.test_cli_exports_only_requested_files_and_no_runtime_effects) ... ok
+test_count_boundaries (test_export.ExportTests.test_count_boundaries) ... ok
+test_default_counts_and_months (test_export.ExportTests.test_default_counts_and_months) ... ok
+test_detector_allowlist_drops_nested_sentinels (test_export.ExportTests.test_detector_allowlist_drops_nested_sentinels) ... ok
+test_duplicates_and_dangling_references_rejected (test_export.ExportTests.test_duplicates_and_dangling_references_rejected) ... ok
+test_evaluator_truth_hash_and_disjointness (test_export.ExportTests.test_evaluator_truth_hash_and_disjointness) ... ok
+test_event_sequence_version_atomic_submit_and_actors (test_export.ExportTests.test_event_sequence_version_atomic_submit_and_actors) ... ok
+test_four_planted_patterns_are_observable_without_truth_payload (test_export.ExportTests.test_four_planted_patterns_are_observable_without_truth_payload) ... ok
+test_generated_bytes_and_retained_hashes (test_export.ExportTests.test_generated_bytes_and_retained_hashes) ... ok
+test_manifest_tamper_and_noncanonical_file (test_export.ExportTests.test_manifest_tamper_and_noncanonical_file) ... ok
+test_material_validation (test_export.ExportTests.test_material_validation) ... ok
+test_no_truth_or_credentials_in_history (test_export.ExportTests.test_no_truth_or_credentials_in_history) ... ok
+test_order_submission_fields_match_domain_types (test_export.ExportTests.test_order_submission_fields_match_domain_types) ... ok
+test_photo_placeholders_are_honest_and_scoped (test_export.ExportTests.test_photo_placeholders_are_honest_and_scoped) ... ok
+test_pinned_core_contract_hash (test_export.ExportTests.test_pinned_core_contract_hash) ... ok
+test_point_in_time_payload_excludes_future_outcomes (test_export.ExportTests.test_point_in_time_payload_excludes_future_outcomes) ... ok
+test_publication_package_is_small_and_excludes_full_generated_data (test_export.ExportTests.test_publication_package_is_small_and_excludes_full_generated_data) ... ok
+test_reproducible_bytes_and_changed_seed (test_export.ExportTests.test_reproducible_bytes_and_changed_seed) ... ok
+test_schema_rejects_unknown_fields_and_non_synthetic (test_export.ExportTests.test_schema_rejects_unknown_fields_and_non_synthetic) ... ok
+test_schema_source_and_file_agree (test_export.ExportTests.test_schema_source_and_file_agree) ... ok
+test_scope_and_roles_rejected (test_export.ExportTests.test_scope_and_roles_rejected) ... ok
+test_small_example_is_exact_linked_subset (test_export.ExportTests.test_small_example_is_exact_linked_subset) ... ok
+test_time_and_deadline_consistency (test_export.ExportTests.test_time_and_deadline_consistency) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 12.324s
+
+OK
+
+=== c2-tests ===
+test_detector_gets_only_typed_facts (test_isolation.DatasetIsolationTests.test_detector_gets_only_typed_facts) ... ok
+test_duplicate_json_keys_rejected (test_isolation.DatasetIsolationTests.test_duplicate_json_keys_rejected) ... ok
+test_fixed_manifest_hashes_and_partition (test_isolation.DatasetIsolationTests.test_fixed_manifest_hashes_and_partition) ... ok
+test_input_only_subprocess_needs_no_label_argument (test_isolation.DatasetIsolationTests.test_input_only_subprocess_needs_no_label_argument) ... ok
+test_inputs_contain_only_facts_with_no_labels_or_scenario_hints (test_isolation.DatasetIsolationTests.test_inputs_contain_only_facts_with_no_labels_or_scenario_hints) ... ok
+test_labels_rejected_at_every_allowed_object_boundary (test_isolation.DatasetIsolationTests.test_labels_rejected_at_every_allowed_object_boundary) ... ok
+test_prediction_succeeds_while_all_label_file_reads_are_denied (test_isolation.DatasetIsolationTests.test_prediction_succeeds_while_all_label_file_reads_are_denied) ... ok
+test_absent_class_not_given_fictitious_f1 (test_metrics.MetricOracleTests.test_absent_class_not_given_fictitious_f1) ... ok
+test_all_abstentions_have_zero_recall_not_perfect_accuracy (test_metrics.MetricOracleTests.test_all_abstentions_have_zero_recall_not_perfect_accuracy) ... ok
+test_duplicate_foreign_or_contradictory_rows_rejected (test_metrics.MetricOracleTests.test_duplicate_foreign_or_contradictory_rows_rejected) ... ok
+test_eight_episode_hand_calculated_oracle (test_metrics.MetricOracleTests.test_eight_episode_hand_calculated_oracle) ... ok
+test_empty_denominators_are_null_and_cannot_pass (test_metrics.MetricOracleTests.test_empty_denominators_are_null_and_cannot_pass) ... ok
+test_invalid_telemetry_cannot_hide_unsafe_permit (test_metrics.MetricOracleTests.test_invalid_telemetry_cannot_hide_unsafe_permit) ... ok
+test_malformed_prediction_never_becomes_false_success (test_metrics.MetricOracleTests.test_malformed_prediction_never_becomes_false_success) ... ok
+test_missing_prediction_is_in_denominator (test_metrics.MetricOracleTests.test_missing_prediction_is_in_denominator) ... ok
+test_quantiles_and_input_validation (test_metrics.MetricOracleTests.test_quantiles_and_input_validation) ... ok
+test_blocking_gate_suppresses_even_a_matching_stub (test_provider_seam.ProviderSeamTests.test_blocking_gate_suppresses_even_a_matching_stub) ... ok
+test_input_payload_has_no_label_score_identity_or_images (test_provider_seam.ProviderSeamTests.test_input_payload_has_no_label_score_identity_or_images) ... ok
+test_real_adapter_objects_are_not_executable_in_synthetic_harness (test_provider_seam.ProviderSeamTests.test_real_adapter_objects_are_not_executable_in_synthetic_harness) ... ok
+test_successful_synthetic_outputs_remain_rules_fallback (test_provider_seam.ProviderSeamTests.test_successful_synthetic_outputs_remain_rules_fallback) ... ok
+test_timeout_unavailable_invalid_and_injection_are_explicit_fallbacks (test_provider_seam.ProviderSeamTests.test_timeout_unavailable_invalid_and_injection_are_explicit_fallbacks) ... ok
+test_untrusted_provider_schema_cannot_claim_photos_or_execute_commands (test_provider_seam.ProviderSeamTests.test_untrusted_provider_schema_cannot_claim_photos_or_execute_commands) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.089s
+
+OK
+
+=== c3-oracle ===
+test_all_unscored_is_missing_and_ai_does_not_fill (__main__.Examples.test_all_unscored_is_missing_and_ai_does_not_fill) ... ok
+test_close_at_end_is_excluded_from_flow (__main__.Examples.test_close_at_end_is_excluded_from_flow) ... ok
+test_downtime_union_clipping_and_open_interval (__main__.Examples.test_downtime_union_clipping_and_open_interval) ... ok
+test_duplicate_fact_and_cross_scope_fail (__main__.Examples.test_duplicate_fact_and_cross_scope_fail) ... ok
+test_empty_assessment_is_not_job_status_or_human_score (__main__.Examples.test_empty_assessment_is_not_job_status_or_human_score) ... ok
+test_empty_cohort_is_not_zero_rate (__main__.Examples.test_empty_cohort_is_not_zero_rate) ... ok
+test_event_retry_dedup_is_not_version_dedup (__main__.Examples.test_event_retry_dedup_is_not_version_dedup) ... ok
+test_incomplete_capture_and_wrong_asof_are_rejected (__main__.Examples.test_incomplete_capture_and_wrong_asof_are_rejected) ... ok
+test_independent_expected_values (__main__.Examples.test_independent_expected_values) ... ok
+test_known_zero_rate_differs_from_missing (__main__.Examples.test_known_zero_rate_differs_from_missing) ... ok
+test_missing_timeliness_is_not_on_time (__main__.Examples.test_missing_timeliness_is_not_on_time) ... ok
+test_repeat_fault_mature_cohort_excludes_early_positive (__main__.Examples.test_repeat_fault_mature_cohort_excludes_early_positive) ... ok
+test_rework_same_domain_instant_uses_attempt_identity (__main__.Examples.test_rework_same_domain_instant_uses_attempt_identity) ... ok
+test_score_zero_is_observed (__main__.Examples.test_score_zero_is_observed) ... ok
+test_utc_display_and_half_open_boundaries (__main__.Examples.test_utc_display_and_half_open_boundaries) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.003s
+
+OK
+
+=== c3-tests ===
+test_committed_manifest_reproduces (test_c1_metrics.C1Metrics.test_committed_manifest_reproduces) ... ok
+test_frozen_quarter_and_month_totals (test_c1_metrics.C1Metrics.test_frozen_quarter_and_month_totals) ... ok
+test_independent_direct_facts_and_trace_membership (test_c1_metrics.C1Metrics.test_independent_direct_facts_and_trace_membership) ... ok
+test_input_order_has_no_effect (test_c1_metrics.C1Metrics.test_input_order_has_no_effect) ... ok
+test_modified_generated_history_is_rejected (test_c1_metrics.C1Metrics.test_modified_generated_history_is_rejected) ... ok
+test_nulls_and_no_assessment_not_false_zero (test_c1_metrics.C1Metrics.test_nulls_and_no_assessment_not_false_zero) ... ok
+test_period_partition_and_actual_asof_only (test_c1_metrics.C1Metrics.test_period_partition_and_actual_asof_only) ... ok
+test_source_only_directory_no_git_default_and_explicit_input (test_c1_metrics.C1Metrics.test_source_only_directory_no_git_default_and_explicit_input) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.742s
+
+OK
+
+=== c4-tests ===
+test_artifact_bytes_and_source_provenance (test_c4_c1_artifacts.C1Artifacts.test_artifact_bytes_and_source_provenance) ... ok
+test_html_discloses_level_and_has_no_active_or_external_content (test_c4_c1_artifacts.C1Artifacts.test_html_discloses_level_and_has_no_active_or_external_content) ... ok
+test_selected_source_rows_are_original_and_photos_only_placeholders (test_c4_c1_artifacts.C1Artifacts.test_selected_source_rows_are_original_and_photos_only_placeholders) ... ok
+test_explicit_input_path_without_git_or_adjacent_manifest (test_c4_c1_history_report.C1HistoryReports.test_explicit_input_path_without_git_or_adjacent_manifest) ... ok
+test_explicit_mapping_preserves_source_facts (test_c4_c1_history_report.C1HistoryReports.test_explicit_mapping_preserves_source_facts) ... ok
+test_full_quarter_independent_numeric_checkpoint (test_c4_c1_history_report.C1HistoryReports.test_full_quarter_independent_numeric_checkpoint) ... ok
+test_incomplete_capture_and_orphan_review_rejected (test_c4_c1_history_report.C1HistoryReports.test_incomplete_capture_and_orphan_review_rejected) ... ok
+test_no_mutation_of_source (test_c4_c1_history_report.C1HistoryReports.test_no_mutation_of_source) ... ok
+test_period_outside_history_rejected (test_c4_c1_history_report.C1HistoryReports.test_period_outside_history_rejected) ... ok
+test_pinned_history_and_no_truth_or_runtime_input (test_c4_c1_history_report.C1HistoryReports.test_pinned_history_and_no_truth_or_runtime_input) ... ok
+test_sample_independent_arithmetic_and_full_source_ids (test_c4_c1_history_report.C1HistoryReports.test_sample_independent_arithmetic_and_full_source_ids) ... ok
+test_selected_order_null_score_rework_and_absent_ai (test_c4_c1_history_report.C1HistoryReports.test_selected_order_null_score_rework_and_absent_ai) ... ok
+test_source_only_cli_default_path_needs_no_git (test_c4_c1_history_report.C1HistoryReports.test_source_only_cli_default_path_needs_no_git) ... ok
+test_tampered_bytes_fail_before_projection (test_c4_c1_history_report.C1HistoryReports.test_tampered_bytes_fail_before_projection) ... ok
+test_absent_assessment_not_pending_and_empty_materials_not_zero (test_c4_report_examples.ReportExamples.test_absent_assessment_not_pending_and_empty_materials_not_zero) ... ok
+test_all_case_objects_validate (test_c4_report_examples.ReportExamples.test_all_case_objects_validate) ... ok
+test_assessment_wrong_revision_rejected (test_c4_report_examples.ReportExamples.test_assessment_wrong_revision_rejected) ... ok
+test_bad_window_timestamp_mixed_snapshot_and_scope (test_c4_report_examples.ReportExamples.test_bad_window_timestamp_mixed_snapshot_and_scope) ... ok
+test_close_end_boundary_excluded (test_c4_report_examples.ReportExamples.test_close_end_boundary_excluded) ... ok
+test_cross_order_current_submission_rejected (test_c4_report_examples.ReportExamples.test_cross_order_current_submission_rejected) ... ok
+test_distinct_review_ids_on_same_submission_rejected (test_c4_report_examples.ReportExamples.test_distinct_review_ids_on_same_submission_rejected) ... ok
+test_duplicate_attempt_rejected (test_c4_report_examples.ReportExamples.test_duplicate_attempt_rejected) ... ok
+test_duplicate_order_rejected (test_c4_report_examples.ReportExamples.test_duplicate_order_rejected) ... ok
+test_empty_cohort_known_zero_counts_unknown_mean (test_c4_report_examples.ReportExamples.test_empty_cohort_known_zero_counts_unknown_mean) ... ok
+test_html_escapes_and_preserves_long_cyrillic_text (test_c4_report_examples.ReportExamples.test_html_escapes_and_preserves_long_cyrillic_text) ... ok
+test_incomplete_close_rejected (test_c4_report_examples.ReportExamples.test_incomplete_close_rejected) ... ok
+test_independent_expected_values_and_source_ids (test_c4_report_examples.ReportExamples.test_independent_expected_values_and_source_ids) ... ok
+test_invalid_quantities (test_c4_report_examples.ReportExamples.test_invalid_quantities) ... ok
+test_missing_materials_is_not_empty_list (test_c4_report_examples.ReportExamples.test_missing_materials_is_not_empty_list) ... ok
+test_missing_nullable_score_is_not_null (test_c4_report_examples.ReportExamples.test_missing_nullable_score_is_not_null) ... ok
+test_noninteger_scores_rejected (test_c4_report_examples.ReportExamples.test_noninteger_scores_rejected) ... ok
+test_partial_and_drained_moving_pages_do_not_get_totals (test_c4_report_examples.ReportExamples.test_partial_and_drained_moving_pages_do_not_get_totals) ... ok
+test_unknown_material_and_missing_unit (test_c4_report_examples.ReportExamples.test_unknown_material_and_missing_unit) ... ok
+
+----------------------------------------------------------------------
+Ran 33 tests in 1.048s
+
+OK
