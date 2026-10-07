@@ -164,7 +164,10 @@ export function PanelScreen({ orders, employees, selectedOrderId, history, onSel
                 </dl>
                 <button type="button" className="panel-button panel-button--secondary" aria-controls={`${id}-history`}
                   aria-pressed={selectedOrderId === order.id} aria-label={`Показать историю наряда № ${order.number}`}
-                  onClick={() => onSelectOrder(order.id)}>История наряда</button>
+                  onClick={() => {
+                    onSelectOrder(order.id);
+                    if (selectedOrderId === order.id) historyRegion.current?.focus();
+                  }}>История наряда</button>
               </article>
             </li>)}
           </ul>}
