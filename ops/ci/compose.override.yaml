@@ -1,0 +1,28 @@
+# CI-only overlay. Base runtime/Dockerfiles/seed remain owned by A5.
+# Use only through ops/ci/run_mobile.py, which supplies fresh private inputs.
+services:
+  api:
+    environment:
+      DALA_DOMAIN: localhost
+      DALA_ALLOWED_ORIGIN: https://localhost:18443
+      OPENAI_API_KEY: ''
+  web:
+    environment:
+      DALA_DOMAIN: localhost
+    volumes:
+      - ${DALA_CI_SOURCE_DIR:?Use run_mobile.py}/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${DALA_CI_PRIVATE_DIR:?Use run_mobile.py}/tls/server.crt:/run/ci-tls/server.crt:ro
+      - ${DALA_CI_PRIVATE_DIR:?Use run_mobile.py}/tls/server.key:/run/ci-tls/server.key:ro
+secrets:
+  postgres_owner_password:
+    file: ${DALA_CI_PRIVATE_DIR}/postgres_owner_password
+  postgres_runtime_password:
+    file: ${DALA_CI_PRIVATE_DIR}/postgres_runtime_password
+  owner_dsn:
+    file: ${DALA_CI_PRIVATE_DIR}/owner_dsn
+  runtime_dsn:
+    file: ${DALA_CI_PRIVATE_DIR}/runtime_dsn
+  master_pin:
+    file: ${DALA_CI_PRIVATE_DIR}/master_pin
+  executor_pin:
+    file: ${DALA_CI_PRIVATE_DIR}/executor_pin

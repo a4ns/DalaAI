@@ -1,0 +1,15 @@
+FROM python:3.12.15-slim-bookworm
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+WORKDIR /service
+COPY backend/requirements.lock ./requirements.lock
+RUN python -m pip install --no-cache-dir -r requirements.lock \
+    && python -m pip check \
+    && groupadd --gid 10001 app \
+    && useradd --uid 10001 --gid app --no-create-home app
+COPY --chown=app:app backend/app ./app
+COPY --chown=app:app backend/db ./db
+COPY --chown=app:app ops/provision ./ops/provision
+COPY --chown=app:app ops/demo/entrypoint.py ops/demo/setup.py ./ops/demo/
+USER 10001:10001
+EXPOSE 8000
+CMD ["python", "ops/demo/entrypoint.py"]

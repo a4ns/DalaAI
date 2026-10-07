@@ -1,0 +1,34 @@
+{
+    admin off
+    auto_https disable_redirects
+}
+
+http://{$DALA_DOMAIN}:80 {
+    redir {$DALA_ALLOWED_ORIGIN}{uri} permanent
+}
+
+https://{$DALA_DOMAIN}:443 {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        X-Frame-Options DENY
+        Permissions-Policy "camera=(self), microphone=(), geolocation=()"
+        -Server
+    }
+    @backend path /api/* /healthz /readyz
+    handle @backend {
+        reverse_proxy api:8000 {
+            transport http {
+                dial_timeout 3s
+                response_header_timeout 45s
+            }
+        }
+    }
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        header Cache-Control "no-cache"
+        file_server
+    }
+}

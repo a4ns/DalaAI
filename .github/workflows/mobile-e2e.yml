@@ -1,0 +1,132 @@
+name: Mobile composed app (Android emulation)
+'on':
+  push:
+    branches: [main, 'pod-a/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: mobile-e2e-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  mobile-core:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/dalaai-playwright-browsers
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, same accepted pin as backend CI
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.15'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Verify harness safety invariants and accepted source inputs
+        run: |
+          python -m unittest discover -s ops/ci/tests -v
+          node --test ops/ci/tests/test_reporter.cjs
+          node --check ops/ci/playwright.config.cjs
+          node --check ops/ci/safe-reporter.cjs
+          python ops/ci/run_mobile.py --check-inputs
+      - name: Install C-110 exact dependencies and official Chromium
+        run: |
+          npm ci --prefix tests/e2e --ignore-scripts
+          node tests/e2e/node_modules/@playwright/test/cli.js install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libnss3-tools
+          docker compose version
+      - name: Real PostgreSQL, mounted app, composed frontend and C-110 scenarios
+        run: python ops/ci/run_mobile.py --report mobile-ci-summary.json
+      - name: Publish count-only evidence
+        if: always()
+        run: |
+          if [ -f mobile-ci-summary.json ]; then
+            python - <<'PY'
+          import json, os
+          from pathlib import Path
+          result = json.loads(Path('mobile-ci-summary.json').read_text())
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write('Mobile core: ' + result['status'] + '\n\n')
+              out.write('Stage: ' + result['stage'] + '\n\n')
+              out.write('Exact source SHA: ' + result.get('source_sha', 'not established') + '\n\n')
+              out.write('Passed: ' + str(result.get('tests_passed', 0)) + '\n\n')
+              out.write('Physical Android and real provider/browser WebPush delivery are NOT RUN.\n')
+              out.write('This job does not deploy and cannot mark the complete demo/release green.\n')
+          PY
+          else
+            printf '%s\n' 'Mobile core: BLOCKED before executable gate; no browser pass claimed' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: mobile-ci-summary-${{ github.sha }}
+          path: mobile-ci-summary.json
+          if-no-files-found: ignore
+          retention-days: 7
+  b-synthetic-rendering:
+    name: B synthetic rendering only (Pixel9 Android emulation)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/dalaai-b-playwright-browsers
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # exact accepted B source, never a moving branch
+        with:
+          ref: 2a12798c19a26b33aabd9ffd572b99586f80e2f1
+          path: .ci-b-source
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # exact accepted harness, scoped overlay only
+        with:
+          ref: 9f37c2951cbffb88db8a254beff033f7e31ed6d9
+          path: .ci-b-harness
+          persist-credentials: false
+      - name: Assemble only five accepted B harness files
+        run: python3 ops/ci/run_synthetic.py --source .ci-b-source --harness-source .ci-b-harness --prepare-only
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Install exact B frontend and official matching Chromium
+        working-directory: .ci-b-source/frontend
+        run: |
+          npm ci
+          node node_modules/typescript/bin/tsc -p tests/tsconfig.json
+          node node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Execute all 13 B browser cases with zero skips
+        run: python3 ops/ci/run_synthetic.py --source .ci-b-source --harness-source .ci-b-harness --report b-synthetic-summary.json
+      - name: Publish B-only evidence summary
+        if: always()
+        run: |
+          if [ -f b-synthetic-summary.json ]; then
+            python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          result = json.loads(Path('b-synthetic-summary.json').read_text())
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write('B synthetic rendering: ' + result['status'] + '\n\n')
+              out.write('B product SHA: ' + result['source_sha'] + '\n\n')
+              out.write('B harness SHA: ' + result['harness_sha'] + '\n\n')
+              out.write('Passed: ' + str(result.get('tests_passed', 0)) + ' / 13\n\n')
+              out.write('This is Pixel9 Android14 Chromium emulation with synthetic API/callbacks.\n')
+              out.write('Actual API/DB, physical Android and push are NOT RUN by this job.\n')
+          PY
+          else
+            printf '%s\n' 'B synthetic rendering: BLOCKED before browser execution; no pass claimed' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: b-synthetic-rendering-${{ github.sha }}
+          path: b-synthetic-summary.json
+          if-no-files-found: ignore
+          retention-days: 7

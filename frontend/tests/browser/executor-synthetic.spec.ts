@@ -50,13 +50,13 @@ test('synthetic: repeat click cannot submit twice and old identity completion is
   await expect(page.getByText('Действие подтверждено сервером.', { exact: false })).toHaveCount(0);
 });
 
-test('synthetic: stale snapshot retains context and disables mutation at 390px', async ({ page }, info) => {
+test('synthetic: stale snapshot retains context and disables mutation at the configured viewport', async ({ page }, info) => {
   await page.getByTestId('stale').click();
   await expect(page.getByText('Синтетическое оборудование').first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Отправить неполный результат на проверку' })).toBeDisabled();
   await expect(page.getByRole('alert')).toContainText('Синтетический отказ загрузки');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-  await page.screenshot({ path: info.outputPath('synthetic-executor-stale-390.png'), fullPage: true });
+  await page.screenshot({ path: info.outputPath(`synthetic-executor-stale-${info.project.name}.png`), fullPage: true });
 });
 
 test('synthetic: photo activity blocks submission without inventing a command, and settling it preserves unknown command lock', async ({ page }) => {

@@ -32,3 +32,6 @@ coverage/
 .coverage
 htmlcov/
 postgres_data/
+
+# Human-run isolated demo credentials and artifacts. Never commit their values.
+ops/demo/.local/

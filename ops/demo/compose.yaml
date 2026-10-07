@@ -1,0 +1,113 @@
+name: dalaai-demo
+services:
+  db:
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_DB: naryadai
+      POSTGRES_USER: naryadai_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_owner_password
+    secrets: [postgres_owner_password, postgres_runtime_password]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./pg-init.sh:/docker-entrypoint-initdb.d/01-runtime-role.sh:ro
+    networks: [backend]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U naryadai_owner -d naryadai"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    mem_limit: 512m
+  photo-directory:
+    build:
+      context: ../..
+      dockerfile: ops/demo/Dockerfile.api
+    user: '0:0'
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER]
+    security_opt: [no-new-privileges:true]
+    command: [python, -c, "import os; os.chmod('/photos',0o700); os.chown('/photos',10001,10001)"]
+    volumes: [photos:/photos]
+    network_mode: none
+    read_only: true
+  prepare:
+    build:
+      context: ../..
+      dockerfile: ops/demo/Dockerfile.api
+    command: [python, ops/demo/setup.py]
+    environment:
+      DALA_API_MODE: demo
+      DALA_DEMO_SEED_ALLOWED: '1'
+      DALA_DEMO_PHOTO_CAPABILITY_ALLOWED: '1'
+      DALA_DATABASE_SCHEMA: dalaai_demo
+    secrets: [owner_dsn, runtime_dsn, master_pin, executor_pin]
+    networks: [backend]
+    depends_on:
+      db: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  api:
+    build:
+      context: ../..
+      dockerfile: ops/demo/Dockerfile.api
+    environment:
+      DALA_API_MODE: demo
+      DALA_RUNTIME_DSN_FILE: /run/secrets/runtime_dsn
+      DALA_DATABASE_SCHEMA: dalaai_demo
+      DALA_ALLOWED_ORIGIN: ${DALA_ALLOWED_ORIGIN:?Prepare the exact HTTPS origin}
+      DALA_PHOTO_STORAGE_ROOT: /var/lib/naryadai/photos
+      DALA_PHOTO_MAX_TOTAL_BYTES: '1073741824'
+      DALA_DOMAIN: ${DALA_DOMAIN}
+    secrets: [runtime_dsn]
+    volumes: [photos:/var/lib/naryadai/photos]
+    networks: [backend]
+    depends_on:
+      prepare: {condition: service_completed_successfully}
+      photo-directory: {condition: service_completed_successfully}
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1536m
+    healthcheck:
+      test: [CMD, python, -c, "import os,urllib.request; r=urllib.request.Request('http://127.0.0.1:8000/readyz',headers={'Host':os.environ['DALA_DOMAIN']}); urllib.request.urlopen(r,timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+  web:
+    build:
+      context: ../..
+      dockerfile: ops/demo/Dockerfile.web
+    environment:
+      DALA_DOMAIN: ${DALA_DOMAIN}
+      DALA_ALLOWED_ORIGIN: ${DALA_ALLOWED_ORIGIN}
+    ports:
+      - '${DALA_BIND_ADDRESS:-127.0.0.1}:${DALA_HTTP_PORT:-8080}:80'
+      - '${DALA_BIND_ADDRESS:-127.0.0.1}:${DALA_HTTPS_PORT:-8443}:443'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [frontend, backend]
+    depends_on:
+      api: {condition: service_healthy}
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+networks:
+  backend: {internal: true}
+  frontend: {}
+volumes:
+  postgres_data: {}
+  photos: {}
+  caddy_data: {}
+  caddy_config: {}
+secrets:
+  postgres_owner_password: {file: ./.local/postgres_owner_password}
+  postgres_runtime_password: {file: ./.local/postgres_runtime_password}
+  owner_dsn: {file: ./.local/owner_dsn}
+  runtime_dsn: {file: ./.local/runtime_dsn}
+  master_pin: {file: ./.local/master_pin}
+  executor_pin: {file: ./.local/executor_pin}

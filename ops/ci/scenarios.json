@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "accepted": false,
+  "owner": "C-110",
+  "package_dir": "tests/e2e",
+  "config_path": "tests/e2e/playwright.config.ts",
+  "project": "android-chromium",
+  "required_test_ids": [],
+  "expected_test_count": 0,
+  "required_source_files": [],
+  "reason": "Awaiting the C-110 owner's actual scenario artifact and exact interface; fail closed until integrated"
+}

@@ -116,5 +116,7 @@ jobs:
         run: python ops/run_photos_role.py
       - name: Actual mounted physical-photo closure integrity
         run: python ops/run_photo_closure_tests.py
+      - name: Explicit demo provisioning and photo capability PostgreSQL gate
+        run: python ops/run_provisioning_tests.py
       - name: Aggregate with real PostgreSQL configured
         run: make check
