@@ -4,6 +4,8 @@ import { isPushConfig, isPushConfirmation, validPushEndpoint, validPushRegistrat
 import type { PushApiConfig } from './pushProtocol';
 import { isAnalyticsFacts, isOrderReport, isShiftReport, validPeriod } from './analyticsProtocol';
 import type { AnalyticsFacts, OrderReport, PeriodRequest, ShiftReport } from './analyticsProtocol';
+import { readReportFile, REPORT_FILE_MIME } from './reportFiles';
+import type { ReportFile, ReportFileFormat, ReportFileKind } from './reportFiles';
 type ApiProblem = Omit<Problem, 'code'> & { code: Problem['code'] | 'SUBSCRIPTION_CONFLICT' | 'PUSH_DISABLED' | 'REPORT_LIMIT_EXCEEDED' };
 
 const BASE = '/api/v1';
@@ -95,7 +97,7 @@ export class ApiClient {
   subscribe(listener: () => void): () => void { this.#listeners.add(listener); return () => { this.#listeners.delete(listener); }; }
   clearIdentity(): void { this.#epoch += 1; this.#session = null; this.#listeners.forEach(listener => listener()); }
   #assertEpoch(epoch: number): void { if (epoch !== this.#epoch) throw new SessionChangedError(); }
-  async #request<T>(path: string, options: { method?: 'GET' | 'POST'; body?: string | Blob; contentType?: string; schema?: SchemaName; successStatus?: number; epoch?: number; auth?: boolean; mutation?: boolean; signal?: AbortSignal; image?: boolean; validate?: (data: unknown) => boolean; push?: boolean; emptyBody?: boolean; analytics?: boolean; maxBytes?: number } = {}): Promise<T> {
+  async #request<T>(path: string, options: { method?: 'GET' | 'POST'; body?: string | Blob; contentType?: string; schema?: SchemaName; successStatus?: number; epoch?: number; auth?: boolean; mutation?: boolean; signal?: AbortSignal; image?: boolean; validate?: (data: unknown) => boolean; push?: boolean; emptyBody?: boolean; analytics?: boolean; maxBytes?: number; reportFile?: {format:ReportFileFormat;filename:string} } = {}): Promise<T> {
     const epoch = options.epoch ?? this.#epoch;
     this.#assertEpoch(epoch);
     if (!this.#online()) throw new ApiError('Нет сети. Изменения не отправлены.');
@@ -103,7 +105,7 @@ export class ApiClient {
     const cooldown = this.#cooldowns.get(routeKey);
     if (cooldown && cooldown.until > Date.now()) throw new ApiError('Повторите запрос после указанной сервером задержки.', cooldown.status, null, false, Math.ceil((cooldown.until - Date.now()) / 1000));
     this.#cooldowns.delete(routeKey);
-    const headers = new Headers({ Accept: options.image ? 'image/jpeg, image/png, image/webp' : 'application/json' });
+    const headers = new Headers({ Accept: options.reportFile ? REPORT_FILE_MIME[options.reportFile.format] : options.image ? 'image/jpeg, image/png, image/webp' : 'application/json' });
     if (options.contentType) headers.set('Content-Type', options.contentType);
     if (options.method === 'POST' && options.auth !== false) {
       if (!this.#session) throw new ApiError('Сессия завершена. Войдите снова.', 401);
@@ -136,6 +138,10 @@ export class ApiClient {
       if (response.status === 204) {
         if (options.emptyBody && (await response.text()) !== '') throw new ApiError('Ответ отключения не соответствует контракту.', response.status, null, Boolean(options.mutation));
         this.#assertEpoch(epoch); return undefined as T;
+      }
+      if (options.reportFile) {
+        try { return await readReportFile(response, options.reportFile.format, options.reportFile.filename, () => this.#assertEpoch(epoch)) as T; }
+        catch(error) { await response.body?.cancel().catch(()=>undefined); if(error instanceof SessionChangedError) throw error; throw new ApiError('Файл отчёта не прошёл проверку формата или размера. Сохранение не начато.', response.status); }
       }
       if (options.image) {
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(response.headers.get('Content-Type')?.split(';')[0] ?? '')) throw new ApiError('Сервер вернул неподдерживаемое изображение.', response.status);
@@ -199,6 +205,13 @@ export class ApiClient {
     const result = await this.#report<OrderReport>(`/reports/orders/${id(orderId)}`, period, isOrderReport, signal);
     if (result.order.order.id.toLowerCase() !== orderId.toLowerCase()) throw new ApiError('Ответ содержит отчёт другого наряда.');
     return result;
+  }
+  async getReportFile(kind:ReportFileKind, format:ReportFileFormat, period:PeriodRequest, signal?:AbortSignal):Promise<ReportFile> {
+    if(format!=='pdf'&&format!=='xlsx')throw new ApiError('Формат отчёта не поддерживается.');
+    const query=new URLSearchParams(this.#analyticsQuery(period));query.delete('format');
+    const suffix=kind==='shift'?'shift':`orders/${id(kind.orderId).toLowerCase()}`;
+    const filename=`naryadai-${kind==='shift'?'shift':`order-${kind.orderId.toLowerCase()}`}.${format}`;
+    return this.#request(`/reports/${suffix}.${format}?${query}`,{signal,analytics:true,reportFile:{format,filename}});
   }
   #assertPushSession(): void {
     if (!this.#session?.principal.active || !(Date.parse(this.#session.expires_at) > Date.now())) throw new ApiError('Сессия завершена. Войдите снова.', 401);

@@ -27,7 +27,7 @@ import { AnalyticsScreen } from '../features/analytics/AnalyticsScreen';
 
 const submissionKey = (order: Order): string => `${order.id}:${order.version}:${order.assignment_revision}:${order.current_submission_id ?? 'none'}`;
 type Pending = { token: PreparedMutation<CommandResult>; status: MutationState['status']; epoch: number; unresolved: boolean };
-export function Workspace({ client, orders, session, sessionKey, section }: { client: ApiClient; orders: OrderStore; session: Session; sessionKey: string; section: string }) {
+export function Workspace({ client, orders, session, sessionKey, section, isAuthReady = () => true, authBusy = false }: { client: ApiClient; orders: OrderStore; session: Session; sessionKey: string; section: string; isAuthReady?: () => boolean; authBusy?: boolean }) {
   const source = useSyncExternalStore(orders.subscribe, orders.getSnapshot);
   const { state: dictState, refresh: refreshDicts } = useResource(client, () => client.getDictionaries());
   const [createDraft, setCreateDraft] = useState(emptyMasterCreateDraft);
@@ -175,7 +175,7 @@ export function Workspace({ client, orders, session, sessionKey, section }: { cl
       </aside>}
     </>}
     {(session.principal.role === 'master' || session.principal.role === 'manager') && <div hidden={session.principal.role === 'master' && section !== 'Обзор смены'}><PanelScreen orders={mapResource(source, items => items.map(order => panelOrder(order, dictState.snapshot)))} employees={mapResource(dictState, panelEmployees)} selectedOrderId={selected} onSelectOrder={setSelected} history={historyState} onRefresh={() => void refresh()} onRefreshHistory={() => void refreshHistory()} access={access}/></div>}
-    {session.principal.role === 'master' && <div hidden={section !== 'Аналитика и отчёты'}><AnalyticsScreen client={client} domainNow={rows.map(row=>row.domain_now).sort((a,b)=>Date.parse(b)-Date.parse(a))[0]??null} onRefreshClock={()=>void refresh()}/></div>}
+    {session.principal.role === 'master' && <div hidden={section !== 'Аналитика и отчёты'}><AnalyticsScreen client={client} isAuthReady={isAuthReady} authBusy={authBusy} domainNow={rows.map(row=>row.domain_now).sort((a,b)=>Date.parse(b)-Date.parse(a))[0]??null} onRefreshClock={()=>void refresh()}/></div>}
     {session.principal.role === 'admin' && <section className="card"><h3>Административная сессия</h3><p>Производственные действия и административные инструменты не предоставлены этой версии интерфейса.</p></section>}
   </>;
 }
