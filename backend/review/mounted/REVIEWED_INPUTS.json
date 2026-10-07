@@ -1,0 +1,9 @@
+{
+  "scope": "nine independent local catalog and ASGI probes; no PG claim",
+  "files": {
+    "backend/review/mounted/test_mounted_security.py": "6f3372001066414bfbc65462a6d37ce56f330208c6f0324e6edbb889a303dead",
+    "backend/app/main.py": "40e4c0e31a3df904c60615d334e30b1dac0b51288ce00438d9830a89f2b840a7",
+    "backend/app/runtime.py": "766890a02cc983f270fe1e6ac6b71ce03830087d205aa8152de2099fd10de5ce",
+    "backend/app/persistence/service.py": "6afd0771aafbee91872e20659e64983d7159b40a4645a3d62948386b867c26e3"
+  }
+}

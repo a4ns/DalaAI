@@ -63,3 +63,25 @@ class RuntimeConfigTests(unittest.TestCase):
         self.assertEqual(client.get('/docs').status_code,404)
         self.assertFalse(app.dependency_overrides)
         self.assertFalse(app.state.runtime_ready)
+
+
+    def test_readiness_timeout_latches_api_closed_even_after_thread_finishes(self):
+        import time
+        settings=RuntimeSettings('demo','synthetic','https://example.test')
+        calls=[]
+        def validation(connect):
+            calls.append(True)
+            if len(calls)>1:
+                time.sleep(0.08)
+        with patch('app.main.validate_database',validation), patch('app.health.READINESS_TIMEOUT_SECONDS',0.01):
+            app=create_app(settings=settings,connect=Mock())
+            with TestClient(app,base_url='https://example.test') as client:
+                self.assertTrue(app.state.runtime_ready)
+                self.assertEqual(client.get('/readyz').status_code,503)
+                self.assertFalse(app.state.runtime_ready)
+                response=client.get('/api/v1/me')
+                self.assertEqual(response.status_code,503)
+                self.assertEqual(response.json()['code'],'TEMPORARILY_UNAVAILABLE')
+                self.assertEqual(response.headers['retry-after'],'1')
+                time.sleep(0.1)
+                self.assertFalse(app.state.runtime_ready)

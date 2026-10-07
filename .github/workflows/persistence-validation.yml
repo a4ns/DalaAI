@@ -92,7 +92,11 @@ jobs:
         run: PYTHONPATH=backend:backend/acceptance python -m unittest discover -s backend/acceptance/tests -v
       - name: Real component HTTP lifecycle and process-restart gate
         run: python ops/run_vertical_acceptance.py
+      - name: Independent mounted runtime security review probes
+        run: PYTHONPATH=backend python backend/review/mounted/test_mounted_security.py
       - name: Actual mounted runtime and non-owner startup guards
         run: python ops/run_mounted_runtime_tests.py
+      - name: Actual app.main non-owner lifecycle and process restart
+        run: python ops/run_actual_runtime_acceptance.py
       - name: Aggregate with real PostgreSQL configured
         run: make check

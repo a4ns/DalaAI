@@ -2,6 +2,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 from urllib.parse import urlsplit
+from uuid import uuid4
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -50,8 +51,9 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     @app.middleware('http')
     async def require_started_runtime(request, call_next):
         if request.url.path.startswith('/api/') and not app.state.runtime_ready:
-            return JSONResponse({'detail':'Runtime unavailable'}, status_code=503,
-                                headers={'Cache-Control':'no-store'})
+            return JSONResponse({'code':'TEMPORARILY_UNAVAILABLE', 'message':'Runtime unavailable',
+                'request_id':str(uuid4()), 'retryable':True, 'current_version':None, 'field_errors':[]},
+                status_code=503, headers={'Cache-Control':'private, no-store', 'Retry-After':'1'})
         return await call_next(request)
 
     async def runtime_ready():
@@ -60,7 +62,13 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
         try:
             await asyncio.to_thread(validate_database, connector)
             return True
+        except asyncio.CancelledError:
+            app.state.runtime_ready = False
+            raise
         except Exception:
+            # A failed prerequisite check requires operator repair and a new
+            # process startup. Never keep accepting commands after detecting it.
+            app.state.runtime_ready = False
             return False
 
     app.include_router(health_router(runtime_ready))

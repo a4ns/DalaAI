@@ -18,10 +18,12 @@ roles, PINs, seed data or sessions.
 The runtime permission profile is the union of the exercised command/discovery
 role and the session role. Exact grants are exercised by the disposable real-PG
 CI, not provisioned against a deployed service. Startup checks required columns,
-enabled receipt/audit/identity/evidence guards, expected INSERT and column UPDATE,
+enabled receipt/audit/identity/evidence guards, exact INSERT and column UPDATE,
 order sequence access, and refuses sensitive auth/file-validation UPDATE grants.
 A failed prerequisite raises a generic RuntimePrerequisiteError with a fixed code.
-Readiness repeats these checks; liveness remains process-only. Requests cannot
+DELETE/TRUNCATE/TRIGGER privileges are forbidden. Readiness repeats these checks
+and latches API admission closed after any failed prerequisite. Repair requires
+a new process startup; no implicit recovery occurs. Liveness remains process-only. Requests cannot
 use domain routes before a successful application lifespan startup.
 
 The runtime uses wall UTC, Secure HttpOnly same-origin cookies, explicit dictionary
@@ -40,8 +42,12 @@ demo mode against that owner connection. An HTTPS same-origin ingress and any
 trusted proxy-address mapping are separate deployment work. The image deliberately
 ignores forwarded headers until an explicit trusted ingress is configured.
 
-Evidence boundaries: eight focused PostgreSQL tests execute this actual factory,
+Evidence boundaries: eleven focused PostgreSQL tests execute this actual factory,
 including real lifespan, scoped role, readiness failure and unverified-blob close.
 The separate frozen v1 harness still proves test-owned component assembly. Actual
-mounted lifecycle evidence is a distinct gate; in-process HTTPS-origin ASGI checks
+mounted lifecycle evidence is a distinct gate using the frozen runtime_delta
+harness: two fresh Python processes, actual app.main lifespan, real restricted
+LOGIN, owner-only fixture/effect inspection, and explicit owner-startup rejection.
+Nine independent catalog/ASGI reviewer probes run separately. Corrected readiness
+also latches closed when its bounded probe is cancelled or times out. These in-process HTTPS-origin ASGI checks
 do not establish deployed TLS, browser/Android, notifications or photo performance.
