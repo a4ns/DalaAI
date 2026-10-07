@@ -12,7 +12,7 @@
     },
     {
       "lane": "B-103",
-      "sha": "09691f6268f7cc08cedc65dc25121094313c901b",
+      "sha": "b7c67a8066c03c382fe12c0f21800aa316a0ec47",
       "paths": [
         "frontend/src/mobile/executor"
       ]
@@ -35,7 +35,7 @@
     },
     {
       "lane": "B-106",
-      "sha": "8f170602b8ddd57ae6674ea5b987ae408e27ad89",
+      "sha": "9f37c2951cbffb88db8a254beff033f7e31ed6d9",
       "paths": [
         "frontend/tests",
         "frontend/playwright.config.ts"
@@ -66,6 +66,10 @@
     "frontend/src/shared/api/client.ts: bind receipts and reads to requested object IDs",
     "frontend/index.html: link imported local manifest",
     "frontend/README.md: composition behavior and verification limits",
-    "frontend/src/app/Workspace.tsx: pending/unknown intent guards precede every new-intent preflight and conflict resolution"
+    "frontend/src/app/Workspace.tsx: pending/unknown intent guards precede every new-intent preflight and conflict resolution",
+    "frontend/src/app/executorController.ts: per-order/assignment unresolved effect quarantine and private draft retention",
+    "frontend/src/app/executorController.test.cjs: synthetic controller privacy/concurrency probes",
+    "frontend/src/app/Workspace.tsx: bind executor feedback/photos/drafts to selected authorized operation scope",
+    "frontend/src/shared/api/orderStore.ts: successful sweep generation for late-receipt visibility fences"
   ]
 }

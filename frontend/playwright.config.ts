@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 const root = process.cwd();
 const port = Number(process.env.UI_TEST_PORT ?? 4176);
 const nodeOnly = process.env.UI_TEST_NO_SERVER === '1';
@@ -32,6 +32,12 @@ export default defineConfig({
   projects: [
     { name: 'independent-source', testMatch: 'node/**/*.spec.ts' },
     { name: 'chromium-390', testMatch: 'browser/**/*.spec.ts', use: { browserName: 'chromium' } },
+    {
+      name: 'android-emulation-pixel-9',
+      testMatch: 'browser/**/*.spec.ts',
+      metadata: { device: 'Playwright Pixel 9', evidenceLevel: 'Android mobile emulation only; not a physical Android device' },
+      use: { ...devices['Pixel 9'], browserName: 'chromium' },
+    },
   ],
   webServer: nodeOnly ? undefined : {
     command: `npm run dev -- --port ${port}`,

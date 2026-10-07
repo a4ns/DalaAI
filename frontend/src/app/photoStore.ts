@@ -73,8 +73,8 @@ export class PhotoStore {
       }
       const photo = await this.#client.execute(token);
       if (this.#client.epoch !== this.#epoch) return;
-      const matches = photo.section_id === context.sectionId && photo.purpose === context.phase && photo.owner_id === this.#client.session?.principal.user_id && (context.phase === 'before' ? photo.order_id === null && photo.assignment_revision === null : photo.order_id === context.orderId && photo.assignment_revision === context.assignmentRevision);
-      if (!matches) throw new ApiError('Подтверждение загрузки относится к другому контексту. Фото не прикреплено.', 200, null, true);
+      const matches = photo.section_id.toLowerCase() === context.sectionId.toLowerCase() && photo.purpose === context.phase && photo.owner_id.toLowerCase() === this.#client.session?.principal.user_id.toLowerCase() && (context.phase === 'before' ? photo.order_id === null && photo.assignment_revision === null : photo.order_id?.toLowerCase() === context.orderId.toLowerCase() && photo.assignment_revision === context.assignmentRevision);
+      if (!matches) throw new ApiError('Подтверждение загрузки относится к другому контексту. Фото не прикреплено.', 201, null, true);
       this.#unresolved.delete(key);
       if (Date.parse(photo.expires_at) <= Date.now()) throw new ApiError('Срок хранения фото истёк. Удалите его из выбора и загрузите заново.');
       this.#job(context, file.id, { status: 'confirmed', error: null, photo });

@@ -19,16 +19,31 @@ export class ApiError extends Error {
   readonly problem: Problem | null;
   readonly outcomeUnknown: boolean;
   readonly retryAfterSeconds: number | null;
-  constructor(message: string, status = 0, problem: Problem | null = null, outcomeUnknown = false, retryAfterSeconds: number | null = null) {
-    super(message); this.name = 'ApiError'; this.status = status; this.problem = problem; this.outcomeUnknown = outcomeUnknown; this.retryAfterSeconds = retryAfterSeconds;
+  readonly transportInterrupted: boolean;
+  constructor(message: string, status = 0, problem: Problem | null = null, outcomeUnknown = false, retryAfterSeconds: number | null = null, transportInterrupted = false) {
+    super(message); this.name = 'ApiError'; this.status = status; this.problem = problem; this.outcomeUnknown = outcomeUnknown; this.retryAfterSeconds = retryAfterSeconds; this.transportInterrupted = transportInterrupted;
+  }
+}
+export class LoginError extends ApiError {
+  readonly loginOutcome: 'rejected' | 'unknown';
+  constructor(source: ApiError) {
+    super(source.message, source.status, source.problem, false, source.retryAfterSeconds, source.transportInterrupted);
+    this.name = 'LoginError';
+    this.loginOutcome = source.transportInterrupted || source.status >= 500 || (source.status >= 200 && source.status < 300) ? 'unknown' : 'rejected';
   }
 }
 export function safeErrorMessage(error: unknown): string {
   if (error instanceof SessionChangedError) return error.message;
+  if (error instanceof LoginError) {
+    if (error.loginOutcome === 'unknown') return 'Ответ на запрос входа не подтверждён. Проверьте соединение и повторите вход, введя PIN заново.';
+    if (error.status === 401) return 'Не удалось войти. Проверьте табельный код и PIN.';
+    if (error.status === 0) return 'Нет соединения. Запрос входа не отправлен.';
+  }
   if (!(error instanceof ApiError)) return 'Не удалось выполнить запрос. Повторите попытку.';
   if (error.outcomeUnknown) return 'Результат операции не подтверждён. Повторите тот же запрос.';
   if (error.status === 401) return 'Сессия завершена. Войдите снова.';
   if (error.status === 403) return 'Нет доступа к этому действию или объекту.';
+  if (error.status === 409 && error.problem?.code === 'INCOMPLETE_SUBMISSION') return 'Закрытие невозможно: не хватает обязательных доказательств. Проверьте шифр работ и требуемые фото; результат можно вернуть на доработку.';
   if (error.status === 409) return error.problem?.code === 'OPERATION_ID_REUSED' ? 'Идентификатор операции уже использован с другими данными. Автоматический повтор остановлен.' : 'Данные изменились. Загрузите актуальное состояние и проверьте введённые значения.';
   if (error.status === 422) return 'Проверьте заполненные поля и обязательные доказательства.';
   if (error.status === 429) return 'Слишком много запросов. Повторите позже.';
@@ -124,7 +139,7 @@ export class ApiClient {
     } catch (error) {
       if (error instanceof ApiError || error instanceof SessionChangedError) throw error;
       this.#assertEpoch(epoch);
-      throw new ApiError(options.mutation ? 'Результат операции не подтверждён.' : 'Не удалось связаться с сервером.', 0, null, Boolean(options.mutation));
+      throw new ApiError(options.mutation ? 'Результат операции не подтверждён.' : 'Не удалось связаться с сервером.', 0, null, Boolean(options.mutation), null, true);
     } finally {
       clearTimeout(timeout); options.signal?.removeEventListener('abort', abort);
     }
@@ -133,8 +148,13 @@ export class ApiClient {
     assertWire('Login', input);
     this.clearIdentity();
     const epoch = this.#epoch;
-    const session = await this.#request<Session>('/auth/login', { method: 'POST', body: JSON.stringify(input), contentType: 'application/json', auth: false, schema: 'Session', epoch });
-    this.#assertEpoch(epoch); this.#session = session; this.#listeners.forEach(listener => listener()); return session;
+    try {
+      const session = await this.#request<Session>('/auth/login', { method: 'POST', body: JSON.stringify(input), contentType: 'application/json', auth: false, schema: 'Session', epoch });
+      this.#assertEpoch(epoch); this.#session = session; this.#listeners.forEach(listener => listener()); return session;
+    } catch (error) {
+      if (error instanceof ApiError) throw new LoginError(error);
+      throw error;
+    }
   }
   async getMe(): Promise<Session> {
     const epoch = this.#epoch;
