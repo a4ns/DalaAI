@@ -45,8 +45,9 @@ class CommandService:
     Domain clock is explicit; real time alone governs sessions/stages/job retries.
     """
     def __init__(self, connect, *, allowed_origin, delivery_channel, domain_clock,
-                 real_clock=None):
+                 real_clock=None, references_factory=PostgresReferences):
         self.connect = connect
+        self.references_factory = references_factory
         self.protection = RequestProtection(allowed_origin)
         self.policy = SchedulePolicy(channel=delivery_channel)
         self.domain_clock = domain_clock
@@ -125,7 +126,7 @@ class CommandService:
                 actor = actor_from_auth_context(context)
                 now = self.domain_clock.now()
                 real_now = self.real_clock.now()
-                refs = PostgresReferences(repo, context.principal, real_now, current)
+                refs = self.references_factory(repo, context.principal, real_now, current)
                 photo_ids = (getattr(command.payload, "before_photo_ids", ()) or
                              getattr(command.payload, "after_photo_ids", ()))
                 refs.lock_stages(photo_ids)

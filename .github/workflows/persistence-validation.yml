@@ -1,7 +1,7 @@
 name: PostgreSQL persistence validation
 'on':
   push:
-    branches: ['main', 'pod-a/A-009-persistence-runtime', 'pod-a/A-010-reference-key-hardening', 'pod-a/A-011-discovery-runtime', 'pod-a/A-012-session-runtime']
+    branches: ['main', 'pod-a/A-009-persistence-runtime', 'pod-a/A-010-reference-key-hardening', 'pod-a/A-011-discovery-runtime', 'pod-a/A-012-session-runtime', 'pod-a/A-013-mounted-runtime']
 permissions:
   contents: read
 concurrency:
@@ -92,5 +92,7 @@ jobs:
         run: PYTHONPATH=backend:backend/acceptance python -m unittest discover -s backend/acceptance/tests -v
       - name: Real component HTTP lifecycle and process-restart gate
         run: python ops/run_vertical_acceptance.py
+      - name: Actual mounted runtime and non-owner startup guards
+        run: python ops/run_mounted_runtime_tests.py
       - name: Aggregate with real PostgreSQL configured
         run: make check
