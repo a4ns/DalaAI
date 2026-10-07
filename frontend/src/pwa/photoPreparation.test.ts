@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { beginPhotoPreparation } from './preparationActivity.ts';
 import { inspectImageHeader, outputDimensions, PHOTO_LIMITS, PhotoPreparationError, photoErrorMessage, preparePhoto } from './photoPreparation.ts';
 
 // Real, synthetic 2x2 PNG bytes. Header tests alone do not prove browser decoding.
@@ -143,4 +144,33 @@ test('simulated browser: cancellation closes a late bitmap without yielding a fi
     await assert.rejects(preparePhoto(new File([PNG], 'photo.png'), controller.signal), { name: 'AbortError' });
     assert.equal(closed(), 1);
   });
+});
+
+
+test('preparation busy seam: start synchronous, finish exactly once', () => {
+  const states: boolean[] = [];
+  const activity = beginPhotoPreparation(busy => states.push(busy));
+  assert.deepEqual(states, [true]);
+  assert.equal(activity.signal.aborted, false);
+  activity.finish(); activity.finish();
+  assert.deepEqual(states, [true, false]);
+});
+test('preparation busy seam: cancel/unmount releases busy and aborts work', () => {
+  const states: boolean[] = [];
+  const activity = beginPhotoPreparation(busy => states.push(busy));
+  activity.cancel(); activity.cancel(); activity.finish();
+  assert.equal(activity.signal.aborted, true);
+  assert.deepEqual(states, [true, false]);
+});
+test('preparation busy seam: stale completion cannot clear a newer context batch', () => {
+  const states: boolean[] = [];
+  const onBusyChange = (busy: boolean): void => { states.push(busy); };
+  const oldActivity = beginPhotoPreparation(onBusyChange);
+  oldActivity.cancel();
+  const newActivity = beginPhotoPreparation(onBusyChange);
+  oldActivity.finish();
+  assert.deepEqual(states, [true, false, true]);
+  assert.equal(newActivity.signal.aborted, false);
+  newActivity.finish();
+  assert.deepEqual(states, [true, false, true, false]);
 });

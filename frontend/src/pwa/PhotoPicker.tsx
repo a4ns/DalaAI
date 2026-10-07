@@ -3,6 +3,8 @@ import type { ChangeEvent } from 'react';
 import { PHOTO_LIMITS, photoErrorMessage, preparePhoto } from './photoPreparation';
 import type { PhotoPhase, PreparedPhoto } from './photoPreparation';
 import { connectivityMessage, useConnectivity } from './useConnectivity';
+import { beginPhotoPreparation } from './preparationActivity';
+import type { PhotoPreparationActivity } from './preparationActivity';
 import './photoPicker.css';
 
 export interface PhotoPickerProps {
@@ -11,6 +13,8 @@ export interface PhotoPickerProps {
   phase: PhotoPhase;
   value: readonly PreparedPhoto[];
   onChange: (photos: PreparedPhoto[]) => void;
+  /** Include this in form busy state so submission waits for local preparation. */
+  onBusyChange?: (busy: boolean) => void;
   disabled?: boolean;
   maxPhotos?: number;
   /** Informational only: server/workflow decides when missing photos block completion. */
@@ -34,14 +38,14 @@ export function PhotoPicker(props: PhotoPickerProps) {
   // Remount the selection state when an account, assignment, draft or phase changes.
   return <PhotoPickerSelection key={JSON.stringify([props.contextKey, props.phase])} {...props} />;
 }
-function PhotoPickerSelection({ contextKey, phase, value, onChange, disabled = false, maxPhotos = PHOTO_LIMITS.maxPhotos, required = false }: PhotoPickerProps) {
+function PhotoPickerSelection({ contextKey, phase, value, onChange, onBusyChange, disabled = false, maxPhotos = PHOTO_LIMITS.maxPhotos, required = false }: PhotoPickerProps) {
   const id = useId();
   const camera = useRef<HTMLInputElement>(null);
   const files = useRef<HTMLInputElement>(null);
-  const active = useRef<AbortController | null>(null);
+  const active = useRef<PhotoPreparationActivity | null>(null);
   const mounted = useRef(false);
-  const current = useRef({ contextKey, phase, value, onChange, disabled });
-  useLayoutEffect(() => { current.current = { contextKey, phase, value, onChange, disabled }; }, [contextKey, phase, value, onChange, disabled]);
+  const current = useRef({ contextKey, phase, value, onChange, onBusyChange, disabled });
+  useLayoutEffect(() => { current.current = { contextKey, phase, value, onChange, onBusyChange, disabled }; }, [contextKey, phase, value, onChange, onBusyChange, disabled]);
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [status, setStatus] = useState('');
@@ -50,11 +54,11 @@ function PhotoPickerSelection({ contextKey, phase, value, onChange, disabled = f
   const locked = disabled || busy;
   const full = value.length >= limit;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; active.current?.abort(); active.current = null; };
+    return () => { mounted.current = false; active.current?.cancel(); active.current = null; };
   }, []);
-  useEffect(() => { if (disabled) active.current?.abort(); }, [disabled]);
+  useEffect(() => { if (disabled) active.current?.cancel(); }, [disabled]);
 
   const select = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
     const selected = Array.from(event.currentTarget.files ?? []);
@@ -65,7 +69,7 @@ function PhotoPickerSelection({ contextKey, phase, value, onChange, disabled = f
     const batch = selected.slice(0, remaining);
     const issues: string[] = selected.length > remaining ? [`Можно выбрать не больше ${limit} фото на этот этап. Лишние файлы не добавлены.`] : [];
     if (batch.length === 0) { setErrors(issues); return; }
-    const controller = new AbortController();
+    const controller = beginPhotoPreparation(initial.onBusyChange);
     active.current = controller;
     setBusy(true); setErrors([]); setStatus('Подготавливаем фото на устройстве…');
     const prepared: PreparedPhoto[] = [];
@@ -88,6 +92,7 @@ function PhotoPickerSelection({ contextKey, phase, value, onChange, disabled = f
     } finally {
       if (active.current === controller) {
         active.current = null;
+        controller.finish();
         if (mounted.current) setBusy(false);
       }
     }
