@@ -23,9 +23,11 @@ test('synthetic auth: repeated login submits once and failed response returns to
 
 test('synthetic expired identity hides the prior order snapshot immediately', async ({ page }, info) => {
   let expired = false;
+  const managerSession = session();
+  managerSession.principal.role = 'manager';
   await page.route('**/api/v1/**', async route => {
     const url = route.request().url();
-    if (url.endsWith('/me')) return route.fulfill({ json: session() });
+    if (url.endsWith('/me')) return route.fulfill({ json: managerSession });
     if (url.includes('/orders')) {
       if (expired) return route.fulfill({ status: 401, json: {} });
       return route.fulfill({ json: { items: [result().order], next_cursor: null } });
@@ -33,10 +35,10 @@ test('synthetic expired identity hides the prior order snapshot immediately', as
     return route.fulfill({ status: 404, json: {} });
   });
   await page.goto('/');
-  await expect(page.getByText('Наряд № SYNTHETIC-001')).toBeVisible();
+  await expect(page.getByText('Наряд № SYNTHETIC-001').first()).toBeVisible();
   expired = true;
-  await page.getByRole('button', { name: 'Обновить', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Войдите в систему' })).toBeVisible();
+  // The app's existing read polling observes expiry; avoid racing its refresh button.
+  await expect(page.getByRole('heading', { name: 'Войдите в систему' })).toBeVisible({ timeout: 8_000 });
   await expect(page.getByText('Наряд № SYNTHETIC-001')).toHaveCount(0);
   await expect(page.getByText('SYNTHETIC-UI-TEST', { exact: false })).toHaveCount(0);
   await page.screenshot({ path: info.outputPath('synthetic-expired-identity.png'), fullPage: true });

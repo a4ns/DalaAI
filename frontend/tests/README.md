@@ -26,8 +26,8 @@ B4 independently reviews these tests. B6 reviews product code, not its own test 
 
 ## Current coverage
 
-- Independent source project:42 tests of request replay, session epochs, expiry, old logout races, multipart retries, route cooldown, safe event cursors, partial/stale snapshots, master close gates, executor validation, panel history/workload and photo preflight.
-- Browser project:12 tests. Three real React fixtures use explicitly synthetic responses or controlled callbacks. They cover Russian shell/keyboard/390px overflow/console, repeated login, expired identity, preserved409 drafts, unknown-result retries and interrupted identity/photo callbacks. Run these on the assembled code; they are not evidence of server effects.
+- Independent source project:52 tests of request replay, session epochs, expiry, old logout races, multipart retries, route cooldown, safe event cursors, same-user authorization/CSRF fences, scoped photo busy guards, partial/stale snapshots, master close gates, executor validation, panel history/workload and photo preflight.
+- Browser project:13 tests. Three real React fixtures use explicitly synthetic responses or controlled callbacks. They cover Russian shell/keyboard/390px overflow/console, repeated login, expired identity, preserved409 drafts, unknown-result retries and interrupted identity/photo callbacks. Run these on the assembled code; they are not evidence of server effects.
 - Browser execution in the initial B6 environment was BLOCKED: installed Chromium aborted with `process_singleton_posix.cc:297 socket() failed: Operation not permitted`; one supported reviewed escalation had the same failure. No screenshots were generated, no security workaround was used, and no browser pass is claimed.
 
 Test code can be typechecked after assembly with `npx tsc -p tests/tsconfig.json`. The package's normal app typecheck does not include this test tree. `playwright test --list` only verifies discovery, never execution. Run `npm run test:ui -- client.spec.ts order-store.spec.ts --project=independent-source` for a client-only checkout; a full source run deliberately fails if required feature modules are absent.

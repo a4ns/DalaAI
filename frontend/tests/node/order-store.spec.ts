@@ -114,3 +114,31 @@ test('a newer receipt arriving during refresh survives an older page response', 
   expect(store.getSnapshot().snapshot?.[0]).toMatchObject({ version: 6, status: 'closed' });
   store.dispose();
 });
+
+test('only an explicit 403 marks access forbidden; transport errors retain stale data without inventing denial', async () => {
+  for (const status of [403, 503]) {
+    const client = new ApiClient({ online: () => true, fetch: async () => json({}, status) });
+    const store = new OrderStore(client);
+    store.record(result().order, client.epoch);
+    await store.refresh();
+    expect(store.access).toBe(status === 403 ? 'forbidden' : 'allowed');
+    if (status === 403) expect(store.getSnapshot().snapshot).toBeNull();
+    else expect(store.getSnapshot()).toMatchObject({ freshness: 'stale', incomplete: true, snapshot: [result().order] });
+    store.dispose();
+  }
+});
+
+test('a confirmed allowed response or identity reset clears an old forbidden flag', async () => {
+  let calls = 0;
+  const client = new ApiClient({ online: () => true, fetch: async () => ++calls === 1 ? json({}, 403) : json({ items: [], next_cursor: null }) });
+  const store = new OrderStore(client);
+  await store.refresh();
+  expect(store.access).toBe('forbidden');
+  await store.refresh();
+  expect(store.access).toBe('allowed');
+  expect(store.getSnapshot()).toMatchObject({ snapshot: [], freshness: 'fresh', loadStatus: 'ready' });
+  client.clearIdentity();
+  expect(store.access).toBe('allowed');
+  expect(store.getSnapshot().snapshot).toBeNull();
+  store.dispose();
+});

@@ -226,3 +226,66 @@ test('unsafe outgoing history cursor is rejected before fetch', async () => {
   for (const cursor of [Number.MAX_SAFE_INTEGER + 1, -1, 1.5, Infinity]) await expect(client.listOrderEvents(ids.order, cursor)).rejects.toBeInstanceOf(ApiError);
   expect(sends).toBe(0);
 });
+
+for (const change of ['csrf', 'role', 'sections', 'active'] as const) {
+  test(`same-user ${change} change fences old prepared intent and cached order data`, async () => {
+    const { OrderStore } = sourceModule<typeof import('../../src/shared/api/orderStore')>('src/shared/api/orderStore.ts');
+    const changed = session();
+    if (change === 'csrf') changed.csrf_token = 'synthetic-rotated-csrf';
+    if (change === 'role') changed.principal.role = 'manager';
+    if (change === 'sections') changed.principal.section_ids = [];
+    if (change === 'active') changed.principal.active = false;
+    let mutations = 0;
+    const client = new ApiClient({ online: () => true, fetch: async url => {
+      if (String(url).endsWith('/auth/login')) return json(session());
+      if (String(url).endsWith('/me')) return json(changed);
+      mutations += 1;
+      return json(result());
+    } });
+    await client.login(login);
+    const initialEpoch = client.epoch;
+    const store = new OrderStore(client);
+    store.record(result().order, initialEpoch);
+    const prepared = client.prepareCommand(ids.order, { expected_version: 1, action: 'accept', payload: {} });
+    await client.getMe();
+    expect(client.epoch).toBeGreaterThan(initialEpoch);
+    expect(store.getSnapshot().snapshot).toBeNull();
+    await expect(client.execute(prepared)).rejects.toBeInstanceOf(SessionChangedError);
+    expect(mutations).toBe(0);
+    store.dispose();
+  });
+}
+
+test('late 401 from a prior same-user CSRF generation cannot clear the new session', async () => {
+  const stale = deferred<Response>();
+  const rotated = { ...session(), csrf_token: 'synthetic-rotated-csrf' };
+  const client = new ApiClient({ online: () => true, fetch: async url => {
+    if (String(url).endsWith('/auth/login')) return json(session());
+    if (String(url).endsWith('/me')) return json(rotated);
+    return stale.promise;
+  } });
+  await client.login(login);
+  const pending = client.listOrders();
+  const rejected = expect(pending).rejects.toBeInstanceOf(SessionChangedError);
+  await client.getMe();
+  stale.resolve(json({}, 401));
+  await rejected;
+  expect(client.session?.csrf_token).toBe(rotated.csrf_token);
+});
+
+test('same effective scope with reordered sections, shift status and refreshed expiry preserves pending intent', async () => {
+  const original = session();
+  original.principal.section_ids = [ids.section, ids.equipment];
+  const refreshed = { ...original, principal: { ...original.principal, on_shift: false, section_ids: [...original.principal.section_ids].reverse() }, expires_at: '2099-01-02T00:00:00Z' };
+  const client = new ApiClient({ online: () => true, fetch: async url => {
+    if (String(url).endsWith('/auth/login')) return json(original);
+    if (String(url).endsWith('/me')) return json(refreshed);
+    return json(result());
+  } });
+  await client.login(login);
+  const initialEpoch = client.epoch;
+  const prepared = client.prepareCommand(ids.order, { expected_version: 1, action: 'accept', payload: {} });
+  await client.getMe();
+  expect(client.epoch).toBe(initialEpoch);
+  await expect(client.execute(prepared)).resolves.toMatchObject({ order: { id: ids.order } });
+});
