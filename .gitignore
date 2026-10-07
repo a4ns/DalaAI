@@ -1,0 +1,28 @@
+# Secrets and local configuration: review every diff before publishing.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+
+# Private source inputs and raw data stay outside this public repository.
+private_inputs/
+raw_inputs/
+secrets/
+
+# Local caches and runtime output.
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+node_modules/
+dist/
+coverage/
+*.log
