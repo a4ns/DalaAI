@@ -1,0 +1,71 @@
+{
+  "run_id": "DalaAI-20261008-night",
+  "assembly_base": "c2fbe6a5ce5dd584a6edbdb8e3abf3501e7d1bfd",
+  "contract_sha256": "b8b5b855eb8fffd4607473a4e878a3c64820030820cabb1b0c92d70928730f97",
+  "sources": [
+    {
+      "lane": "B-101",
+      "sha": "3544f9fc809a1dcecfc5fbbaf66798e62b3bc9ef",
+      "paths": [
+        "frontend"
+      ]
+    },
+    {
+      "lane": "B-103",
+      "sha": "09691f6268f7cc08cedc65dc25121094313c901b",
+      "paths": [
+        "frontend/src/mobile/executor"
+      ]
+    },
+    {
+      "lane": "B-104",
+      "sha": "c45f21f9d34993101006a8bfad95541ec5f112ad",
+      "paths": [
+        "frontend/src/panel"
+      ]
+    },
+    {
+      "lane": "B-105",
+      "sha": "37adf547fad970e625ebe294de8fdd920f0c411f",
+      "paths": [
+        "frontend/src/pwa",
+        "frontend/public/manifest.webmanifest",
+        "frontend/public/icons"
+      ]
+    },
+    {
+      "lane": "B-106",
+      "sha": "8f170602b8ddd57ae6674ea5b987ae408e27ad89",
+      "paths": [
+        "frontend/tests",
+        "frontend/playwright.config.ts"
+      ]
+    },
+    {
+      "lane": "B-102",
+      "sha": "95bd59cf1c8766197a96307ce5c49b200db7f46c",
+      "paths": [
+        "frontend/src/mobile/master"
+      ]
+    }
+  ],
+  "composition_edits": [
+    "frontend/src/shared/api/client.ts: same-user session and authorization fencing",
+    "frontend/vite.config.ts: reserved assembly port 4172",
+    "frontend/src/app/assembly-manifest.json: imported sources and composition record",
+    "frontend/src/shared/api/orderStore.ts: explicit list access state without inferring authorization from network errors",
+    "frontend/src/app/App.tsx: role-based mounted workspace and session revalidation",
+    "frontend/src/app/Workspace.tsx: real create, executor commands, review, scoped lists and history",
+    "frontend/src/app/adapters.ts: wire-to-view model mapping and relational review binding",
+    "frontend/src/app/useResource.ts: retained resources with epoch and request fencing",
+    "frontend/src/app/photoStore.ts: memory-only per-context staged-photo tokens and receipts",
+    "frontend/src/app/PhotoStages.tsx: real staged-upload states and exact retries",
+    "frontend/src/app/ProtectedPhoto.tsx: authorized image blobs and cleanup",
+    "frontend/src/shared/styles.css: attachment status and protected image layout",
+    "frontend/src/app/mutationFailure.ts: sticky unknown result classification",
+    "frontend/src/shared/api/client.ts: bind receipts and reads to requested object IDs",
+    "frontend/index.html: link imported local manifest",
+    "frontend/README.md: composition behavior and verification limits",
+    "frontend/src/app/Workspace.tsx: pending/unknown intent guards precede every new-intent preflight and conflict resolution"
+  ]
+}

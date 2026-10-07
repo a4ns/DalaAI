@@ -1,0 +1,22 @@
+.photo-picker { min-width: 0; margin: 1rem 0; padding: 1rem; border: 1px solid #91a8a8; border-radius: 1rem; color: #172f35; background: #fff; }
+.photo-picker legend { padding: 0 .35rem; font-size: 1.125rem; font-weight: 700; }
+.photo-picker p { margin: .5rem 0 .85rem; }
+.photo-picker__help, .photo-picker__notice, .photo-picker__network { font-size: .9375rem; line-height: 1.5; }
+.photo-picker__notice { border-left: 3px solid #366b70; padding-left: .75rem; }
+.photo-picker__network { background: #edf5f4; border-radius: .5rem; padding: .75rem; }
+.photo-picker__actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.photo-picker button { min-height: 64px; border: 1px solid #365f64; border-radius: .65rem; padding: .75rem 1rem; background: #fff; color: #153f45; font: inherit; font-size: 1.125rem; cursor: pointer; }
+.photo-picker__actions button { flex: 1 1 160px; }
+.photo-picker button:focus-visible { outline: 3px solid #a75b00; outline-offset: 3px; }
+.photo-picker button:disabled { background: #edf0f0; color: #56646a; border-color: #8c9a9d; cursor: not-allowed; }
+.photo-picker__status { min-height: 1.5rem; font-weight: 600; }
+.photo-picker__errors { padding: .85rem; border: 2px solid #a73523; border-radius: .65rem; color: #782618; background: #fff4ee; overflow-wrap: anywhere; }
+.photo-picker__errors p { font-weight: 700; }
+.photo-picker__errors ul { padding-left: 1.25rem; }
+.photo-picker__list { margin: 1rem 0 0; padding: 0; list-style: none; display: grid; gap: .75rem; }
+.photo-picker__item { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; border-top: 1px solid #c9d5d5; padding-top: .75rem; }
+.photo-picker__preview { width: 72px; height: 72px; object-fit: cover; border-radius: .5rem; background: #e8eeee; flex: 0 0 auto; }
+.photo-picker__details { display: grid; gap: .2rem; min-width: 0; flex: 1 1 140px; font-size: .875rem; line-height: 1.4; }
+.photo-picker__filename { overflow-wrap: anywhere; }
+.photo-picker__item button { min-height: 48px; font-size: 1rem; }
+@media (max-width: 380px) { .photo-picker { padding: .75rem; } .photo-picker__item button { width: 100%; } }
