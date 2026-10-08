@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
-const FRONTEND_SHA = 'd78b9c3b7cabbcbd05b01df77f2a7ec57739afe5';
+const FRONTEND_SHA = 'da83e9c417a7c6bf7e91b5100e8f2d7616d9f24e';
 const TITLE = 'C112 real history analytics and protected reports';
 const PROJECT = 'c112-android-chromium';
 const HISTORY_SHA256 = '7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1';
