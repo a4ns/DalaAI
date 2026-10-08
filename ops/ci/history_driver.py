@@ -7,6 +7,7 @@ import shutil
 import subprocess
 
 from history_profile import HistoryBlocked
+from history_diagnostics import failure_projection
 
 TITLE='C112 real history analytics and protected reports'
 STEPS=('fresh history database corroborated','separate authenticated mobile sessions',
@@ -68,21 +69,6 @@ def secrecy_preflight(root,env,private):
     if checked.returncode: raise HistoryBlocked('C112_SOURCE_BOUND_PREFLIGHT_INVALID')
     return target,{key:proof[key] for key in ('version','result','playwright','source_sha','frontend_sha','run_id',
         'created_at','expected_dummy_failures','observed_dummy_failures','scanned_outputs','sentinel_matches','scanned_output_sha256')}
-
-
-def failure_projection(report,evidence):
-    output={'completed_steps':0,'failed_step':None,'observations':0,'restrictions':0}
-    try:
-        if evidence.is_symlink() or evidence.stat().st_size>4*1024*1024: return output
-        body=json.loads(evidence.read_text())
-        for index,row in enumerate(body.get('steps',[])[:len(STEPS)]):
-            if row.get('name')!=STEPS[index]: break
-            if row.get('result')=='PASS': output['completed_steps']+=1
-            elif row.get('result')=='FAIL': output['failed_step']=index+1; break
-        for name in ('observations','restrictions'):
-            output[name]=min(len(body[name]),3) if isinstance(body.get(name),list) else 0
-    except Exception: pass
-    return output
 
 
 def execute_history(root,env,private,cli,summary):
