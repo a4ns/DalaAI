@@ -1,0 +1,68 @@
+name: Public synthetic JSON reader comparison
+'on':
+  push:
+    branches: [validation/json-reader-probe-20261008]
+permissions:
+  contents: read
+concurrency:
+  group: json-reader-probe-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  public-comparison:
+    if: github.ref == 'refs/heads/validation/json-reader-probe-20261008'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: a880371589aa1dd117dde9e80936c687d146f919
+          path: .ci-json-reader
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.15'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Verify exact author source and dummy-output safety
+        run: |
+          python ops/ci/json_reader_tests.py
+          node --check ops/ci/json_reader_probe.cjs
+          python ops/ci/json_reader_gate.py --source .ci-json-reader --check-inputs
+          printf 'PLAYWRIGHT_BROWSERS_PATH=%s/dalaai-json-reader-browser\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Install locked packages and official Chromium
+        timeout-minutes: 10
+        run: |
+          npm ci --prefix .ci-json-reader/frontend
+          node .ci-json-reader/frontend/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: One controlled public comparison with120-second runtime bound
+        timeout-minutes: 3
+        run: python ops/ci/json_reader_gate.py --source .ci-json-reader
+      - name: Record diagnostic scope
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path('json-reader-summary.json')
+          r=json.loads(p.read_text()) if p.is_file() else {}
+          status=r.get('status','BLOCKED')
+          if status not in {'COMPARISON_COMPLETE','INCONCLUSIVE','BLOCKED'}:status='BLOCKED'
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
+              out.write('Public synthetic JSON reader comparison: '+status+'\n\n')
+              out.write('One request per arm; app/CDP outcomes are separate. No actual-app or original C acceptance claim.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: public-json-reader-${{ github.sha }}-${{ github.run_attempt }}
+          path: json-reader-summary.json
+          if-no-files-found: ignore
+          retention-days: 7
