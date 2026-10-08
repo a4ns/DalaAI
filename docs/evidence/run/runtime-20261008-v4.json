@@ -1,0 +1,512 @@
+{
+  "schema_version": 1,
+  "kind": "release_evidence_and_remaining_criteria_snapshot",
+  "snapshot_id": "runtime-20261008-v4",
+  "checked_at": "2026-10-08T08:30:00Z",
+  "timezone": "UTC+05:00",
+  "previous_snapshot": "runtime-20261008-v3.json",
+  "code_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
+  "code_tree": "5067407c7982acc4cef6435d9e8ea3189ba13198",
+  "frontend_sha": "6fa27276f14ef31757cb0da5ee9d7acc15789111",
+  "binding_source_sha": "5e97b71c6701e2ae1bf83547dce563a02c693389",
+  "documentation_is_runtime_execution": false,
+  "evidence_method": "Primary GitHub workflow metadata and bounded primary job summaries; independently checked by the assigned reviewer. No private credentials or raw browser output are included.",
+  "overall": {
+    "status": "PARTIAL_ACCEPTANCE",
+    "workflow_pass": 9,
+    "workflow_fail": 1,
+    "fully_green": false,
+    "open_gate": "C113"
+  },
+  "workflows": [
+    {
+      "run_id": 37744382670,
+      "name": "Actual managed image validation",
+      "head_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
+      "branch": "validation/managed-image-20261008",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744382670",
+      "updated_at": "2026-10-08T07:36:56Z"
+    },
+    {
+      "run_id": 37744308538,
+      "name": "PostgreSQL persistence validation",
+      "head_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
+      "branch": "main",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308538",
+      "updated_at": "2026-10-08T07:38:54Z"
+    },
+    {
+      "run_id": 37744308549,
+      "name": "Isolated C107 historical PostgreSQL gate",
+      "head_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
+      "branch": "main",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308549",
+      "updated_at": "2026-10-08T07:35:38Z"
+    },
+    {
+      "run_id": 37744308541,
+      "name": "Frontend source and build",
+      "head_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
+      "branch": "main",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308541",
+      "updated_at": "2026-10-08T07:35:14Z"
+    },
+    {
+      "run_id": 37744308519,
+      "name": "Historical and live demo fixture",
+      "head_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
+      "branch": "main",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308519",
+      "updated_at": "2026-10-08T07:35:56Z"
+    },
+    {
+      "run_id": 37744308533,
+      "name": "Composed HTTPS photo cycle",
+      "head_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
+      "branch": "main",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308533",
+      "updated_at": "2026-10-08T07:36:16Z"
+    },
+    {
+      "run_id": 37744308551,
+      "name": "Backend scaffold",
+      "head_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
+      "branch": "main",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308551",
+      "updated_at": "2026-10-08T07:36:18Z"
+    },
+    {
+      "run_id": 37744308521,
+      "name": "Mobile composed app (Android emulation)",
+      "head_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
+      "branch": "main",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308521",
+      "updated_at": "2026-10-08T07:37:02Z"
+    },
+    {
+      "run_id": 37744308530,
+      "name": "Historical analytics (Android emulation)",
+      "head_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
+      "branch": "main",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308530",
+      "updated_at": "2026-10-08T07:37:09Z"
+    },
+    {
+      "run_id": 37744308528,
+      "name": "Demo clock and protected downloads (Android emulation)",
+      "head_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
+      "branch": "main",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308528",
+      "updated_at": "2026-10-08T07:37:11Z"
+    }
+  ],
+  "current_runtime_gates": [
+    {
+      "name": "C110",
+      "status": "PASS",
+      "run_id": 37744308521,
+      "job_id": 113202053214,
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308521/job/113202053214",
+      "stages": 6,
+      "committed_commands": 11,
+      "database_events": 13,
+      "skips": 0,
+      "proof": {
+        "outputs": 5,
+        "sentinel_matches": 0
+      },
+      "tls": "PASS",
+      "cleanup": "PASS",
+      "artifacts": [
+        {
+          "artifact_id": 11535092346,
+          "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308521/artifacts/11535092346",
+          "sha256": "700f567d11b10330de99caa3f310212103c0d3c55dde765b3cf032148ce05ca9",
+          "expires_at": "2026-10-15T07:36:57Z"
+        }
+      ]
+    },
+    {
+      "name": "C112",
+      "status": "PASS",
+      "run_id": 37744308530,
+      "job_id": 113202053354,
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308530/job/113202053354",
+      "stages": 7,
+      "protected_observations": 3,
+      "executor_denials": 3,
+      "orders": 540,
+      "submissions": 568,
+      "missing_photo_references": 444,
+      "business_rows_unchanged": true,
+      "skips": 0,
+      "proof": {
+        "outputs": 5,
+        "sentinel_matches": 0
+      },
+      "tls": "PASS",
+      "cleanup": "PASS",
+      "artifacts": [
+        {
+          "artifact_id": 11534644876,
+          "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308530/artifacts/11534644876",
+          "sha256": "0c7cae53ba7864e415486f3d150b8a0964005cf3ffef87f884eb43a1d085440b",
+          "expires_at": "2026-10-15T07:37:04Z"
+        }
+      ]
+    },
+    {
+      "name": "C113",
+      "status": "FAIL",
+      "run_id": 37744308528,
+      "job_id": 113202053429,
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308528/job/113202053429",
+      "completed_stages": 4,
+      "clock_observations": 6,
+      "saved_and_inspected_downloads": 1,
+      "completed_downloads": [
+        "SHIFT_PDF"
+      ],
+      "failure": {
+        "target": "SHIFT_XLSX",
+        "substep": "READ_RESPONSE_BYTES",
+        "http": "HTTP_OK",
+        "encoding": "IDENTITY",
+        "declared_length": "POSITIVE_WITHIN_LIMIT",
+        "ui_before": "READY",
+        "ui_after": "READY",
+        "request": "FAILED",
+        "failure_present": true,
+        "body": "BODY_UNAVAILABLE",
+        "xlsx_save_and_inspection": "NOT_REACHED"
+      },
+      "proof": {
+        "outputs": 5,
+        "sentinel_matches": 0
+      },
+      "tls": "PASS",
+      "cleanup": "PASS",
+      "artifacts": [
+        {
+          "artifact_id": 11535032632,
+          "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308528/artifacts/11535032632",
+          "sha256": "c4ae9143bd0697cae251be89b2ec6b9e6bd726d05d04ec10d4b3576026dd2fc5",
+          "expires_at": "2026-10-15T07:37:06Z"
+        }
+      ],
+      "limitation": "Original four-file acceptance failed. UI readiness does not establish that this observer received the response bytes."
+    },
+    {
+      "name": "PostgreSQL persistence",
+      "status": "PASS",
+      "run_id": 37744308538,
+      "job_id": 113202053311,
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744308538/job/113202053311",
+      "assignee_gate": {
+        "owner": 13,
+        "restricted_api_login": 13,
+        "mounted_main": 1,
+        "skips": 0
+      },
+      "report_gate": {
+        "owner": 5,
+        "restricted_api_login": 5,
+        "mounted_main": 2,
+        "skips": 0
+      },
+      "report_model_transport": "RECORDED_ONLY",
+      "report_model_lifecycle": "Application lifespan recreation, not a live provider or dedicated process-restart claim",
+      "aggregate": {
+        "tests_run": 873,
+        "skips": 3,
+        "skipped_classes": [
+          "test_demo_clock_postgres.PostgresClockTests",
+          "test_demo_clock_runtime_postgres.MountedClockTests",
+          "test_worker_runtime_postgres.WorkerRuntimePostgresTests"
+        ],
+        "skip_scope": "Aggregate-specific opt-in/login inputs absent; corresponding mandatory dedicated gates passed separately."
+      }
+    },
+    {
+      "name": "Actual managed image",
+      "status": "PASS",
+      "run_id": 37744382670,
+      "job_id": 113202282475,
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744382670/job/113202282475",
+      "scope": [
+        "trusted_https",
+        "actual_auth_photo_rules_human_cycle",
+        "container_pdf_xlsx",
+        "shared_demo_clock",
+        "database_photo_and_offline_budget_reservation_restart_persistence"
+      ],
+      "limits": [
+        "not_hosted_deployment",
+        "no_live_provider",
+        "no_real_phone",
+        "no_mixed_load"
+      ]
+    }
+  ],
+  "synthetic_ui_checks": [
+    {
+      "name": "responsive_ui",
+      "status": "PASS",
+      "product_sha": "a880371589aa1dd117dde9e80936c687d146f919",
+      "run_id": 37738244894,
+      "job_id": 113182636719,
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37738244894/job/113182636719",
+      "source_tests": 218,
+      "browser_cases_per_viewport": 18,
+      "viewports": [
+        [
+          320,
+          800
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          768,
+          1024
+        ]
+      ],
+      "skips": 0,
+      "retries": 0,
+      "artifact": {
+        "artifact_id": 11532402377,
+        "url": "https://github.com/a4ns/DalaAI/actions/runs/37738244894/artifacts/11532402377",
+        "sha256": "3fd8412aec3d3a84427b9d0e146dc15ac49e29b64717c7cdd319e8fa8bf66964"
+      },
+      "limit": "Synthetic intercepted HTTP, older product; not a full current-head or device acceptance."
+    },
+    {
+      "name": "owned_scroll_and_photo_focus",
+      "status": "PASS",
+      "product_sha": "8081a2984b2f27b909fa2b86cd9f10ffd01d1e11",
+      "test_source_sha": "cbc8fd64764a7dcb8fe0dc45e2f8ce737fe0a3a9",
+      "run_id": 37742410242,
+      "job_id": 113195934896,
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37742410242/job/113195934896",
+      "browser_cases": 18,
+      "viewports": [
+        [
+          320,
+          800
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          768,
+          1024
+        ]
+      ],
+      "skips": 0,
+      "retries": 0,
+      "artifact": {
+        "artifact_id": 11534665483,
+        "url": "https://github.com/a4ns/DalaAI/actions/runs/37742410242/artifacts/11534665483",
+        "sha256": "f4099d1e5510806b8550a917076cb3fd5d521081dca425524465511f5d951e6b"
+      },
+      "limit": "Real components and browser effects with synthetic callbacks/images; predates quiet-poll change."
+    },
+    {
+      "name": "quiet_refresh_geometry",
+      "status": "PASS",
+      "product_sha": "6fa27276f14ef31757cb0da5ee9d7acc15789111",
+      "test_source_sha": "f50dcd8e34bde095581ff3e97ece4e5b7b0f5ba0",
+      "run_id": 37744971244,
+      "job_id": 113204172587,
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37744971244/job/113204172587",
+      "browser_cases": 33,
+      "viewports": [
+        [
+          320,
+          800
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          768,
+          1024
+        ]
+      ],
+      "measurement_count": 24,
+      "cycles_per_measurement": 3,
+      "scroll_y": 173,
+      "maximum_rectangle_delta_px": 0,
+      "allowed_rectangle_delta_px": 0.25,
+      "skips": 0,
+      "retries": 0,
+      "artifact": {
+        "artifact_id": 11535866031,
+        "url": "https://github.com/a4ns/DalaAI/actions/runs/37744971244/artifacts/11535866031",
+        "sha256": "c357ee1710d470c8602d96862b5295ce589f97f1a6a9fa12ea24a0d683342e38",
+        "expires_at": "2026-10-15T07:46:10Z"
+      },
+      "limit": "Actual React/Chromium with synthetic resource states; no network polling latency, API or physical-device claim."
+    }
+  ],
+  "diagnostics": [
+    {
+      "name": "instrumented_real_pdf",
+      "status": "DIAGNOSTIC_COMPLETE",
+      "run_id": 37735477663,
+      "job_id": 113173905315,
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37735477663/job/113173905315",
+      "pdf_bytes": 388774,
+      "app_saved_cdp_equality": true,
+      "content_and_current_authority": "PASS",
+      "business_rows_unchanged": true,
+      "original_c113_acceptance": "NOT_ESTABLISHED"
+    },
+    {
+      "name": "public_json_comparison",
+      "status": "COMPARISON_COMPLETE",
+      "semantic_result": "OBSERVED_DIFFERENCE_OR_FAILURE",
+      "run_id": 37740640456,
+      "job_id": 113190309659,
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37740640456/job/113190309659",
+      "requests_per_arm": 1,
+      "app_bytes_per_arm": 175949,
+      "text_cdp": "EXACT_MATCH",
+      "manual_reader_cdp": "BODY_UNAVAILABLE",
+      "manual_reader_request": "ABORTED",
+      "scope": "Controlled public synthetic JSON only"
+    },
+    {
+      "name": "public_binary_comparison",
+      "status": "COMPARISON_COMPLETE",
+      "semantic_result": "COMPLETE_APP_CHECK_FAILED",
+      "workflow_conclusion": "success",
+      "head_sha": "b5330bd955bc9f13c3d159d59c6ad9109aa99899",
+      "run_id": 37746788648,
+      "job_id": 113210055440,
+      "url": "https://github.com/a4ns/DalaAI/actions/runs/37746788648/job/113210055440",
+      "requests": 12,
+      "requests_per_flow_arm": 1,
+      "manual_app_checks_passed": 6,
+      "manual_app_checks_total": 6,
+      "transform_app_checks_passed": 4,
+      "transform_app_checks_total": 6,
+      "positive_app_bytes": 175949,
+      "positive_payloads_exact": 4,
+      "positive_cdp_matches": 0,
+      "cdp_error": "BODY_UNAVAILABLE",
+      "request_error": "ABORTED",
+      "transform_error_category_mismatches": [
+        "overflow_unknown_length: TypeError",
+        "caller_abort: TypeError"
+      ],
+      "separate_source_limitation": "Uncooperative cancellation may retain an internal pipeThrough source-reader lock.",
+      "adopted": false,
+      "experiment_closed": true,
+      "further_run_planned": false,
+      "prior_run": {
+        "run_id": 37745783006,
+        "job_id": 113206815927,
+        "status": "INCONCLUSIVE",
+        "failure": "TARGET_CLOSED",
+        "requests": 0,
+        "cause_proven": false
+      },
+      "artifact": {
+        "artifact_id": 11536003249,
+        "url": "https://github.com/a4ns/DalaAI/actions/runs/37746788648/artifacts/11536003249",
+        "sha256": "9400bfeceef6cc63f1a2b4002147d1275f70bef5d8545e4c2080430988d8d924",
+        "expires_at": "2026-10-15T07:59:17Z"
+      },
+      "scope": "Signature-only public synthetic bytes; no real document, API, provider or original C113 repair claim."
+    }
+  ],
+  "historical_evidence_preserved": {
+    "snapshot": "runtime-20261008-v3.json",
+    "two_c113_passes_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+    "later_failures_remain_failures": true,
+    "current_failure_not_overwritten_by_diagnostics": true
+  },
+  "remaining_criteria": [
+    {
+      "id": "before_photo_executor_display",
+      "status": "MISSING_AT_SNAPSHOT",
+      "note": "Protected API supports current assigned executor; current view model omits before_photo_ids. Separate work in progress is not counted as accepted."
+    },
+    {
+      "id": "all_four_browser_exports",
+      "status": "FAIL",
+      "note": "Current C113 body-capture failure remains open."
+    },
+    {
+      "id": "live_openai",
+      "status": "NOT_RUN",
+      "note": "Closure/photo/report adapters and recorded tests only. Optional report purpose requires explicit operator opt-in; assignment recommendations remain deterministic."
+    },
+    {
+      "id": "live_push",
+      "status": "NOT_RUN",
+      "note": "Web Push has a generic update payload. Detailed overdue fields required by the case are not implemented in that payload; device delivery/sound and reminder delivery are unverified."
+    },
+    {
+      "id": "public_host",
+      "status": "NOT_RUN",
+      "note": "No verified user-facing hosted URL in this acceptance."
+    },
+    {
+      "id": "physical_android",
+      "status": "NOT_RUN",
+      "note": "Native camera, system Save/open, timed creation/upload/status latency and mixed load unverified."
+    },
+    {
+      "id": "assignment_and_history_ai",
+      "status": "PARTIAL",
+      "note": "Workload-first advisory ranking and limited grounded historical counts; no qualification/equipment-fit verification, causal diagnosis or live-model validation."
+    },
+    {
+      "id": "demo_reset",
+      "status": "NOT_IMPLEMENTED",
+      "note": "Fresh profile only; no automatic deletion or reset."
+    },
+    {
+      "id": "submission_package",
+      "status": "NOT_CONFIRMED",
+      "note": "Final slides/video/form destination/submission receipt not established by engineering evidence."
+    }
+  ],
+  "operator_actions_performed_by_snapshot": {
+    "credential_setup": false,
+    "live_provider_activation": false,
+    "paid_host_deployment": false,
+    "competition_submission": false
+  },
+  "working_deadlines": {
+    "timezone": "UTC+05:00",
+    "freeze": "2026-10-08T17:00:00+05:00",
+    "target_submission": "2026-10-08T22:00:00+05:00",
+    "deadline": "2026-10-08T23:59:00+05:00"
+  }
+}
