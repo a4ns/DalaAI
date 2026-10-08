@@ -1,8 +1,8 @@
 # DalaAI → Render: 15-minute operator checklist
 
-**Source only. Do not deploy overnight. Humans choose the platform and approve charges in the morning.**
+**Actual managed-image CI passed. No hosted deployment was performed. Humans choose the platform and approve charges in the morning.**
 
-**STOP gate:** the full migration bundle and worker-capability launcher are integrated source; verify their exact PostgreSQL/Compose run before launch. Leave `DALA_MANAGED_START_APPROVED=false` until their exact release and database checks pass. This guide does not turn a source candidate into a hosted-ready release.
+[Exact managed-image CI](https://github.com/a4ns/DalaAI/actions/runs/37712260125/job/113100631476) passed the full runtime and restart checks. Leave `DALA_MANAGED_START_APPROVED=false` until the operator also verifies the selected host, database, disk and credentials. Disposable CI does not establish hosted readiness.
 
 ## Before timing
 
@@ -13,13 +13,15 @@ Chosen profile: one **paid 2 GB** web instance containing separate Caddy/API/wor
 ## 0–4 min: accepted schema and roles
 
 - Verify exact SHA, A5 migration map and accepted first-run launcher; old001–004-only initialization is insufficient
-- Run `python ops/provision/enable_worker_capabilities.py --backend backend --schema dalaai_demo --expected-database naryadai --bootstrap --apply` with the documented owner/API/worker DSNs and explicit setup flags in the private administrative environment; retain all data on any uncertain result
-- Validate distinct restricted API/worker LOGINs and matching capability grants; no runtime owner credentials or PINs
+- Before running any initializer, choose clock-off `enable_worker_capabilities.py` or fresh clock-enabled `enable_demo_clock.py`; the latter needs the explicit clock capability flag and one fixed instance ID. Run only the chosen helper with `--backend backend --schema dalaai_demo --expected-database naryadai --bootstrap --apply` and the documented private inputs. The clock wrapper cannot adopt a schema already initialized by the clock-off helper
+- Validate distinct restricted API/worker LOGINs and matching full AI+notification+push capability grants; keep AI/notification flags true and live Web Push false until configured. No runtime owner credentials or PINs
 - Before first initialization, explicitly choose `DALA_DEMO_FIXTURE_MODE=history`
-  for540 canonical orders plus the two live accounts, or leave the default
+  for 540 canonical orders plus the two live accounts, or leave the default
   `minimal`. Keep that same choice on repeat. The existing schema is never adopted
   or widened when the mode differs. Historical actors remain disabled and their
   placeholder photos are disclosed as unavailable physical evidence
+
+- After clock-enabled initialization, forward the same enabled flag and fixed instance ID to API and worker
 
 ## 4–7 min: secrets and durable storage
 

@@ -1,0 +1,57 @@
+{
+  "auth_boundary": "PASS_TRUSTED_TLS_SECURE_COOKIE_ORIGIN_CSRF",
+  "cleanup": "PASS_OWN_DISPOSABLE_PROJECT_REMOVED",
+  "config_shape": {
+    "command_is_default": true,
+    "entrypoint_is_default": true,
+    "included": {
+      "api": false,
+      "budget-directory": false,
+      "db": true,
+      "managed": true,
+      "photo-directory": false,
+      "prepare": true,
+      "tls-edge": true,
+      "web": false,
+      "worker": false
+    },
+    "unexpected_service_count": 0
+  },
+  "counts": {
+    "ai_assessments": 1,
+    "operation_receipts": 6,
+    "orders": 541,
+    "photos": 1,
+    "submissions": 569
+  },
+  "hosted_render": "NOT_RUN",
+  "image_id": "sha256:b439d19433736f2f2cf8d5d2b24d977cbd92973c0fc5e5e1a930edd14e1446ac",
+  "mixed_load_capacity": "NOT_RUN",
+  "offline_ledger": "SEPARATE_CI_POLICY_ONE_CANCELLED_RESERVATION_NO_PROVIDER_CALL_NO_BILLED_COST",
+  "persistence": "PASS_DB_PHOTO_OFFLINE_BUDGET_RESERVATION",
+  "physical_photo_count": 1,
+  "process_boundary": {
+    "api_loopback_only": true,
+    "api_uid": 10001,
+    "child_secret_scopes": "PASS",
+    "edge_uid": 10002,
+    "worker_uid": 10001
+  },
+  "provider_calls": "NOT_RUN_DISABLED",
+  "real_android": "NOT_RUN",
+  "scope": "ACTUAL_MANAGED_IMAGE_DISPOSABLE_TLS_POSTGRES",
+  "smoke": {
+    "AI_worker": "PASS_PERSISTED_RULES_FALLBACK",
+    "clock": "PASS_SHARED_PAUSE_ADVANCE_CAS_MASTER_ONLY",
+    "exports": "PASS_ACTUAL_CONTAINER_PDF_XLSX_MASTER_ONLY",
+    "history": "PASS_540_CANONICAL_ORDERS_VISIBLE_WITH_MISSING_EVIDENCE_DISCLOSURE",
+    "source_sha": "2d1a40796881eace63378c9ef83886b0a0bda95d",
+    "status": "PASS_COMPOSE_PHOTO_CYCLE"
+  },
+  "source_sha": "2d1a40796881eace63378c9ef83886b0a0bda95d",
+  "stage": "completed",
+  "status": "PASS",
+  "run_id": 37712260125,
+  "job_id": 113100631476,
+  "url": "https://github.com/a4ns/DalaAI/actions/runs/37712260125/job/113100631476"
+}

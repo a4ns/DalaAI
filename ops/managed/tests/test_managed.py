@@ -50,6 +50,17 @@ class ManagedTests(unittest.TestCase):
             e = config(); e['DALA_ALLOWED_ORIGIN'] = value
             with self.subTest(value=value), self.assertRaises(ValueError): s.child_environments(e)
 
+    def test_localhost_is_test_only_and_still_exact_https(self):
+        e = config() | {'DALA_ALLOWED_ORIGIN': 'https://localhost'}
+        with self.assertRaises(ValueError): s.child_environments(e)
+        api, worker, edge = s.child_environments(e | {'DALA_MANAGED_TEST_LOCALHOST': 'true'})
+        self.assertEqual(api['DALA_ALLOWED_ORIGIN'], 'https://localhost')
+        self.assertEqual(edge['DALA_PUBLIC_HOST'], 'localhost')
+        self.assertNotIn('DALA_MANAGED_TEST_LOCALHOST', api)
+        for origin in ('http://localhost', 'https://localhost:443', 'https://localhost:8443', 'https://localhost/'):
+            with self.subTest(origin=origin), self.assertRaises(ValueError):
+                s.child_environments(e | {'DALA_ALLOWED_ORIGIN': origin, 'DALA_MANAGED_TEST_LOCALHOST': 'true'})
+
     def test_owner_and_pin_rejected(self):
         for key in s.FORBIDDEN:
             e = config(); e[key] = 'fixture-do-not-propagate'
@@ -142,6 +153,22 @@ class ManagedTests(unittest.TestCase):
         self.assertIn('admin off', caddy)
         self.assertIn('root * /srv', caddy)
         self.assertNotIn('/var/lib/naryadai', caddy)
+
+    def test_copied_managed_caddy_loses_unneeded_file_capability(self):
+        import shlex
+        dockerfile=(ROOT/'Dockerfile').read_text()
+        line=next(row for row in dockerfile.splitlines() if row.startswith('RUN python -c ') and 'security.capability' in row)
+        script=shlex.split(line)[3]
+        for initially_present in (True,False):
+            attrs=['security.capability'] if initially_present else []
+            with patch.object(os,'listxattr',side_effect=lambda path:list(attrs)) as listing, \
+                 patch.object(os,'removexattr',side_effect=lambda path,attribute:attrs.remove(attribute)) as removal:
+                exec(compile(script,'<managed-caddy-capability-check>','exec'),{})
+                self.assertNotIn('security.capability',attrs)
+                self.assertTrue(all(call.args==('/usr/bin/caddy',) for call in listing.call_args_list))
+                if initially_present:removal.assert_called_once_with('/usr/bin/caddy','security.capability')
+                else:removal.assert_not_called()
+        self.assertNotIn('SYS_PTRACE',dockerfile)
 
     def test_worker_preflight_failure_starts_no_listener(self):
         from types import SimpleNamespace

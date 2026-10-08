@@ -1,46 +1,51 @@
 {
-  "status": "INTEGRATED_SOURCE_RUNTIME_CI_PENDING_NOT_DEPLOYED",
+  "status": "ACTUAL_MANAGED_IMAGE_CI_PASSED_NOT_HOSTED",
   "provider": "Render",
   "inspected_base_sha": "5d737eef19e1a7f38e07950f9185a953a2f94e47",
   "scope": "New ops/managed/** only; no ops/demo edits",
   "files_sha256": {
     "ops/managed/Caddyfile": "310d0094ec3b05b5a2cc857c16898b8f4cce538fde84f8cff900eddb8c6425df",
-    "ops/managed/Dockerfile": "24e38b703f6c9263ffc30312bf40bef0e495ac6d7f052305aaff3e956f5ba5ea",
+    "ops/managed/Dockerfile": "5af43ccd508bace4f4e683b99abc73a3b9c4dae0d5154b53269f08ed9d8f9745",
     "ops/managed/Dockerfile.dockerignore": "be969b7e8341d1e5eb8c0d8757ada83faac8aed146358556b87e757a1a1cc9b6",
-    "ops/managed/OPERATOR_15_MIN.md": "6f712309c16688e9539d90f8e246c7653338fce9c14da235ab70945fc18a5797",
-    "ops/managed/README.md": "5b4bc4a5056b7569d3b846240e4c08d678b56ff940aa28593825ec35428e213f",
+    "ops/managed/OPERATOR_15_MIN.md": "fb1bb1e7f3da9b87e8851ded07f27d85ea898eb220040b49d250a01a73d4bc02",
+    "ops/managed/README.md": "5aab9889220bff71c61940e3c6362ab4721c115c1d38144127931ea7df5016da",
     "ops/managed/render.yaml.example": "f35e2a053fb52ad51bcceda2e21f8ac6650bd329738f746d1c2c1455227f2bb3",
-    "ops/managed/supervise.py": "c3b8989392e5efcb229944568b401e391acbbb611299a33d38573a6cf7dc589a",
-    "ops/managed/tests/test_managed.py": "aba6f25a265f381843bc4772d7a4e49df95e19be8465a0d045e1fdba7f329db9"
+    "ops/managed/supervise.py": "4c5d7e8f166f67ed812ae7de32cadbedcaff65ce1f410a48b819a663860cf088",
+    "ops/managed/tests/test_managed.py": "22e5d3027da7bdd40736d04637b8d96a1dd2e55972ce1cd735cc5d44f3a85e95",
+    "ops/managed/CI_EVIDENCE.json": "9929850dcd05d829dc71956df5671acb80a690524563cd540c20cff3d32e0997"
   },
   "checks": {
     "unittest": {
       "result": "PASS",
-      "count": 19,
+      "count": 21,
       "command": "PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s ops/managed/tests -v"
     },
     "python_ast": "PASS",
     "yaml_parse_and_local_invariants": "PASS",
-    "focused_security_source_review": "Frozen package cleared; focused integration seams reviewed, actual runtime gates required"
+    "focused_security_source_review": "Frozen package cleared; focused integration seams reviewed, actual runtime gates required",
+    "actual_managed_image": {
+      "status": "PASS",
+      "run_id": 37712260125,
+      "job_id": 113100631476,
+      "image_id": "sha256:b439d19433736f2f2cf8d5d2b24d977cbd92973c0fc5e5e1a930edd14e1446ac",
+      "evidence": "ops/managed/CI_EVIDENCE.json"
+    }
   },
   "not_run": [
-    "Docker build",
-    "Caddy adapt/validate",
     "official Render schema/API validation",
     "managed resource creation",
     "Render PostgreSQL provisioning/migrations",
-    "hosted mount and UID behavior",
-    "HTTPS cookie/proxy acceptance",
-    "hosted API-to-worker end-to-end",
-    "restart persistence",
+    "hosted disk behavior",
+    "public DNS/TLS deployment",
     "mixed-load resource measurement",
     "live OpenAI",
     "live Web Push",
-    "real Android"
+    "native download save",
+    "physical Android"
   ],
   "remaining_dependencies": [
-    "Exact integration Docker/PostgreSQL/HTTPS CI",
     "Human host/cost choice and secure operator setup",
+    "Exact chosen hosted database/disk/origin validation",
     "Live provider and physical-device acceptance"
   ],
   "external_actions_performed": [],
@@ -53,6 +58,9 @@
     "Optional model force-off forwarding",
     "Copies checksum-pinned synthetic sources for explicit fresh historical fixture",
     "Pinned DejaVu fonts and export dependencies; historical generator included in image allowlist",
-    "Optional shared business-clock instance forwarding; no owner or provisioning credentials in child environments"
-  ]
+    "Optional shared business-clock instance forwarding; no owner or provisioning credentials in child environments",
+    "Explicit test-only HTTPS localhost allowance for isolated managed-image CI; normal hosted domain rule unchanged",
+    "Removes and verifies absence of the copied Caddy low-port file capability; managed listener remains on an unprivileged port"
+  ],
+  "validated_source_sha": "2d1a40796881eace63378c9ef83886b0a0bda95d"
 }

@@ -1,0 +1,32 @@
+name: Actual managed image validation
+'on':
+  push:
+    branches: ['validation/managed-image-20261008']
+permissions:
+  contents: read
+concurrency:
+  group: managed-image-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  managed-image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      DALA_MANAGED_DISPOSABLE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with: {python-version: '3.12.15'}
+      - name: Install pinned local verification dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libnss3-tools
+          python -m pip install -r backend/requirements-dev.lock
+          python -m pip check
+      - name: Source and fail-closed harness contracts
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s ops/managed/tests -v
+          PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s ops/ci/tests -p test_managed_validate.py -v
+      - name: Build and verify exact managed image with disposable TLS and PostgreSQL
+        run: python ops/ci/managed_validate.py --report managed-image-summary.json

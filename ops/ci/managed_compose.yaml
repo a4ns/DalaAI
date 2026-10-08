@@ -1,0 +1,106 @@
+# Disposable managed-image gate only. Reuse original DB + full bootstrap profile.
+# Base: ops/demo/compose.yaml, ops/demo/compose.workers.yaml, then this overlay.
+services:
+  api:
+    profiles: [normal-demo-not-run]
+  worker:
+    profiles: [normal-demo-not-run]
+  web:
+    profiles: [normal-demo-not-run]
+  photo-directory:
+    profiles: [normal-demo-not-run]
+  budget-directory:
+    profiles: [normal-demo-not-run]
+  prepare:
+    image: ${DALA_MANAGED_IMAGE:?Use managed_validate.py}
+    build: {context: ../.., dockerfile: ops/managed/Dockerfile}
+    command: [python, /ci/setup.py]
+    volumes:
+      - ${DALA_MANAGED_ROOT:?Use managed_validate.py}/ops/demo/setup.py:/ci/setup.py:ro
+    environment:
+      DALA_DEMO_FIXTURE_MODE: history
+      DALA_DEMO_CLOCK_ENABLED: 'true'
+      DALA_DEMO_CLOCK_INSTANCE_ID: ${DALA_DEMO_CLOCK_INSTANCE_ID:?Use managed_validate.py}
+  managed:
+    image: ${DALA_MANAGED_IMAGE:?Use managed_validate.py}
+    build: {context: ../.., dockerfile: ops/managed/Dockerfile}
+    env_file: ${DALA_MANAGED_PRIVATE:?Use managed_validate.py}/managed.env
+    environment:
+      DALA_MANAGED_CI_AUTHORIZED: disposable-image-only
+      DALA_MANAGED_START_APPROVED: 'true'
+      DALA_MANAGED_TEST_LOCALHOST: 'true'
+      PORT: '10000'
+      DALA_API_MODE: demo
+      DALA_DATABASE_SCHEMA: dalaai_demo
+      DALA_ALLOWED_ORIGIN: https://localhost
+      DALA_PHOTO_STORAGE_ROOT: /var/lib/naryadai/photos
+      DALA_PHOTO_MAX_TOTAL_BYTES: '1073741824'
+      DALA_MODEL_BUDGET_PATH: /var/lib/naryadai/budget/openai.sqlite3
+      DALA_MODEL_APPROVAL_FILE: /etc/secrets/demo-model-policy.json
+      DALA_MODEL_PROJECT_ID: DalaAI
+      DALA_MODEL_INSTANCE_ID: ${DALA_MODEL_INSTANCE_ID:?Use managed_validate.py}
+      DALA_MODEL_FORCE_OFF: 'true'
+      DALA_DEMO_CLOCK_ENABLED: 'true'
+      DALA_DEMO_CLOCK_INSTANCE_ID: ${DALA_DEMO_CLOCK_INSTANCE_ID:?Use managed_validate.py}
+      DALA_WORKER_ENABLED: 'true'
+      DALA_WORKER_AI_ENABLED: 'true'
+      DALA_WORKER_NOTIFY_ENABLED: 'true'
+      DALA_WORKER_CHANNEL: web_push
+      DALA_NOTIFICATION_CAPABILITY: 'true'
+      DALA_PUSH_CAPABILITY: 'true'
+      DALA_DELIVERY_CHANNEL: web_push
+      DALA_WEB_PUSH_ENABLED: 'false'
+      DALA_WORKER_TELEGRAM_ENABLED: 'false'
+      TELEGRAM_MODE: disabled
+      OPENAI_API_KEY: ''
+      OPENAI_API_KEY_FILE: ''
+      DALA_VAPID_PUBLIC_KEY: ''
+      DALA_VAPID_PRIVATE_KEY: ''
+      DALA_VAPID_SUBJECT: ''
+    secrets:
+      - source: model_policy
+        target: /etc/secrets/demo-model-policy.json
+    volumes:
+      - managed_data:/var/lib/naryadai
+      - ${DALA_MANAGED_ROOT}/ops/ci/managed_observe.py:/ci/managed_observe.py:ro
+    networks: [backend]
+    depends_on:
+      prepare: {condition: service_completed_successfully}
+    mem_limit: 2g
+    stop_grace_period: 90s
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; r=urllib.request.Request('http://127.0.0.1:10000/readyz',headers={'Host':'localhost'}); urllib.request.urlopen(r,timeout=4)"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+      start_period: 30s
+  tls-edge:
+    image: caddy:2.11.7-alpine
+    command: [caddy, run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
+    ports: ['127.0.0.1:443:443']
+    volumes:
+      - ${DALA_MANAGED_ROOT}/ops/ci/managed_Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${DALA_MANAGED_PRIVATE}/tls/server.crt:/run/ci-tls/server.crt:ro
+      - ${DALA_MANAGED_PRIVATE}/tls/server.key:/run/ci-tls/server.key:ro
+    # Only the test TLS edge joins the existing ordinary bridge for host ingress.
+    networks: [backend, frontend]
+    depends_on:
+      managed: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/data, /config]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+volumes:
+  managed_data: {}
+secrets:
+  postgres_owner_password: {file: '${DALA_MANAGED_PRIVATE}/postgres_owner_password'}
+  postgres_runtime_password: {file: '${DALA_MANAGED_PRIVATE}/postgres_runtime_password'}
+  postgres_worker_password: {file: '${DALA_MANAGED_PRIVATE}/postgres_worker_password'}
+  owner_dsn: {file: '${DALA_MANAGED_PRIVATE}/owner_dsn'}
+  runtime_dsn: {file: '${DALA_MANAGED_PRIVATE}/runtime_dsn'}
+  worker_dsn: {file: '${DALA_MANAGED_PRIVATE}/worker_dsn'}
+  master_pin: {file: '${DALA_MANAGED_PRIVATE}/master_pin'}
+  executor_pin: {file: '${DALA_MANAGED_PRIVATE}/executor_pin'}
+  model_policy: {file: '${DALA_MANAGED_PRIVATE}/model_policy.json'}
