@@ -1,0 +1,68 @@
+name: Anonymous WebKit request Origin comparison
+'on':
+  push:
+    branches: [validation/request-origin-browser-20261008]
+permissions:
+  contents: read
+concurrency:
+  group: request-origin-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  anonymous-webkit:
+    if: github.ref == 'refs/heads/validation/request-origin-browser-20261008'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: c219957c0ea8abe8c1c3291c66117074de380946
+          path: .ci-request-origin
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.15'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Verify exact source and anonymous output boundary
+        run: |
+          python ops/ci/request_origin_tests.py
+          node --check ops/ci/request_origin_probe.cjs
+          python ops/ci/request_origin_gate.py --source .ci-request-origin --check-inputs
+          printf 'PLAYWRIGHT_BROWSERS_PATH=%s/dalaai-request-origin-browser\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Install locked packages and official WebKit
+        timeout-minutes: 10
+        run: |
+          npm ci --prefix .ci-request-origin/frontend
+          node .ci-request-origin/frontend/node_modules/@playwright/test/cli.js install --with-deps webkit
+      - name: One anonymous eight-case WebKit comparison
+        timeout-minutes: 3
+        run: python ops/ci/request_origin_gate.py --source .ci-request-origin
+      - name: Record bounded scope
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path('request-origin-summary.json')
+          r=json.loads(p.read_text()) if p.is_file() else {}
+          status=r.get('status','BLOCKED')
+          if status not in {'PASS_ANONYMOUS_WEBKIT_TRANSPORT','FAIL','INCONCLUSIVE','BLOCKED'}:status='BLOCKED'
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
+              out.write('Anonymous WebKit request-Origin comparison: '+status+'\n\n')
+              out.write('Public loopback transport only. No application authentication, hosted HTTPS or physical iPhone proof.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: request-origin-${{ github.sha }}-${{ github.run_attempt }}
+          path: request-origin-summary.json
+          if-no-files-found: ignore
+          retention-days: 7
