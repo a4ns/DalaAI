@@ -70,6 +70,12 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     @asynccontextmanager
     async def lifespan(app):
         await asyncio.to_thread(check_database)
+        # The default loader is inert. Only an explicit report-model host profile
+        # may read its approved policy/key and the shared durable budget here.
+        import os
+        from app.reports.ai_summary_runtime import build_report_model_adapter
+        summary_service.adapter = await asyncio.to_thread(build_report_model_adapter,
+            os.environ, clock, runtime_mode=settings.mode)
         app.state.runtime_ready = True
         try:
             yield
@@ -136,7 +142,8 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     app.include_router(create_c_runtime_router(report_service))
     from app.reports.ai_summary import SummaryService
     from app.reports.ai_summary_routes import create_ai_summary_router
-    app.include_router(create_ai_summary_router(SummaryService(report_service)))
+    summary_service = SummaryService(report_service)
+    app.include_router(create_ai_summary_router(summary_service))
     if photo_service is not None:
         from app.photos.http import create_photo_router
         app.include_router(create_photo_router(photo_service))

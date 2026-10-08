@@ -38,6 +38,65 @@ class RestrictedAIReports(AIReportPostgresTests):
 
 
 class MountedAIReports(RestrictedAIReports):
+    def test_actual_main_opt_in_recorded_transport_shared_budget_and_restart(self):
+        from app.main import create_app
+        from app.runtime import RuntimeSettings
+        from app.ai.demo_policy import build_interactive_demo_policy
+        from app.ai.model_budget import SqliteBudgetLedger
+        from app.ai.openai_runtime import openai_demo_budget
+        from fastapi.testclient import TestClient
+        from datetime import timedelta
+        import json
+
+        adapter = self.recorded_adapter()
+        # An existing closure reservation stays in the very same durable file.
+        shared = SqliteBudgetLedger(adapter.ledger.path, openai_demo_budget())
+        token = shared.reserve(now=self.real.now().timestamp())
+        shared.finish(token, 'cancelled')
+        policy_path = Path(adapter.ledger.path).parent/'combined-policy.json'
+        policy = build_interactive_demo_policy(project_id=adapter.project.project_id,
+            instance_id=adapter.project.instance_id, expires_at=self.real.now()+timedelta(hours=1),
+            include_grounded_reports=True)
+        policy_path.write_text(json.dumps(policy))
+        environment = {'DALA_AI_REPORT_MODEL_ENABLED':'true','OPENAI_API_KEY':'recorded-only-fixture',
+            'DALA_MODEL_APPROVAL_FILE':str(policy_path),'DALA_MODEL_BUDGET_PATH':adapter.ledger.path,
+            'DALA_MODEL_PROJECT_ID':adapter.project.project_id,
+            'DALA_MODEL_INSTANCE_ID':adapter.project.instance_id}
+        origin = 'https://reports.test'
+        settings = RuntimeSettings(mode='demo', database_url=ApplicationRoleTests.runtime_dsn,
+            allowed_origin=origin, database_schema=self.schema)
+        headers = {'cookie':SESSION_COOKIE_NAME+'='+self.handle,'origin':origin,'x-csrf-token':self.csrf}
+        tables = ('orders','submissions','reviews','order_events','auth_sessions','ai_jobs')
+        with self.connect() as owner:
+            before = {table:owner.execute('SELECT count(*) AS n FROM '+table).fetchone()['n'] for table in tables}
+        with patch.dict(os.environ, environment, clear=True), \
+                patch('app.core.auth_boundary.SystemRealClock',return_value=self.real), \
+                patch('app.reports.ai_summary_runtime.OpenAIHTTPTransport',return_value=self.transport):
+            for attempt in range(2):
+                app = create_app(settings=settings,connect=self.runtime_connect)
+                with TestClient(app,base_url=origin,client=('127.0.0.1',45201)) as client:
+                    response = client.post('/api/v1/reports/ai-summary',json=self.body,headers=headers)
+                self.assertEqual(response.status_code,200,'Mounted recorded report failed')
+                self.assertEqual(response.json()['mode'], 'recorded_fixture' if attempt==0 else 'deterministic_fallback')
+                if attempt:
+                    self.assertEqual(response.json()['fallback_reason'],'operation_already_attempted')
+            self.assertEqual(self.transport.calls,1)
+            self.assertEqual(shared.counters()['calls_reserved'],2)
+            # An old closure-only policy still works for closure, but never grants reports.
+            policy_path.write_text(json.dumps(build_interactive_demo_policy(
+                project_id=adapter.project.project_id,instance_id=adapter.project.instance_id,
+                expires_at=self.real.now()+timedelta(hours=1))))
+            app=create_app(settings=settings,connect=self.runtime_connect)
+            with TestClient(app,base_url=origin,client=('127.0.0.1',45202)) as client:
+                denied=client.post('/api/v1/reports/ai-summary',json=self.body,headers=headers)
+            self.assertEqual(denied.status_code,200)
+            self.assertEqual(denied.json()['fallback_reason'],'report_purpose_not_approved')
+            self.assertEqual(self.transport.calls,1)
+            self.assertEqual(shared.counters()['calls_reserved'],2)
+        with self.connect() as owner:
+            after = {table:owner.execute('SELECT count(*) AS n FROM '+table).fetchone()['n'] for table in tables}
+        self.assertEqual(before,after)
+
     def test_actual_main_keyless_summary_and_access_checks(self):
         from app.main import create_app
         from app.runtime import RuntimeSettings
@@ -101,7 +160,8 @@ ApplicationRoleTests.setUpClass()
 try:
     run(unittest.defaultTestLoader.loadTestsFromTestCase(RestrictedAIReports), 5,
         'Grounded summary restricted API LOGIN')
-    run(unittest.TestSuite([MountedAIReports('test_actual_main_keyless_summary_and_access_checks')]), 1,
+    run(unittest.TestSuite([MountedAIReports('test_actual_main_keyless_summary_and_access_checks'),
+        MountedAIReports('test_actual_main_opt_in_recorded_transport_shared_budget_and_restart')]), 2,
         'Actual app.main grounded summary')
 finally:
     ApplicationRoleTests.doClassCleanups()

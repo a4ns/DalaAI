@@ -7,9 +7,17 @@ import './panel.css';
 
 export type { PanelScreenProps } from './types';
 
+// Presentation only: preserve the last complete result while a healthy refresh runs.
+function isRefreshingConfirmedSnapshot(resource: ResourceState<unknown>): boolean {
+  return resource.loadStatus === 'loading' && resource.snapshot !== null &&
+    resource.freshness !== 'never' && Boolean(resource.lastConfirmedAt) && !resource.incomplete && resource.error === null;
+}
+
 function ResourceNotice<T>({ resource, subject }: { resource: ResourceState<T>; subject: string }) {
+  const refreshingConfirmedSnapshot = isRefreshingConfirmedSnapshot(resource);
   let message: string;
-  if (resource.loadStatus === 'unavailable') message = `${subject}: загрузка недоступна.`;
+  if (refreshingConfirmedSnapshot) message = `${subject}: последняя загрузка завершена.`;
+  else if (resource.loadStatus === 'unavailable') message = `${subject}: загрузка недоступна.`;
   else if (resource.loadStatus === 'offline') message = `${subject}: нет сети. Актуальность данных не подтверждена.`;
   else if (resource.loadStatus === 'error') message = `${subject}: не удалось завершить загрузку.`;
   else if (resource.loadStatus === 'loading') message = `${subject}: ${resource.snapshot === null ? 'загружаем данные' : 'обновляем данные'}.`;
@@ -17,7 +25,7 @@ function ResourceNotice<T>({ resource, subject }: { resource: ResourceState<T>; 
   else if (resource.freshness === 'stale') message = `${subject}: данные могут быть устаревшими.`;
   else message = `${subject}: последняя загрузка завершена.`;
 
-  const caution = resource.incomplete || resource.freshness === 'stale'
+  const caution = resource.incomplete || (resource.freshness === 'stale' && !refreshingConfirmedSnapshot)
     || ['error', 'offline', 'unavailable'].includes(resource.loadStatus);
   return (
     <div className={`panel-notice${caution ? ' panel-notice--caution' : ''}`} role="status" aria-live="polite">
@@ -76,8 +84,8 @@ function OrderHistory({ order, resource, onRefresh }: {
           </li>
         ))}
       </ol>}
-      {history && events.length === 0 && resource?.freshness === 'fresh'
-        && resource.loadStatus === 'ready' && !resource.incomplete
+      {history && events.length === 0 && resource && ((resource.freshness === 'fresh'
+        && resource.loadStatus === 'ready' && !resource.incomplete) || isRefreshingConfirmedSnapshot(resource))
         && <p>В загруженной истории событий нет.</p>}
     </>
   );
@@ -148,7 +156,7 @@ export function PanelScreen({ orders, employees, selectedOrderId, history, onSel
           </div>
           {rows.length > 0 && <p className="panel-muted" role="status">Показано из загруженных: {filtered.length} / {rows.length}.
             {orders.incomplete ? ' Список неполный.' : ''}</p>}
-          {isConfirmedEmpty(orders) && <div className="panel-empty"><h3>Доступных нарядов нет</h3>
+          {(isConfirmedEmpty(orders) || (isRefreshingConfirmedSnapshot(orders) && rows.length === 0)) && <div className="panel-empty"><h3>Доступных нарядов нет</h3>
             <p>Это результат последней полной загрузки в вашей области доступа.</p></div>}
           {rows.length > 0 && filtered.length === 0 && <p className="panel-empty" role="status">В загруженных нарядах нет совпадений. Измените или сбросьте фильтры.</p>}
           {filtered.length > 0 && <ul className="panel-order-list">
@@ -188,7 +196,7 @@ export function PanelScreen({ orders, employees, selectedOrderId, history, onSel
         <p className="panel-muted">Очередь учитывает только наряды со статусом «В очереди». Показанный активный наряд может быть одним из нескольких.</p>
         {employees ? <ResourceNotice resource={employees} subject="Исполнители" />
           : <p>Сведения об исполнителях ещё не загружены.</p>}
-        {employees && isConfirmedEmpty(employees) && <p>В загруженном справочнике нет доступных исполнителей.</p>}
+        {employees && (isConfirmedEmpty(employees) || (isRefreshingConfirmedSnapshot(employees) && staff.length === 0)) && <p>В загруженном справочнике нет доступных исполнителей.</p>}
         {staff.length > 0 && <ul className="panel-staff-list">
           {staff.map((employee) => <li key={employee.id} className="panel-person">
             <h3>{employee.label}</h3>

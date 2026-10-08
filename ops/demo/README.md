@@ -113,6 +113,8 @@ docker compose --env-file ops/demo/.local/env --env-file ops/demo/.local/workers
 
 ## Morning checks
 
+The optional [grounded report model profile](../../docs/reports/model-runtime.md) uses a separate explicit `compose.reports.yaml` overlay and combined-purpose policy. Normal `run.sh` keeps factual report fallback and the existing closure-only policy behavior. Do not replace the budget volume or silently edit an existing policy to activate it.
+
 The15-minute setup target assumes Docker, DNS and the selected host are already
 ready; first image downloads can take longer. Review the selected managed-host
 alternative/costs separately. Verify trusted HTTPS, /healthz and /readyz; log in

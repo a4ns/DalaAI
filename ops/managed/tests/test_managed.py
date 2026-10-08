@@ -109,6 +109,28 @@ class ManagedTests(unittest.TestCase):
             e = config(); e[key] = value
             with self.subTest(key=key,value=value), self.assertRaises(ValueError): s.child_environments(e)
 
+    def test_report_model_opt_in_shares_exact_worker_inputs_only_with_api(self):
+        e=config() | {'DALA_AI_REPORT_MODEL_ENABLED':'true','OPENAI_API_KEY_FILE':'/etc/secrets/openai-key',
+            'DALA_MODEL_APPROVAL_FILE':'/etc/secrets/combined-policy.json',
+            'DALA_MODEL_PROJECT_ID':'DalaAI','DALA_MODEL_INSTANCE_ID':'fixture-instance',
+            'DALA_MODEL_FORCE_OFF':'false'}
+        api,worker,edge=s.child_environments(e)
+        self.assertEqual(api['DALA_AI_REPORT_MODEL_ENABLED'],'true')
+        self.assertNotIn('DALA_AI_REPORT_MODEL_ENABLED',worker)
+        self.assertNotIn('DALA_AI_REPORT_MODEL_ENABLED',edge)
+        for key in s.REPORT_MODEL_KEYS:
+            self.assertEqual(api.get(key),worker.get(key))
+            self.assertNotIn(key,edge)
+        for setting in ('false',None):
+            changed=dict(e)
+            if setting is None:changed.pop('DALA_AI_REPORT_MODEL_ENABLED')
+            else:changed['DALA_AI_REPORT_MODEL_ENABLED']=setting
+            api,worker,_=s.child_environments(changed)
+            self.assertFalse(s.REPORT_MODEL_KEYS & set(api))
+            self.assertIn('OPENAI_API_KEY_FILE',worker)
+        with self.assertRaises(ValueError):
+            s.child_environments(e|{'DALA_AI_REPORT_MODEL_ENABLED':'yes'})
+
     def test_worker_cannot_be_silently_disabled(self):
         e = config(); e['DALA_WORKER_ENABLED'] = 'false'
         with self.assertRaises(ValueError): s.child_environments(e)

@@ -14,7 +14,14 @@ const forOrder = (state: Operation | undefined, order: MasterOrderVM): Operation
 const locked = (state: Operation) => state.phase === 'pending' || state.phase === 'unknown' || state.phase === 'confirmed' || state.phase === 'conflict';
 const unknown = (): MutationOutcome => ({ kind: 'unknown', message: 'Связь прервалась. Сервер мог принять операцию, но результат не подтверждён.' });
 
-function ResourceNotice<T>({ resource, noun }: { resource: ResourceState<T>; noun: string }) {
+// Presentation only: a retained confirmed snapshot does not make loading data actionable.
+function isRefreshingConfirmedSnapshot(resource: ResourceState<unknown>): boolean {
+  return resource.loadStatus === 'loading' && resource.snapshot !== null &&
+    resource.freshness !== 'never' && Boolean(resource.lastConfirmedAt) && !resource.incomplete && resource.error === null;
+}
+
+function ResourceNotice<T>({ resource, noun, online }: { resource: ResourceState<T>; noun: string; online: boolean }) {
+  if (online && isRefreshingConfirmedSnapshot(resource)) return null;
   if (resource.loadStatus === 'loading') return <p role="status">{resource.snapshot ? `Обновляем ${noun}…` : `Загружаем ${noun}…`}</p>;
   if (resource.loadStatus === 'offline') return <p role="status">Нет сети. {resource.snapshot ? 'Показаны последние сохранённые данные.' : `${noun} ещё не загружены.`}</p>;
   if (resource.loadStatus === 'error' || resource.loadStatus === 'unavailable') return <p className="master-notice master-notice--warning" role="alert">{resource.error || `Не удалось загрузить ${noun}.`} {resource.snapshot ? 'Сохранённые данные могут быть устаревшими.' : 'Пустой список пока не подтверждён.'}</p>;
@@ -157,7 +164,7 @@ export function MasterScreen(props: MasterScreenProps) {
     {refreshError && <p className="master-error" role="alert">{refreshError}</p>}
     <section className="master-card" aria-labelledby={`${prefix}-create-title`}>
       <h2 id={`${prefix}-create-title`}>Новый наряд</h2>
-      <ResourceNotice resource={props.dictionaries} noun="Справочники" />
+      <ResourceNotice resource={props.dictionaries} noun="Справочники" online={props.online} />
       <form noValidate onSubmit={event => { event.preventDefault(); void create(); }} aria-busy={createState.phase === 'pending'}>
         <fieldset disabled={createLocked} className="master-fields"><legend className="master-visually-hidden">Данные нового наряда</legend>
           <div className="master-two-columns">
@@ -191,8 +198,8 @@ export function MasterScreen(props: MasterScreenProps) {
     <section className="master-review-list" aria-labelledby={`${prefix}-review-title`}>
       <h2 id={`${prefix}-review-title`}>Результаты на проверке</h2>
       {lastReviewConfirmation && <div className="master-notice master-notice--success" role="status"><p>{lastReviewConfirmation}</p><button type="button" onClick={() => setLastReviewConfirmation('')}>Скрыть подтверждение</button></div>}
-      <ResourceNotice resource={props.orders} noun="Наряды" />
-      {props.online && resourceIsCurrent(props.orders) && reviews.length === 0 && <p className="master-notice">Сейчас нет результатов на проверке.</p>}
+      <ResourceNotice resource={props.orders} noun="Наряды" online={props.online} />
+      {props.online && (resourceIsCurrent(props.orders) || isRefreshingConfirmedSnapshot(props.orders)) && reviews.length === 0 && <p className="master-notice">Сейчас нет результатов на проверке.</p>}
       {reviews.map(order => {
         const state = forOrder(reviewStates[order.id], order);
         const reviewDraft = props.reviewDrafts[order.id] || emptyMasterReviewDraft();

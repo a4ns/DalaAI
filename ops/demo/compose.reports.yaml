@@ -1,0 +1,25 @@
+# Optional operator-selected overlay AFTER combined report-purpose approval.
+# Use with compose.yaml + compose.workers.yaml, never as a standalone profile.
+# No key is supplied here. Default run.sh does not select this file.
+services:
+  api:
+    environment:
+      DALA_AI_REPORT_MODEL_ENABLED: 'true'
+      DALA_MODEL_APPROVAL_FILE: /run/secrets/report_model_policy
+      DALA_MODEL_PROJECT_ID: ${DALA_MODEL_PROJECT_ID:?Use the existing named demo project}
+      DALA_MODEL_INSTANCE_ID: ${DALA_MODEL_INSTANCE_ID:?Use the existing named demo instance}
+      DALA_MODEL_BUDGET_PATH: /var/lib/naryadai/budget/openai.sqlite3
+      DALA_MODEL_FORCE_OFF: ${DALA_MODEL_FORCE_OFF:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    secrets: [report_model_policy]
+    volumes: [model_budget:/var/lib/naryadai/budget]
+    networks: [backend, worker_egress]
+    depends_on:
+      budget-directory: {condition: service_completed_successfully}
+  worker:
+    environment:
+      DALA_MODEL_APPROVAL_FILE: /run/secrets/report_model_policy
+    secrets: [report_model_policy]
+secrets:
+  report_model_policy:
+    file: ${DALA_REPORT_MODEL_POLICY_FILE:?Select a separate reviewed combined-purpose policy file}

@@ -24,6 +24,8 @@ BASE = {'PATH': '/usr/local/bin:/usr/bin:/bin', 'PYTHONPATH': '/service',
 SHARED = {'DALA_DEMO_CLOCK_ENABLED','DALA_DEMO_CLOCK_INSTANCE_ID','DALA_API_MODE', 'DALA_DATABASE_SCHEMA', 'DALA_PHOTO_STORAGE_ROOT', 'DALA_PHOTO_MAX_TOTAL_BYTES'}
 PUSH_PUBLIC = {'DALA_WEB_PUSH_ENABLED', 'DALA_VAPID_PUBLIC_KEY', 'DALA_VAPID_SUBJECT'}
 API_KEYS = SHARED | PUSH_PUBLIC | {'DATABASE_URL', 'DALA_ALLOWED_ORIGIN', 'DALA_VAPID_PRIVATE_KEY', 'DALA_NOTIFICATION_CAPABILITY', 'DALA_PUSH_CAPABILITY', 'DALA_DELIVERY_CHANNEL'}
+REPORT_MODEL_KEYS = {'OPENAI_API_KEY', 'OPENAI_API_KEY_FILE', 'DALA_MODEL_APPROVAL_FILE',
+    'DALA_MODEL_PROJECT_ID', 'DALA_MODEL_INSTANCE_ID', 'DALA_MODEL_BUDGET_PATH', 'DALA_MODEL_FORCE_OFF'}
 WORKER_KEYS = SHARED | PUSH_PUBLIC | {
     'DALA_WORKER_ENABLED', 'DALA_WORKER_AI_ENABLED', 'DALA_WORKER_NOTIFY_ENABLED',
     'DALA_WORKER_CHANNEL', 'DALA_WORKER_TELEGRAM_ENABLED',
@@ -80,6 +82,13 @@ def child_environments(environment):
             p = Path(env[key])
             require(p.parent == Path('/etc/secrets') and p.name not in ('', '.', '..'), 'MANAGED_SECRET_FILE_PATH_REQUIRED')
     api_env = BASE | {k: v for k, v in env.items() if k in API_KEYS}
+    report_enabled = env.get('DALA_AI_REPORT_MODEL_ENABLED', 'false')
+    require(report_enabled in ('true', 'false'), 'MANAGED_REPORT_MODEL_FLAG_INVALID')
+    if report_enabled == 'true':
+        # Same application principal and persistent ledger as the closure worker.
+        # The API loader independently requires the exact combined purpose.
+        api_env.update({k: v for k, v in env.items() if k in REPORT_MODEL_KEYS})
+        api_env['DALA_AI_REPORT_MODEL_ENABLED'] = 'true'
     worker_env = BASE | {k: v for k, v in env.items() if k in WORKER_KEYS}
     edge_env = BASE | {'PORT': env['PORT'], 'DALA_PUBLIC_HOST': host,
                       'XDG_DATA_HOME': '/tmp/caddy-data', 'XDG_CONFIG_HOME': '/tmp/caddy-config'}

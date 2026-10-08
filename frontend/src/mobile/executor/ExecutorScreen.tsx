@@ -10,7 +10,14 @@ import './executor.css';
 
 export type { ExecutorScreenProps } from './types';
 
+// Presentation only: freshness guards still require a completed successful load.
+function isRefreshingConfirmedSnapshot(resource: ResourceState<unknown>): boolean {
+  return resource.loadStatus === 'loading' && resource.snapshot !== null &&
+    resource.freshness !== 'never' && Boolean(resource.lastConfirmedAt) && !resource.incomplete && resource.error === null;
+}
+
 function ResourceNotice<T>({ resource, name }: { resource: ResourceState<T>; name: string }) {
+  if (isRefreshingConfirmedSnapshot(resource)) return null;
   if (resource.loadStatus === 'loading') return <p role="status">{name}: загрузка…</p>;
   if (resource.loadStatus === 'offline') return <p className="executor-notice" role="status">Нет сети. {resource.snapshot ? 'Показаны сохранённые данные; они могут быть устаревшими.' : `${name} пока не получены.`} Отправка недоступна.</p>;
   if (resource.loadStatus === 'error' || resource.loadStatus === 'unavailable') return <p className="executor-notice executor-notice--error" role="alert">{resource.error || `${name} не удалось получить.`} {resource.snapshot ? 'Показан последний снимок.' : 'Наличие данных не подтверждено.'}</p>;
@@ -77,6 +84,11 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   const awaitingSnapshot = mutation.status === 'confirmed' && activeIntent !== null &&
     (!fresh || Boolean(actedOrder && actedOrder.version <= activeIntent.expectedVersion));
   const canCommand = fresh && !frozen && !awaitingSnapshot;
+  const refreshingConfirmedSnapshot = isRefreshingConfirmedSnapshot(props.orders);
+  // A routine poll must not retract an already observed post-command version.
+  // Keep the wait notice when that version is still missing, including a missing order.
+  const showAwaitingSnapshot = awaitingSnapshot && !(refreshingConfirmedSnapshot && activeIntent &&
+    actedOrder && actedOrder.version > activeIntent.expectedVersion);
   const missing = selected ? incompleteEvidence(selected, draft) : [];
   const photoBlocked = props.photoBusy === true;
   const photoBlockedReason = props.photoBusyReason || 'Результат подготовки или загрузки фото ещё не подтверждён. Завершите действие с фото перед отправкой результата.';
@@ -207,7 +219,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   // Keep one announcement beside its order; a different or absent selection uses the global location.
   const operationBelongsToSelected = selected !== null && (!activeIntent || activeIntent.orderId === selected.id);
   const operationFeedback = (!scopedOperations || selected !== null) && <div ref={operationFeedbackRegion} className="executor-operation">
-    <p role="status" aria-live="polite" aria-atomic="true">{pending ? 'Отправляем действие. Дождитесь ответа; повторное нажатие заблокировано.' : mutation.status === 'confirmed' ? <>Действие подтверждено сервером.{awaitingSnapshot ? ' Обновляемый статус ещё не получен. Нажмите «Обновить».' : ''}</> : null}</p>
+    <p role="status" aria-live="polite" aria-atomic="true">{pending ? 'Отправляем действие. Дождитесь ответа; повторное нажатие заблокировано.' : mutation.status === 'confirmed' ? <>Действие подтверждено сервером.{showAwaitingSnapshot ? ' Обновляемый статус ещё не получен. Нажмите «Обновить».' : ''}</> : null}</p>
     {mutation.status === 'unknown_result' && <div className="executor-notice" role="alert"><strong>Результат не подтверждён</strong><p>{mutation.error} Черновик сохранён в этом сеансе и заморожен. Повтор отправит исходное действие с тем же идентификатором; новое действие не создаётся.</p><button className="executor-button" type="button" disabled={props.orders.loadStatus === 'offline'} onClick={() => void perform()}>Повторить исходное действие</button></div>}
     {mutation.status === 'conflict' && <div className="executor-notice" role="alert"><strong>Наряд изменился</strong><p>{mutation.error || 'Сервер отклонил действие из-за конфликта.'} Черновик сохранён. Обновите наряды, проверьте текущий статус и явно подтвердите работу с новой версией.</p><button className="executor-button executor-button--secondary" type="button" disabled={props.orders.loadStatus === 'loading'} onClick={refreshOrders}>Загрузить актуальное состояние</button><button className="executor-button" type="button" disabled={!hasConfirmedRefresh} onClick={() => { if (!hasConfirmedRefresh || (scopedOperations && committedScope.current !== scopeKey)) return; props.onResolveConflict(); setLocalMutation({ status: 'idle', error: null }); setConflictRefresh(null); setLocalIntent(null); setErrors({}); }}>Состояние проверено, продолжить</button></div>}
     {mutation.status === 'failed' && <p className="executor-notice executor-notice--error" role="alert">{mutation.error || 'Действие отклонено.'} Черновик сохранён. Исправьте причину перед новой отправкой.</p>}
@@ -215,7 +227,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
 
   return <section className="executor-screen" aria-labelledby={`${id}-title`}>
     <header className="executor-header">
-      <div><p className="executor-eyebrow">Исполнитель · НарядAI</p><h1 id={`${id}-title`}>Мои наряды</h1><p>{fresh ? `Активных: ${activeCount}` : 'Список требует подтверждения'}</p></div>
+      <div><p className="executor-eyebrow">Исполнитель · НарядAI</p><h1 id={`${id}-title`}>Мои наряды</h1><p>{fresh || refreshingConfirmedSnapshot ? `Активных: ${activeCount}` : 'Список требует подтверждения'}</p></div>
       <button type="button" className="executor-button executor-button--secondary" onClick={refreshOrders} disabled={pending || props.orders.loadStatus === 'loading'}>Обновить</button>
     </header>
     <ResourceNotice resource={props.orders} name="Наряды" />
@@ -223,7 +235,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
     {(props.quarantinedIntentCount ?? 0) > 0 && <p className="executor-notice" role="status">Есть действие с неподтверждённым результатом для наряда с изменившимся доступом. Исходная попытка сохранена отдельно. Можно работать с другими доступными нарядами.</p>}
     {!operationBelongsToSelected && operationFeedback}
     {orders.length > 0 && <div className="executor-filters" role="group" aria-label="Какие наряды показать"><button type="button" aria-pressed={filter === 'active'} onClick={() => changeFilter('active')}>Активные</button><button type="button" aria-pressed={filter === 'all'} onClick={() => changeFilter('all')}>Все</button></div>}
-    {isConfirmedEmpty(props.orders) && <div className="executor-empty"><h2>Назначенных нарядов нет</h2><p>Список получен с сервера. Обновите его, когда мастер выдаст новый наряд.</p></div>}
+    {(isConfirmedEmpty(props.orders) || (refreshingConfirmedSnapshot && orders.length === 0)) && <div className="executor-empty"><h2>Назначенных нарядов нет</h2><p>Список получен с сервера. Обновите его, когда мастер выдаст новый наряд.</p></div>}
     {orders.length > 0 && visibleOrders.length === 0 && <p>В полученном списке нет активных нарядов. Выберите «Все», чтобы увидеть остальные.</p>}
     <div className="executor-layout">
       <nav aria-label="Назначенные наряды" className="executor-order-list">
@@ -242,7 +254,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
         <p className="executor-preserve-lines">{selected.description}</p>
         {selected.comment && <p className="executor-preserve-lines"><strong>Комментарий мастера: </strong>{selected.comment}</p>}
         <p>Срок: <time dateTime={selected.dueAt}>{formatExecutorTime(selected.dueAt)}</time>{selected.isOverdue && <strong className="executor-urgent"> · Просрочен</strong>}</p>
-        {!fresh && <p className="executor-caption">Действия станут доступны после получения актуального полного списка.</p>}
+        {!fresh && !refreshingConfirmedSnapshot && <p className="executor-caption">Действия станут доступны после получения актуального полного списка.</p>}
         <div className="executor-actions" role="group" aria-label={`Действия по наряду ${selected.number}`}>
           {allowedActions(selected.status).filter((action) => action !== 'submit').map((action) => <button className={`executor-button${action === 'reject' || action === 'pause' || action === 'queue' ? ' executor-button--secondary' : ''}`} type="button" key={action} disabled={!canCommand} onClick={() => { if (action === 'reject' || action === 'pause') { setMode(action); setErrors({}); } else command(action); }}>{ACTION_LABELS[action]}</button>)}
         </div>
