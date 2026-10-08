@@ -1,0 +1,68 @@
+name: Combined UI synthetic responsive viewports
+'on':
+  push:
+    branches: [validation/day-ui-viewports-20261008]
+permissions:
+  contents: read
+concurrency:
+  group: day-ui-viewport-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  synthetic-viewports:
+    if: github.ref == 'refs/heads/validation/day-ui-viewports-20261008'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: a880371589aa1dd117dde9e80936c687d146f919
+          path: .ci-day-ui
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.15'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Verify exact source and bounded synthetic gate
+        run: |
+          python ops/ci/day_ui_tests.py
+          node --check ops/ci/day_ui_playwright.cjs
+          python ops/ci/day_ui_gate.py --source .ci-day-ui --check-inputs
+          printf 'PLAYWRIGHT_BROWSERS_PATH=%s/dalaai-day-ui-chromium\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Install locked frontend and official Chromium
+        timeout-minutes: 10
+        run: |
+          npm ci --prefix .ci-day-ui/frontend
+          node .ci-day-ui/frontend/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Source checks and unchanged browser scenarios at three viewports
+        run: python ops/ci/day_ui_gate.py --source .ci-day-ui
+      - name: Publish synthetic scope
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          file=Path('day-ui-summary.json')
+          result=json.loads(file.read_text()) if file.is_file() else {}
+          status=result.get('status','BLOCKED')
+          if status not in {'PASS_SYNTHETIC_VIEWPORTS_ONLY','FAIL','BLOCKED'}:status='BLOCKED'
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
+              out.write('Synthetic responsive Chromium: '+status+'\n\n')
+              out.write('Viewports320x800,390x844,768x1024;18 existing browser cases per viewport, including five AI mount cases.\n')
+              out.write('No actual API/DB/provider/physical-device acceptance. New PhotoPicker focus/cancel and executor scroll ownership need separate browser cases.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: day-ui-synthetic-${{ github.sha }}-${{ github.run_attempt }}
+          path: day-ui-summary.json
+          if-no-files-found: ignore
+          retention-days: 7
