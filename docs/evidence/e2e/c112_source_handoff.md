@@ -69,3 +69,32 @@ actual acceptance pass. Browser normalization remains the suspected cause until
 A's rerun verifies it. Browser, preflight, UI/API and PostgreSQL execution remain
 NOT_RUN in C0. A must regenerate the source-bound preflight receipt on the exact
 newly accepted HEAD and run with a fresh C112 run ID.
+
+## Semantic order-selector correction
+
+Delta base: published `edd109d2111e798db0440c7d3050e7e4fca80e42`, tree-identical
+to local `dc8cd90e712c4d1d7e5df2b33f92e62323b686c0`.
+A0 reported run `37710664206`, job `113095586236`, on main `2471afde` passed
+the first four stages, including real analytics and the shift report, then
+timed out at stage 5's exact `getByLabel` order selector.
+
+Pinned UI `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c` has a wrapping label
+around the select and its options in `AnalyticsView.tsx:26`. Playwright 1.63.0
+source uses raw label element text for `getByLabel`, including option text.
+Its role-name computation marks the target select visited before traversing
+the associated label, excluding that select subtree from its accessible name.
+The correction uses the exact `Наряд для отчёта` combobox role/name within the
+exact `Аналитика и отчёты` region. No product accessibility defect is claimed.
+
+The matching control must be unique. Selection still uses only the ID returned
+by the actual analytics response; both the selected-values return and the actual
+field value are asserted before requesting that same ID's protected report.
+All counts, report comparisons, security checks, timeouts and gates are unchanged.
+
+Source verification: 63 Node source/mock tests and 5 Python observer tests PASS,
+plus C112 JavaScript syntax checks and `git diff --check`. Six new regressions
+exercise the actual selection-source fragment with mocks, including missing or
+duplicate controls, empty/wrong returned IDs and a wrong actual field value.
+These checks are not a browser reproduction or an actual acceptance pass.
+Browser, preflight, UI/API and PostgreSQL execution remain NOT_RUN in C0.
+A must produce a fresh exact-HEAD secrecy preflight receipt and C112 run ID.

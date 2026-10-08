@@ -210,7 +210,13 @@ test(c.TITLE, async ({ browser, browserName }, info) => {
       record('shift_report', result, { orders: 540, submissions: 568, photo_references: 444 }, { totals_available: true, agrees_with_analytics: true });
     });
     await stage(c.REQUIRED_STEPS[4], async () => {
-      await master.page.getByLabel('Наряд для отчёта', { exact: true }).selectOption(selected.order.id);
+      // A wrapping label's raw text includes its options; use the select's accessible name.
+      const orderSelect = master.page.getByRole('region', { name: 'Аналитика и отчёты', exact: true })
+        .getByRole('combobox', { name: 'Наряд для отчёта', exact: true });
+      await expect(orderSelect).toHaveCount(1);
+      const selectedValues = await orderSelect.selectOption({ value: selected.order.id });
+      expect(selectedValues).toEqual([selected.order.id]);
+      await expect(orderSelect).toHaveValue(selected.order.id);
       const pathname = `/api/v1/reports/orders/${selected.order.id}`;
       const result = await uiRead(master.page, pathname, () => master.page.getByRole('button', { name: 'Открыть отчёт наряда', exact: true }).click());
       const photoCount = selected.attempts.reduce((n,a) => n + a.submission.payload.after_photo_ids.length, 0);

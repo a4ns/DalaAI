@@ -42,7 +42,9 @@ historical provenance are separate assertions.
    assertions use the “Выбранный отчёт” region
 5. Select an order ID returned by the real facts/options, with historical photo
    references; its protected order report matches that exact observed fact and
-   displays its own scoped unavailable-evidence counts
+   displays its own scoped unavailable-evidence counts. The exact-name combobox
+   is scoped to the analytics region and must be unique; both `selectOption`'s
+   returned ID and the actual field value must match the observed ID before fetch
 6. Executor has no analytics UI and receives 403/FORBIDDEN, protected response
    headers and no report data from all three report/analytics paths
 7. An independent second PostgreSQL observation has the same business-row digest,
@@ -160,5 +162,6 @@ stage records its complete API/UI observation only after every assertion passes.
 The fixed diagnostics are advisory and cannot make a failed gate pass. Their
 helper is source-bound and exercised by the mandatory dummy-failure preflight.
 The diagnostic-source change requires a new receipt on the exact accepted HEAD.
-The date-fill correction also changes source-bound files: A5 must generate a
-fresh preflight receipt for the exact newly accepted HEAD before the actual rerun.
+The date-fill and semantic order-selector corrections change source-bound files:
+A5 must generate a fresh preflight receipt for the exact newly accepted HEAD
+before the actual rerun.

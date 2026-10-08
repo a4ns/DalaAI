@@ -1,6 +1,6 @@
 # C112 history/analytics Android CI seam (source preparation)
 
-Source-ready binding: C112 `edd109d2111e798db0440c7d3050e7e4fca80e42` against frontend
+Source-ready binding: C112 `d34455d877f9d3853421cad4cf6d3f92056254f7` against frontend
 `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`. Actual C112 execution is pending. Existing
 C110 remains an independent exact-one-journey gate; its prior green results do
 not establish this new history journey.
@@ -78,7 +78,7 @@ The exact single title is `C112 real history analytics and protected reports`;
 project `c112-android-chromium`, seven required steps, Pixel 7 emulation with two
 contexts. C112 owns `c112_playwright.config.cjs`, `c112_secrecy_preflight.cjs`,
 `c112_preflight_proof.cjs` and `c112_gate.cjs`. The source manifest binds all
-16 C112 files and both existing package/lock files. The C112 proof binds the new
+17 C112 files and both existing package/lock files. The C112 proof binds the new
 C112 test/config/capture/observer code and shared login boundary actually used;
 a previous C110 receipt alone cannot authorize unrelated test code. No alternate
 reporter/config, skipped mandatory cases, fake API success or reused proof is a pass.
@@ -136,3 +136,10 @@ C-owned fixed diagnostic helper. Fresh proof is mandatory after this source
 change. Historical b2eda8c/d4a293 failures remain failures, localized to the old
 first date-field fill. CI projects only the helper's fixed substep/failure/HTTP
 category labels when a later run fails; diagnostic labels cannot promote a pass.
+
+The subsequent semantic selector correction scopes the exact-name combobox to
+the analytics region, requires one matching control, and verifies both returned
+selection and field value against the same actual analytics order ID. Its six
+new source regressions do not replace a real browser run. The prior 2471afde
+receipt remains FAIL at order selection after four completed steps; the next
+exact-HEAD proof and run must establish the remaining report/role/data checks.
