@@ -130,6 +130,8 @@ jobs:
         run: DALA_ACCEPTANCE_DISPOSABLE=1 python ops/run_worker_runtime_tests.py
       - name: Protected report author, restricted-login and actual-main PostgreSQL gates
         run: python ops/run_report_runtime_tests.py
+      - name: Advisory assignee author, restricted-login and mounted PostgreSQL gates
+        run: DALA_ACCEPTANCE_DISPOSABLE=1 python ops/run_assignee_runtime_tests.py
       - name: Optional durable clock, three-login bootstrap and mounted clock separation
         run: DALA_ACCEPTANCE_DISPOSABLE=1 python ops/run_demo_clock_tests.py
       - name: Aggregate with real PostgreSQL configured

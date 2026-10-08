@@ -123,6 +123,10 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     app.include_router(create_discovery_router(DiscoveryService(connector, domain_clock=domain_clock,
                        real_clock=clock, dictionary_policy=WorkloadPolicy(POLICY_NAME))))
     app.include_router(create_order_events_router(OrderEventService(connector, real_clock=clock)))
+    from app.recommendations.assignee import AssigneeRecommendationService
+    from app.recommendations.assignee_routes import create_assignee_router
+    app.include_router(create_assignee_router(AssigneeRecommendationService(connector,
+        domain_clock=domain_clock, real_clock=clock, synthetic=True)))
     from app.analytics.c3_repository import RuntimeReportService
     from app.reports.c4_routes import create_c_runtime_router
     from app.reports.c5_export_routes import create_c_export_router
