@@ -84,10 +84,10 @@ test('gate rejects absent DB, receipt loss, missing steps and physical-phone pro
   }
 });
 
-test('only exact reviewed f967d0ac source is accepted and preserved', () => {
-  assert.equal(FRONTEND_SHA, 'f967d0acf3f04bda304b7fe47e1bf76ca8814634');
+test('only exact reviewed d78b9c3b source is accepted and preserved', () => {
+  assert.equal(FRONTEND_SHA, 'd78b9c3b7cabbcbd05b01df77f2a7ec57739afe5');
   assert.equal(load().frontend_sha, FRONTEND_SHA);
-  for (const selected of [undefined, '', 'f967d0ac', 'bbe897514e58a4b8f8b6d4f580e5273e34cb5c75', 'bbe89751', '6fa27276f14ef31757cb0da5ee9d7acc15789111', '6fa27276', '8081a2984b2f27b909fa2b86cd9f10ffd01d1e11', '8081a298', 'a880371589aa1dd117dde9e80936c687d146f919', 'a8803715', '1594a930de4b9f15d11dd35bbc59e5b4b0b1d964', '1594a930', 'faef5d3d', 'faef5d3d8b4c640fae013dbfa78074382e512e8f', OLD_FRONTEND_SHA, '3ef269bba80dbd6eafaff0d5e557da21f2d96244', 'ca320bf692c01d89dd79496fe18d1bc2742052df', '2beb2244c4639c09004e4cdb5a7598d447ad68f6', '45a65ae2b0b23c1a717fec9baa7a30369b2dd117', 'f'.repeat(40), FRONTEND_SHA.toUpperCase()]) {
+  for (const selected of [undefined, '', 'd78b9c3b', 'f967d0acf3f04bda304b7fe47e1bf76ca8814634', 'f967d0ac', 'bbe897514e58a4b8f8b6d4f580e5273e34cb5c75', 'bbe89751', '6fa27276f14ef31757cb0da5ee9d7acc15789111', '6fa27276', '8081a2984b2f27b909fa2b86cd9f10ffd01d1e11', '8081a298', 'a880371589aa1dd117dde9e80936c687d146f919', 'a8803715', '1594a930de4b9f15d11dd35bbc59e5b4b0b1d964', '1594a930', 'faef5d3d', 'faef5d3d8b4c640fae013dbfa78074382e512e8f', OLD_FRONTEND_SHA, '3ef269bba80dbd6eafaff0d5e557da21f2d96244', 'ca320bf692c01d89dd79496fe18d1bc2742052df', '2beb2244c4639c09004e4cdb5a7598d447ad68f6', '45a65ae2b0b23c1a717fec9baa7a30369b2dd117', 'f'.repeat(40), FRONTEND_SHA.toUpperCase()]) {
     let reads = 0;
     assert.throws(() => fixtureFromEnv({ ...env(), DALA_E2E_FRONTEND_SHA: selected }, () => { reads++; return '{}'; }, () => {}), /reviewed frontend/);
     assert.equal(reads, 0);

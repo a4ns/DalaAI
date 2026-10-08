@@ -6,7 +6,7 @@ It never selects or changes C110's exact-one lifecycle test or existing gate.
 
 ## Frozen target and scenario
 
-- Frontend: `f967d0acf3f04bda304b7fe47e1bf76ca8814634` (reviewed Panel reset-focus product, per
+- Frontend: `d78b9c3b7cabbcbd05b01df77f2a7ec57739afe5` (reviewed healthy-poll command product, per
   [C0092 binding maintenance](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6051803090))
 - Harness base: `4d38c71164a56b0eeefa9eb0430eb9100bcd7a3d`
 - Exactly one test: `C112 real history analytics and protected reports`
