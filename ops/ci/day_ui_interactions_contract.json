@@ -1,0 +1,33 @@
+{
+  "accepted": true,
+  "product_sha": "8081a2984b2f27b909fa2b86cd9f10ffd01d1e11",
+  "test_source_sha": "cbc8fd64764a7dcb8fe0dc45e2f8ce737fe0a3a9",
+  "files": {
+    "frontend/tests/browser/interaction-owned-effects.spec.ts": "7710b9c4307a04b3b81df439d0eb59131695dc18f598c640260168296a9034a1",
+    "frontend/tests/fixtures/interaction-owned-effects.html": "d8dda72f159b16dc7b485e4888e8248933d2b8d96fe763c06090de9da753f541",
+    "frontend/tests/fixtures/interaction-owned-effects.tsx": "f68d16d626783e6c5aa5e0d8849c0159dc2253e5301f17000f33770961ea597d"
+  },
+  "product_dependencies": {
+    "frontend/src/mobile/executor/ExecutorScreen.tsx": "34c7d420c373e9f9994423845ccda94da56b3207e5f8290b2ea0e21785ec6738",
+    "frontend/src/mobile/executor/executor.css": "598e14f63b24ba6820ebb4dd3ae5dc5f51b4e4738a4f35ddaca64015c29b0a16",
+    "frontend/src/pwa/PhotoPicker.tsx": "27e60c1b2a8c63683d55dee8359e161905965dbd7f85d1b46620e6e6d807ba2f",
+    "frontend/src/pwa/photoPreparation.ts": "c6b09e6173821c6dd612ecacf3adab83c0225149d2990a79fb8c39f91ba3b534",
+    "frontend/src/pwa/photoPicker.css": "a24b2c726e4884a3e98b55ef12443bca5dcaa5b4f7b036a927dfb343c96478e5"
+  },
+  "case_count": 18,
+  "cases_per_viewport": 6,
+  "viewports": [
+    [
+      320,
+      800
+    ],
+    [
+      390,
+      844
+    ],
+    [
+      768,
+      1024
+    ]
+  ]
+}
