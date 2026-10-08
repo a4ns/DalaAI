@@ -53,6 +53,7 @@ export function Workspace({ client, orders, session, sessionKey, section, isAuth
   const [selected, setSelected] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const pending = useRef(new Map<string, Pending>());
+  const workspaceEpoch = useRef(client.epoch);
   const dirty = JSON.stringify(createDraft) !== JSON.stringify(emptyMasterCreateDraft()) || Object.values(reviewDrafts).some(draft => draft.reason || draft.finalScore) || executor.hasDrafts || photos.hasWork;
   useEffect(() => {
     if (!dirty) return;
@@ -86,8 +87,10 @@ export function Workspace({ client, orders, session, sessionKey, section, isAuth
     }
     return loaded;
   });
+  const reviewSource = useRef(submissionState);
+  useLayoutEffect(() => { reviewSource.current = submissionState; }, [submissionState]);
   useEffect(() => { if (session.principal.role === 'master') void refreshSubmissions(); }, [reviewFingerprint, session.principal.role, refreshSubmissions]);
-  const refresh = useCallback(async () => { adviceDictionaryAllowed.current = false; try { const epoch = client.epoch; await client.getMe(); if (epoch !== client.epoch) return; setNotice(null); await Promise.all([orders.refresh(), refreshDicts()]); if (session.principal.role === 'master') await refreshSubmissions(); } catch (error) { if (mounted.current && !(error instanceof SessionChangedError)) setNotice(safeErrorMessage(error)); } }, [client, orders, refreshDicts, refreshSubmissions, session.principal.role]);
+  const refresh = useCallback(async () => { adviceDictionaryAllowed.current = false; const orderRead = orders.refresh(); try { const epoch = client.epoch; await client.getMe(); if (epoch !== client.epoch) return; setNotice(null); await Promise.all([orderRead, refreshDicts()]); if (session.principal.role === 'master') await refreshSubmissions(); } catch (error) { if (mounted.current && !(error instanceof SessionChangedError)) setNotice(safeErrorMessage(error)); } }, [client, orders, refreshDicts, refreshSubmissions, session.principal.role]);
   const { state: historyState, refresh: refreshHistory } = useResource<PanelHistory>(client, async () => {
     if (!selected) throw new ApiError('Выберите наряд.');
     const orderId = selected; const epoch = client.epoch;
@@ -102,6 +105,7 @@ export function Workspace({ client, orders, session, sessionKey, section, isAuth
   useEffect(() => { if (selected && (session.principal.role === 'master' || session.principal.role === 'manager')) void refreshHistory(); }, [selected, selectedVersion, refreshHistory, session.principal.role]);
 
   async function execute(key: string, make: (() => PreparedMutation<CommandResult>) | null): Promise<MutationOutcome> {
+    if (!mounted.current || !isAuthReady() || client.epoch !== workspaceEpoch.current) return { kind: make ? 'rejected' : 'unknown', message: 'Сессия изменяется. Новый запрос не отправлен; прежний неподтверждённый исход не разрешён.' };
     let entry = pending.current.get(key);
     if (make) {
       if (entry && (entry.status === 'pending' || entry.status === 'unknown_result')) return { kind: 'unknown', message: 'Предыдущее действие ещё не подтверждено. Повторите исходную операцию.' };
@@ -136,14 +140,21 @@ export function Workspace({ client, orders, session, sessionKey, section, isAuth
     });
   }
   function review(intent: MasterReviewIntent): Promise<MutationOutcome> {
+    if (!mounted.current || !isAuthReady() || client.epoch !== workspaceEpoch.current || !client.activeSession || !client.online || client.session?.principal.role !== 'master' || !orders.actionReady) return Promise.resolve({ kind: 'rejected', message: 'Сессия или полный снимок не подтверждены. Обновите данные перед решением.' });
+    const current = orders.getSnapshot().snapshot?.find(order => order.id === intent.orderId);
+    const submitted = reviewSource.current;
+    const submission = current ? submitted.snapshot?.[submissionKey(current)] : null;
+    if (!current || current.status !== 'ai_review' || current.version !== intent.expectedVersion || current.current_submission_id !== intent.submissionId || !client.session.principal.section_ids.includes(current.section_id) || !resourceIsCurrent(submitted) || !submission || submission.id !== intent.submissionId || submission.order_id !== current.id || submission.assignment_revision !== current.assignment_revision) return Promise.resolve({ kind: 'conflict', message: 'Наряд, назначение или результат изменились. Обновите данные и проверьте решение.' });
     return execute(`review:${intent.orderId}`, () => client.prepareCommand(intent.orderId, { expected_version: intent.expectedVersion, action: 'review', payload: { submission_id: intent.submissionId, decision: intent.decision, reason: intent.reason, final_score: intent.finalScore } }));
   }
   async function act(intent: ExecutorIntent): Promise<MutationOutcome> {
+    if (!mounted.current || !isAuthReady() || client.epoch !== workspaceEpoch.current) return { kind: 'rejected', message: 'Сессия изменяется. Действие не отправлено.' };
     const outcome = await executor.act(intent);
     if (outcome.kind === 'confirmed' || outcome.kind === 'conflict') void refresh();
     return outcome;
   }
   async function retryExecutor(scope: string): Promise<MutationOutcome> {
+    if (!mounted.current || !isAuthReady() || client.epoch !== workspaceEpoch.current) return { kind: 'unknown', message: 'Исход прежнего действия не подтверждён. Повтор недоступен во время смены сессии.' };
     const outcome = await executor.retry(scope);
     if (outcome.kind === 'confirmed' || outcome.kind === 'conflict') void refresh();
     return outcome;

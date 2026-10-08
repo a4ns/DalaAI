@@ -96,7 +96,7 @@ export class ExecutorController {
     if (!this.#currentSession()) return Promise.resolve({ kind: 'rejected', message: 'Сессия изменилась.' });
     return withNewIntentGuard(this.#unresolvedOrder(intent.orderId), () => {
       const source = this.#orders.getSnapshot();
-      if (source.freshness !== 'fresh' || source.loadStatus !== 'ready' || source.incomplete) return Promise.resolve({ kind: 'rejected', message: 'Сначала загрузите актуальные доступные наряды.' });
+      if (!this.#orders.actionReady || source.freshness !== 'fresh' || source.loadStatus !== 'ready' || source.incomplete) return Promise.resolve({ kind: 'rejected', message: 'Сначала загрузите актуальные доступные наряды.' });
       const order = this.visibleOrders().find(item => item.id === intent.orderId);
       if (!order || order.version !== intent.expectedVersion || order.assignment_revision !== intent.expectedAssignmentRevision) return Promise.resolve({ kind: 'conflict', message: 'Наряд или назначение изменились. Обновите данные.' });
       const photoContext = this.photoContext(order);

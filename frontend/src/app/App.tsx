@@ -36,10 +36,11 @@ export function App({ client = defaultClient, orders = defaultOrders, renderWork
   useEffect(() => {
     if (!session || !session.principal.active || session.principal.role === 'admin') return;
     void orders.refresh();
-    const timer = setInterval(() => { if (document.visibilityState === 'visible') void orders.refresh(); }, 2000);
-    const refresh = () => { if (document.visibilityState === 'visible') void client.getMe().then(() => orders.refresh()).catch(error => { if (!(error instanceof SessionChangedError)) setAuthError(safeErrorMessage(error)); }); };
-    window.addEventListener('online', refresh); document.addEventListener('visibilitychange', refresh);
-    return () => { clearInterval(timer); window.removeEventListener('online', refresh); document.removeEventListener('visibilitychange', refresh); };
+    const timer = setInterval(() => { if (document.visibilityState === 'visible') void orders.refresh({ background: true }); }, 2000);
+    const refresh = () => { if (document.visibilityState === 'visible') { const orderRead = orders.refresh(); void client.getMe().then(() => orderRead).catch(error => { if (!(error instanceof SessionChangedError)) setAuthError(safeErrorMessage(error)); }); } };
+    const offline = () => orders.invalidateOffline();
+    window.addEventListener('online', refresh); window.addEventListener('offline', offline); document.addEventListener('visibilitychange', refresh);
+    return () => { clearInterval(timer); window.removeEventListener('online', refresh); window.removeEventListener('offline', offline); document.removeEventListener('visibilitychange', refresh); };
   }, [sessionKey, orders, session, client]);
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

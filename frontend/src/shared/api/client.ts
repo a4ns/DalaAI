@@ -128,6 +128,8 @@ export class ApiClient {
     this.#timeout = options.timeoutMs ?? 15000;
   }
   get epoch(): number { return this.#epoch; }
+  get online(): boolean { return this.#online(); }
+  get activeSession(): boolean { return Boolean(this.#session?.principal.active && Date.parse(this.#session.expires_at) > Date.now()); }
   get session(): Session | null { return this.#session; }
   subscribe(listener: () => void): () => void { this.#listeners.add(listener); return () => { this.#listeners.delete(listener); }; }
   clearIdentity(): void { this.#epoch += 1; this.#session = null; this.#listeners.forEach(listener => listener()); }
@@ -356,7 +358,7 @@ export class ApiClient {
     assertWire('OrderCommand', body); return this.#prepare(body.operation_id, `/orders/${id(orderId)}/commands`, JSON.stringify(body), 'CommandResult', 200, 'application/json', orderId);
   }
   #prepare<T>(operationId: string, path: string, body: string | Blob, schema: SchemaName, successStatus: number, contentType = 'application/json', expectedOrderId?: string, expectedPhoto?: PhotoReceiptContext): PreparedMutation<T> {
-    if (!this.#session) throw new ApiError('Сначала войдите в систему.', 401);
+    if (!this.activeSession) throw new ApiError('Сессия завершена или неактивна. Войдите снова.', 401);
     const token = Object.freeze({ operationId });
     this.#prepared.set(token, { epoch: this.#epoch, path, body, contentType, schema, successStatus, expectedOrderId, expectedPhoto });
     return token;
@@ -388,7 +390,7 @@ export class ApiClient {
   execute<T>(token: PreparedMutation<T>): Promise<T> {
     const prepared = this.#prepared.get(token);
     if (!prepared) return Promise.reject(new Error('Unknown prepared intent'));
-    try { this.#assertEpoch(prepared.epoch); } catch (error) { return Promise.reject(error); }
+    try { this.#assertEpoch(prepared.epoch); if (!this.activeSession) throw new ApiError('Сессия завершена или неактивна. Войдите снова.', 401); } catch (error) { return Promise.reject(error); }
     if (prepared.retryAt && prepared.retryAt > Date.now()) return Promise.reject(prepared.retryError);
     if (prepared.confirmed !== undefined) return Promise.resolve(prepared.confirmed as T);
     if (prepared.inFlight) return prepared.inFlight as Promise<T>;
