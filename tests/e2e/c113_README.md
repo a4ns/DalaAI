@@ -8,7 +8,7 @@ changed. No shared runner, workflow, dependency, contract or product edits.
 ## Fixed identities and minimal A interface
 
 - Base: `347119c47b9a0ec70cd30cbc8bce2a2774a439e0`
-- Frozen frontend: `1594a930de4b9f15d11dd35bbc59e5b4b0b1d964`
+- Frozen frontend: `a880371589aa1dd117dde9e80936c687d146f919`
 - Binding maintenance: [C0092](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6051803090); fresh runtime evidence is required
 - Exactly one test: `C113 real protected downloads and demo clock`
 - Exactly one project: `c113-android-chromium`
