@@ -82,7 +82,8 @@ services:
       - ${DALA_MANAGED_ROOT}/ops/ci/managed_Caddyfile:/etc/caddy/Caddyfile:ro
       - ${DALA_MANAGED_PRIVATE}/tls/server.crt:/run/ci-tls/server.crt:ro
       - ${DALA_MANAGED_PRIVATE}/tls/server.key:/run/ci-tls/server.key:ro
-    networks: [backend]
+    # Only the test TLS edge joins the existing ordinary bridge for host ingress.
+    networks: [backend, frontend]
     depends_on:
       managed: {condition: service_healthy}
     read_only: true

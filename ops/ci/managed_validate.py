@@ -94,6 +94,9 @@ def verify_config(config, image):
     require(managed.get('command') is None and managed.get('entrypoint') is None, 'MANAGED_ENTRYPOINT_OVERRIDDEN')
     require(not managed.get('ports') and config['networks']['backend'].get('internal') is True, 'MANAGED_NETWORK_BOUNDARY')
     require(set(managed['networks']) == {'backend'}, 'MANAGED_EGRESS_NOT_ISOLATED')
+    require(set(services['db']['networks']) == {'backend'} and not services['db'].get('ports'), 'DATABASE_NETWORK_BOUNDARY')
+    require(set(edge['networks']) == {'backend', 'frontend'}
+            and config['networks']['frontend'].get('internal') is not True, 'TLS_EDGE_INGRESS_NETWORK_INVALID')
     ports = edge.get('ports', [])
     require(len(ports) == 1 and ports[0].get('host_ip') == '127.0.0.1'
             and int(ports[0]['published']) == 443 and ports[0]['target'] == 443, 'TLS_NOT_LOOPBACK_ONLY')
@@ -126,18 +129,36 @@ def opener(ca):
     return urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=context))
 
 
+def readiness_error(error):
+    if isinstance(error, urllib.error.HTTPError):
+        return 'HTTP_STATUS_' + str(error.code) if 100 <= error.code <= 599 else 'HTTP_STATUS_OTHER'
+    reason = error.reason if isinstance(error, urllib.error.URLError) else error
+    if isinstance(reason, ssl.SSLCertVerificationError):
+        return 'TLS_CERTIFICATE_REJECTED'
+    if isinstance(reason, ssl.SSLError):
+        return 'TLS_HANDSHAKE_FAILED'
+    if isinstance(reason, ConnectionRefusedError):
+        return 'TRANSPORT_REFUSED'
+    if isinstance(reason, TimeoutError):
+        return 'TRANSPORT_TIMEOUT'
+    if isinstance(reason, json.JSONDecodeError):
+        return 'RESPONSE_JSON_INVALID'
+    return 'TRANSPORT_OTHER'
+
+
 def wait_ready(ca):
     client = opener(ca)
     until = time.monotonic() + 180
+    last_error = 'RESPONSE_NOT_READY'
     while time.monotonic() < until:
         try:
             with client.open(ORIGIN + '/readyz', timeout=5) as response:
                 if response.status == 200 and json.loads(response.read()) == {'status': 'ready'}:
                     return
-        except Exception:
-            pass
+        except Exception as error:
+            last_error = readiness_error(error)
         time.sleep(2)
-    raise GateFailure('TRUSTED_HTTPS_READINESS_FAILED')
+    raise GateFailure('TRUSTED_HTTPS_READINESS_FAILED_' + last_error)
 
 
 def auth_boundary(ca, private):

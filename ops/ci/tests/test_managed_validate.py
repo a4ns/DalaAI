@@ -14,12 +14,14 @@ m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 
 def config():
     inactive = {name: {'profiles': ['normal-demo-not-run']} for name in ('api','worker','web','photo-directory','budget-directory')}
-    return {'networks': {'backend': {'internal': True}}, 'services': inactive | {
+    return {'networks': {'backend': {'internal': True}, 'frontend': {}}, 'services': inactive | {
+        'db': {'networks': {'backend': {}}},
         'managed': {'image': 'fixture:candidate', 'build': {'dockerfile': 'ops/managed/Dockerfile'},
                     'networks': {'backend': {}}, 'environment': {'DALA_WORKER_NOTIFY_ENABLED': 'true',
                     'DALA_WEB_PUSH_ENABLED': 'false', 'DALA_MODEL_FORCE_OFF': 'true'}},
         'prepare': {'image': 'fixture:candidate'},
-        'tls-edge': {'ports': [{'host_ip': '127.0.0.1', 'published': '443', 'target': 443}]}}}
+        'tls-edge': {'networks': {'backend': {}, 'frontend': {}},
+                     'ports': [{'host_ip': '127.0.0.1', 'published': '443', 'target': 443}]}}}
 
 
 def snapshot():
@@ -75,6 +77,9 @@ class ManagedValidationTests(unittest.TestCase):
     def test_network_and_owner_secrets_fail_closed(self):
         for mutate in (lambda d:d['services']['managed'].update(ports=[443]),
                        lambda d:d['networks']['backend'].update(internal=False),
+                       lambda d:d['services']['db']['networks'].update(frontend={}),
+                       lambda d:d['services']['managed']['networks'].update(frontend={}),
+                       lambda d:d['services']['tls-edge'].update(networks={'backend':{}}),
                        lambda d:d['services']['tls-edge']['ports'][0].update(host_ip='0.0.0.0'),
                        lambda d:d['services']['managed']['environment'].update(OPENAI_API_KEY='fixture'),
                        lambda d:d['services']['managed']['environment'].update(DALA_DEMO_OWNER_DATABASE_URL='fixture'),
@@ -106,6 +111,15 @@ class ManagedValidationTests(unittest.TestCase):
         with patch.object(m.shutil,'which',return_value=None),patch.object(m,'prepare_private') as prepare:
             m.run(report)
         self.assertEqual(report['status'],'NOT_RUN');prepare.assert_not_called()
+
+    def test_readiness_diagnostics_are_fixed_codes(self):
+        import ssl
+        from urllib.error import URLError, HTTPError
+        self.assertEqual(m.readiness_error(URLError(ssl.SSLCertVerificationError('secret fixture'))),'TLS_CERTIFICATE_REJECTED')
+        self.assertEqual(m.readiness_error(URLError(ConnectionRefusedError('secret fixture'))),'TRANSPORT_REFUSED')
+        self.assertEqual(m.readiness_error(TimeoutError('secret fixture')),'TRANSPORT_TIMEOUT')
+        self.assertEqual(m.readiness_error(HTTPError('https://localhost',503,'secret fixture',None,None)),'HTTP_STATUS_503')
+        self.assertNotIn('secret',m.readiness_error(RuntimeError('secret fixture')))
 
     def test_blueprint_default_has_no_test_localhost_gate(self):
         source=(HERE.parent/'managed/render.yaml.example').read_text()
