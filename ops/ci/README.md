@@ -12,8 +12,8 @@ and report export remain separate gates. No deployment is performed.
 ## C-110 accepted source and build provenance
 
 `scenarios.json` accepts exact C source
-`beee17544119794009cf96c3cb3a69838bc2a738` and final frontend
-`8081a2984b2f27b909fa2b86cd9f10ffd01d1e11`. C includes the bounded resume/Back
+`5e97b71c6701e2ae1bf83547dce563a02c693389` and final frontend
+`6fa27276f14ef31757cb0da5ee9d7acc15789111`. C includes the bounded resume/Back
 render waits and version-2 frontend/source-bound receipt. Missing or altered
 source still blocks before private execution. Do not lower counts or silently
 skip a missing input.
@@ -212,3 +212,12 @@ C113 clock-prelude failures remain preserved; this source correction is not proo
 of their cause. Fresh independent privacy proofs and unchanged actual gates must
 establish this candidate's results. The a880 synthetic viewport PASS remains
 historical, and the separate public JSON experiment does not substitute for C acceptance.
+
+The current quiet-polling, optional report-model and failure-cleanup product
+`6fa27276f14ef31757cb0da5ee9d7acc15789111` is bound to source
+`5e97b71c6701e2ae1bf83547dce563a02c693389`. The optional model remains off by default.
+Fresh independent privacy proofs and unchanged actual gates must establish this
+candidate's results. The 06877 C110/C112 passes and C113 SHIFT_XLSX body-capture
+failure remain preserved, along with the earlier d48 failures. Prior a880 viewport
+and 8081 interaction evidence is historical; new quiet-polling geometry and public
+reader experiments are separate evidence and do not replace these actual gates.

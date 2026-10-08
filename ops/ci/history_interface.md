@@ -1,7 +1,7 @@
 # C112 history/analytics Android CI seam (source preparation)
 
-Source-ready binding: C112 `beee17544119794009cf96c3cb3a69838bc2a738` against frontend
-`8081a2984b2f27b909fa2b86cd9f10ffd01d1e11`. Actual C112 execution is pending. Existing
+Source-ready binding: C112 `5e97b71c6701e2ae1bf83547dce563a02c693389` against frontend
+`6fa27276f14ef31757cb0da5ee9d7acc15789111`. Actual C112 execution is pending. Existing
 C110 remains an independent exact-one-journey gate; its prior green results do
 not establish this new history journey.
 
@@ -164,3 +164,12 @@ C113 clock-prelude failures remain preserved; this source correction is not proo
 of their cause. Fresh independent privacy proofs and unchanged actual gates must
 establish this candidate's results. The a880 synthetic viewport PASS remains
 historical, and the separate public JSON experiment does not substitute for C acceptance.
+
+The current quiet-polling, optional report-model and failure-cleanup product
+`6fa27276f14ef31757cb0da5ee9d7acc15789111` is bound to source
+`5e97b71c6701e2ae1bf83547dce563a02c693389`. The optional model remains off by default.
+Fresh independent privacy proofs and unchanged actual gates must establish this
+candidate's results. The 06877 C110/C112 passes and C113 SHIFT_XLSX body-capture
+failure remain preserved, along with the earlier d48 failures. Prior a880 viewport
+and 8081 interaction evidence is historical; new quiet-polling geometry and public
+reader experiments are separate evidence and do not replace these actual gates.
