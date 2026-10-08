@@ -6,6 +6,10 @@ import { isAnalyticsFacts, isOrderReport, isShiftReport, validPeriod } from './a
 import type { AnalyticsFacts, OrderReport, PeriodRequest, ShiftReport } from './analyticsProtocol';
 import { readReportFile, REPORT_FILE_MIME } from './reportFiles';
 import type { ReportFile, ReportFileFormat, ReportFileKind } from './reportFiles';
+import { isDemoClockChange, isDemoClockControl, isDemoClockSnapshot } from './demoClockProtocol';
+import type { DemoClockChange, DemoClockControl, DemoClockSnapshot } from './demoClockProtocol';
+export interface PreparedDemoClock { readonly intent:Readonly<DemoClockControl> }
+type ClockPrepared={epoch:number;body:string;snapshot:DemoClockSnapshot;intent:Readonly<DemoClockControl>;promise?:Promise<DemoClockSnapshot>};
 type ApiProblem = Omit<Problem, 'code'> & { code: Problem['code'] | 'SUBSCRIPTION_CONFLICT' | 'PUSH_DISABLED' | 'REPORT_LIMIT_EXCEEDED' };
 
 const BASE = '/api/v1';
@@ -83,6 +87,7 @@ export class ApiClient {
   #session: Session | null = null;
   #listeners = new Set<() => void>();
   #prepared = new WeakMap<object, Prepared>();
+  #clockPrepared = new WeakMap<object,ClockPrepared>();
   #fetch: typeof fetch;
   #online: () => boolean;
   #timeout: number;
@@ -212,6 +217,36 @@ export class ApiClient {
     const suffix=kind==='shift'?'shift':`orders/${id(kind.orderId).toLowerCase()}`;
     const filename=`naryadai-${kind==='shift'?'shift':`order-${kind.orderId.toLowerCase()}`}.${format}`;
     return this.#request(`/reports/${suffix}.${format}?${query}`,{signal,analytics:true,reportFile:{format,filename}});
+  }
+  #assertClockSession():void {
+    if(!this.#session?.principal.active||!(Date.parse(this.#session.expires_at)>Date.now()))throw new ApiError('Сессия завершена. Войдите снова.',401);
+    if(this.#session.principal.role!=='master')throw new ApiError('Демо-время доступно только разрешённому оператору.',403);
+  }
+  async getDemoClock(signal?:AbortSignal):Promise<DemoClockSnapshot> {
+    this.#assertClockSession();return this.#request('/demo/clock',{validate:isDemoClockSnapshot,signal,maxBytes:4096});
+  }
+  prepareDemoClock(snapshot:DemoClockSnapshot,change:DemoClockChange):PreparedDemoClock {
+    this.#assertClockSession();
+    if(!isDemoClockChange(change))throw new ApiError('Проверьте допустимое целое значение демо-времени.',422);
+    if(!isDemoClockSnapshot(snapshot)||snapshot.version>=2147483647)throw new ApiError('Версия демо-времени недоступна для изменения.');
+    const intent=Object.freeze({instance_id:snapshot.instance_id,expected_version:snapshot.version,...change});
+    if(!isDemoClockControl(intent))throw new ApiError('Проверьте допустимое целое значение демо-времени.',422);
+    const token=Object.freeze({intent});
+    this.#clockPrepared.set(token,{epoch:this.#epoch,body:JSON.stringify(intent),snapshot:Object.freeze({...snapshot,limits:Object.freeze({...snapshot.limits})}),intent});return token;
+  }
+  executeDemoClock(token:PreparedDemoClock):Promise<DemoClockSnapshot> {
+    const prepared=this.#clockPrepared.get(token);
+    if(!prepared)return Promise.reject(new ApiError('Неизвестное действие демо-времени.'));
+    try{this.#assertEpoch(prepared.epoch);this.#assertClockSession();}catch(error){return Promise.reject(error);}
+    // A token is sent at most once. A repeated call observes the same settled promise,
+    // including an unknown result; it is NOT an idempotent domain receipt or a retry.
+    prepared.promise??=Promise.resolve().then(async()=>{
+      const result=await this.#request<DemoClockSnapshot>('/demo/clock',{method:'POST',body:prepared.body,contentType:'application/json',epoch:prepared.epoch,validate:isDemoClockSnapshot,mutation:true,maxBytes:4096});
+      const old=prepared.snapshot,intent=prepared.intent;
+      const minimum=Date.parse(old.domain_now)+(intent.action==='advance'?intent.seconds*1000:0);
+      if(result.instance_id!==intent.instance_id||result.version!==intent.expected_version+1||result.scale!==(intent.action==='set_scale'?intent.scale:old.scale)||Date.parse(result.domain_now)<minimum||result.domain_limit!==old.domain_limit||result.real_anchor!==result.real_now||result.domain_anchor!==result.domain_now)throw new ApiError('Ответ изменения демо-времени не соответствует исходному действию.',200,null,true);
+      return result;
+    });return prepared.promise;
   }
   #assertPushSession(): void {
     if (!this.#session?.principal.active || !(Date.parse(this.#session.expires_at) > Date.now())) throw new ApiError('Сессия завершена. Войдите снова.', 401);

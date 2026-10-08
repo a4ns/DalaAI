@@ -90,7 +90,10 @@
     "frontend/src/app/App.tsx and Workspace.tsx: master analytics navigation without unmounting active drafts",
     "frontend/src/shared/api/reportFiles.ts and client.ts: fixed protected report binary paths with bounded body and safe metadata",
     "frontend/src/features/analytics/downloads.ts and DownloadControls.tsx: explicit preparation/save with session/report fences and URL cleanup",
-    "frontend/src/app/App.tsx and Workspace.tsx: propagate synchronous logout latch to optional download controls"
+    "frontend/src/app/App.tsx and Workspace.tsx: propagate synchronous logout latch to optional download controls",
+    "frontend/src/features/demoClock: authorized server-snapshot controls with CAS-only unknown-outcome lock",
+    "frontend/src/shared/api/demoClockProtocol.ts and client.ts: actual optional clock wire, immutable single-send controls",
+    "frontend/src/app/App.tsx: session-owned master demo-clock tab survives unrelated Workspace access gates"
   ],
   "analytics_base": "3ef269bba80dbd6eafaff0d5e557da21f2d96244",
   "analytics_contracts": {
@@ -98,5 +101,7 @@
     "C108": "711e2fbd69598d06f43da9ff47de60d2c569634c",
     "C109": "e999232014be8b16717058c6d9b70b41dec75c89"
   },
-  "analytics_download_contract": "3d4312b815fd7ca60baa176dc1e3449f9ca3a34f"
+  "analytics_download_contract": "3d4312b815fd7ca60baa176dc1e3449f9ca3a34f",
+  "demo_clock_base": "859e3c43a545320cfb1fa2bb58b54bb73b853900",
+  "demo_clock_contract": "d4a2932ad064807246332980b9db9888dc40efa1"
 }
