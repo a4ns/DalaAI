@@ -20,6 +20,16 @@ import zlib
 MAX_BYTES = 8 * 1024 * 1024
 MAX_EXPANDED = 32 * 1024 * 1024
 MAX_TEXT = 2 * 1024 * 1024
+STAGES = frozenset({'START','READ_EXPECTED_FILE','PARSE_EXPECTED_JSON','READ_SAVED_FILE','EXPECTED_CONTRACT','FILE_BOUND',
+    'PDF_XREF','PDF_OBJECTS','PDF_CATALOG_PAGES','PDF_PAGE_SHAPE','PDF_FONT_RESOURCES','PDF_STREAM','PDF_FONT_MAP',
+    'PDF_OPERATORS','PDF_VISIBLE_STYLE','PDF_TEXT_DECODE','PDF_CONTENT','XLSX_ARCHIVE','XLSX_ENTRY','XLSX_XML',
+    'XLSX_RELATIONSHIPS','XLSX_CELLS','XLSX_CONTENT','RESULT','UNCLASSIFIED'})
+_stage = 'START'
+
+
+def checkpoint(stage):
+    global _stage
+    _stage = stage if stage in STAGES else 'UNCLASSIFIED'
 
 
 def require(condition):
@@ -41,6 +51,7 @@ def bounded_file(path, limit):
 
 
 def xml(data):
+    checkpoint('XLSX_XML')
     require(len(data) <= MAX_EXPANDED and b'<!DOCTYPE' not in data.upper() and b'<!ENTITY' not in data.upper())
     result = ET.fromstring(data)
     require(sum(1 for _ in result.iter()) <= 300000)
@@ -52,6 +63,7 @@ NS = {'s': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main',
 
 
 def xlsx(data):
+    checkpoint('XLSX_ARCHIVE')
     require(data.startswith(b'PK\x03\x04'))
     with ZipFile(BytesIO(data)) as archive:
         entries = archive.infolist()
@@ -59,6 +71,7 @@ def xlsx(data):
         require(sum(e.file_size for e in entries) <= MAX_EXPANDED)
         contents = {}
         for entry in entries:
+            checkpoint('XLSX_ENTRY')
             name = entry.filename
             require(not entry.is_dir() and len(name) <= 160 and '\\' not in name and not name.startswith('/') and '..' not in PurePosixPath(name).parts)
             require(entry.compress_type in {ZIP_DEFLATED, ZIP_STORED} and not entry.flag_bits & 1 and 0 < entry.file_size <= MAX_EXPANDED)
@@ -73,6 +86,7 @@ def xlsx(data):
             require(not any(e.tag.rsplit('}', 1)[-1] in {'f', 'hyperlink', 'externalReference'} for e in root.iter()))
             if name.endswith('.rels'):
                 require(all(e.attrib.get('TargetMode') != 'External' for e in root))
+        checkpoint('XLSX_RELATIONSHIPS')
         relations = {r.attrib['Id']: r.attrib['Target'] for r in xml(contents['xl/_rels/workbook.xml.rels'])}
         sheets = {}
         text_size = 0
@@ -83,6 +97,7 @@ def xlsx(data):
             rows = []
             previous_row = 0
             for row in xml(contents[target]).findall('s:sheetData/s:row', NS):
+                checkpoint('XLSX_CELLS')
                 row_number = int(row.attrib['r'])
                 require(row_number > previous_row and row_number <= 30000)
                 previous_row = row_number
@@ -121,6 +136,7 @@ def inflate(data, budget):
 
 def pdf(data):
     """Only traditional xref and ReportLab direct page/font/content objects."""
+    checkpoint('PDF_XREF')
     require(data.startswith(b'%PDF-1.') and len(data) <= MAX_BYTES)
     end = re.search(rb'startxref\s+(\d+)\s+%%EOF\s*$', data)
     require(end is not None)
@@ -132,6 +148,7 @@ def pdf(data):
     require(4 <= size <= 1500 and len(lines) == size and lines[0] == b'0000000000 65535 f ')
     offsets = [int(line[:10]) for line in lines[1:]]
     require(all(line[11:18] == b'00000 n' for line in lines[1:]) and offsets == sorted(set(offsets)) and offsets[-1] < offset)
+    checkpoint('PDF_OBJECTS')
     objects = {}
     for number, begin in enumerate(offsets, 1):
         finish = offsets[number] if number < len(offsets) else offset
@@ -142,6 +159,7 @@ def pdf(data):
         dictionary = objects[number].split(b'\nstream\n', 1)[0]
         require(not re.search(rb'/(?:OpenAction|AA|JS|JavaScript|Launch|URI|EmbeddedFile|Filespec|Encrypt|CropBox|BleedBox|TrimBox|ArtBox|UserUnit)\b', dictionary))
     require(re.search(rb'/Size\s+' + str(size).encode() + rb'\b', cross[3]) is not None)
+    checkpoint('PDF_CATALOG_PAGES')
     root_match = re.search(rb'/Root\s+(\d+) 0 R', cross[3]); require(root_match is not None)
     catalog = objects[int(root_match[1])]
     require(re.fullmatch(rb'<<\s*/PageMode /UseNone\s*/Pages [1-9][0-9]* 0 R\s*/Type /Catalog\s*>>', catalog) is not None)
@@ -157,6 +175,7 @@ def pdf(data):
     cache = {}
     def stream(number):
         nonlocal expanded
+        checkpoint('PDF_STREAM')
         if number in cache:
             return cache[number]
         obj = objects[number]
@@ -176,6 +195,7 @@ def pdf(data):
         return payload
     fonts = {}
     def font_map(number):
+        checkpoint('PDF_FONT_MAP')
         if number in fonts:
             return fonts[number]
         obj = objects[number]
@@ -195,6 +215,7 @@ def pdf(data):
         return mapping
     lines = []
     for page_id in page_ids:
+        checkpoint('PDF_PAGE_SHAPE')
         page = objects[page_id]
         # Exact producer-owned page/resource shape. New extensions fail closed;
         # no crop, inherited viewport, optional-content or graphics-state seam.
@@ -214,11 +235,13 @@ def pdf(data):
         require(left == bottom == 0 and abs(width-595.2756) < 0.001 and abs(height-841.8898) < 0.001)
         content = re.search(rb'/Contents (\d+) 0 R', page); font = re.search(rb'/Font (\d+) 0 R', page)
         require(content is not None and font is not None)
+        checkpoint('PDF_FONT_RESOURCES')
         resource = objects[int(font[1])]
         require(re.fullmatch(rb'<<\s*(?:/F[0-9]+(?:\+[0-9]+)? [1-9][0-9]* 0 R\s*)+>>', resource) is not None)
         refs = {k.decode(): int(v) for k, v in re.findall(rb'/(F[0-9]+(?:\+[0-9]+)?) (\d+) 0 R', objects[int(font[1])])}
         require(1 <= len(refs) <= 20)
         raw = stream(int(content[1])); current = None; count_text = 0
+        checkpoint('PDF_OPERATORS')
         # C5 Canvas emits only these fixed drawing/text operators. Strip literal
         # strings first so harmless source text cannot masquerade as an operator.
         literal_pattern = rb'\((?:[^()\\]|\\(?:[0-7]{1,3}|.|\n))*\)'
@@ -229,6 +252,7 @@ def pdf(data):
         # transforms or rendering-mode switches are in the generated subset.
         transforms = re.findall(rb'([^\n]+) cm', raw)
         require(all(t.strip() == b'1 0 0 1 0 0' for t in transforms))
+        checkpoint('PDF_VISIBLE_STYLE')
         # Fixed C5 palette and font sizes; this is generated-subset validation,
         # not a claim that decoded strings alone guarantee visible content.
         number = rb'[-+]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)'
@@ -254,6 +278,7 @@ def pdf(data):
         for token in re.finditer(pattern, raw, re.S):
             if token[1]:
                 current = font_map(refs[token[1].decode()]); continue
+            checkpoint('PDF_TEXT_DECODE')
             require(current is not None)
             literal = token[2]
             def unescape(m):
@@ -270,6 +295,7 @@ def pdf(data):
 
 
 def validate_expected(e):
+    checkpoint('EXPECTED_CONTRACT')
     require(set(e) == {'kind','order_id','order_number','period','historical_counts'})
     require(e['kind'] in {'shift','order'} and e['period'] == {'start':'2026-07-01T00:00:00Z','end':'2026-10-01T00:00:00Z'})
     if e['kind'] == 'order':
@@ -282,11 +308,13 @@ def validate_expected(e):
 
 def inspect(data, fmt, expected):
     validate_expected(expected)
+    checkpoint('FILE_BOUND')
     require(0 < len(data) <= MAX_BYTES and fmt in {'pdf','xlsx'})
     title = 'Отчёт смены' if expected['kind'] == 'shift' else 'Наряд ' + expected['order_number']
     labels = ['Исторических нарядов','Исторических попыток','Исторических ссылок на фото','Отсутствующих записей фото']
     if fmt == 'pdf':
         lines, units = pdf(data)
+        checkpoint('PDF_CONTENT')
         text = '\n'.join(lines)
         require(title in lines and 'СИНТЕТИЧЕСКИЕ ДАННЫЕ' in text and 'Asia/Almaty (UTC+05:00)' in text)
         require('Начало периода, включено: 01.07.2026 05:00:00 +0500' in text and 'Конец периода, исключён: 01.10.2026 05:00:00 +0500' in text)
@@ -298,6 +326,7 @@ def inspect(data, fmt, expected):
             require('issued_orders' in text and 'Значение точно: 540' in lines)
     else:
         sheets = xlsx(data); units = len(sheets)
+        checkpoint('XLSX_CONTENT')
         meta = {r[0]:r[1] for r in sheets['Об отчёте'] if len(r)==2}
         require(meta.get('Отчёт') == title and meta.get('Режим') == 'СИНТЕТИЧЕСКИЕ ДАННЫЕ' and meta.get('Часовой пояс всех дат') == 'Asia/Almaty (UTC+05:00)')
         for label, stamp in [('Начало периода, включено','2026-07-01T05:00:00'),('Конец периода, исключён','2026-10-01T05:00:00')]:
@@ -310,6 +339,7 @@ def inspect(data, fmt, expected):
             require(fields.get('ID наряда') == expected['order_id'] and fields.get('Номер') == expected['order_number'])
         else:
             require(any(len(row)>5 and row[0]=='Смена' and row[1]=='issued_orders' and row[5]=='540' for row in sheets['Показатели']))
+    checkpoint('RESULT')
     return {'validator':'c113-generated-subset-v1','format':fmt,'bytes':len(data),'sha256':sha256(data).hexdigest(),
             'units':units,'signature_valid':True,'content_valid':True,'synthetic_disclosure':True,
             'period_matches':True,'scope_matches':True,'historical_disclosure':True,'bounded_structure':True,
@@ -319,11 +349,13 @@ def inspect(data, fmt, expected):
 def main():
     try:
         require(len(sys.argv)==4)
-        expected = json.loads(bounded_file(sys.argv[3],4096))
-        result = inspect(bounded_file(sys.argv[1],MAX_BYTES),sys.argv[2],expected)
+        checkpoint('READ_EXPECTED_FILE');raw = bounded_file(sys.argv[3],4096)
+        checkpoint('PARSE_EXPECTED_JSON');expected = json.loads(raw)
+        checkpoint('READ_SAVED_FILE');data = bounded_file(sys.argv[1],MAX_BYTES)
+        result = inspect(data,sys.argv[2],expected)
         print(json.dumps(result,sort_keys=True)); return 0
     except Exception:
-        print('{"status":"BLOCKED","code":"C113_DOWNLOAD_INSPECTION_FAILED"}'); return 2
+        print(json.dumps({'status':'BLOCKED','code':'C113_DOWNLOAD_INSPECTION_FAILED','stage':_stage})); return 2
 
 
 if __name__=='__main__':

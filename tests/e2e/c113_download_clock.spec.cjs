@@ -28,7 +28,7 @@ test(c.TITLE,async({browser,browserName},info)=>{
   const e={schema_version:1,result:'FAIL',test:c.TITLE,run_id:fixture.run_id,harness_sha:sourceSha,
     frontend_sha:fixture.frontend_sha,backend_sha:fixture.backend_sha,source_files:hashes,
     manifest:fixture.manifest,manifest_sha256:fixture.manifest_sha256,secrecy_proof:fixture.proof,
-    started_at:new Date().toISOString(),steps:[],clock:[],downloads:[],restrictions:[],
+    started_at:new Date().toISOString(),steps:[],clock:[],downloads:[],restrictions:[],download_diagnostic:files.createDownloadDiagnostic(),
     period:c.PERIOD,ui_period_utc_plus_5:c.LOCAL_PERIOD,
     browser:{mode:'ANDROID_EMULATION',engine:'chromium',version:browser.version(),profile:'Pixel 7',playwright:'1.63.0',contexts:2,mobile:true,touch:true,locale:'ru-RU',timezone:'Asia/Almaty',trusted_tls:true,credential_environment:'excluded_from_browser_process',service_workers:'blocked'},
     separate_gates:Object.fromEntries(['c110_lifecycle','c112_analytics','physical_android','native_excel','native_camera','push_delivery','provider_model','live_closure','security_clock_expiry'].map(k=>[k,'NOT_RUN']))};
@@ -100,36 +100,48 @@ test(c.TITLE,async({browser,browserName},info)=>{
     protectedHeaders(response,pathname);
     const body=await response.json();require('./c113_gate.cjs').validatePeriod(body.period);return body;
   });
+  const markDownload=(label,target)=>files.downloadCheckpoint(e.download_diagnostic,label,target);
   const download=async(kind,format)=>privateOperationBoundary(async()=>{
+    markDownload('PREPARE_EXPECTATION',`${kind}_${format}`.toUpperCase());
+    e.download_diagnostic.response='NOT_OBSERVED';e.download_diagnostic.encoding='NOT_OBSERVED';e.download_diagnostic.content_length='NOT_OBSERVED';e.download_diagnostic.inspector='NOT_RUN';
     const expected=files.expected(kind,selected),pathname=files.pathname(expected,format),filename=files.filename(expected,format);
     const scope=master.page.getByRole('region',{name:'Скачать выбранный отчёт',exact:true});
     let observed=0;const watch=()=>observed++;master.page.on('download',watch);
+    markDownload('WAIT_PREPARE_RESPONSE');
     const [response]=await Promise.all([master.page.waitForResponse(r=>{
       const u=new URL(r.url());return u.origin===fixture.origin&&u.pathname===pathname&&r.request().method()==='GET'&&Date.parse(u.searchParams.get('start'))===Date.parse(c.PERIOD.start)&&Date.parse(u.searchParams.get('end'))===Date.parse(c.PERIOD.end);
     }),scope.getByRole('button',{name:`Подготовить ${format.toUpperCase()}`,exact:true}).click()]);
-    const h=protectedHeaders(response,pathname);
-    c.check(h['content-type']===files.MEDIA[format]&&h['content-disposition']===`attachment; filename="${filename}"`&&h['content-security-policy']==="default-src 'none'; sandbox",'EXACT_EXPORT_HEADERS_REQUIRED');
+    files.downloadResponse(e.download_diagnostic,response.status());markDownload('CHECK_PROTECTED_HEADERS');
+    const h=response.headers();files.downloadTransport(e.download_diagnostic,h);protectedHeaders(response,pathname);
+    markDownload('CHECK_EXPORT_MIME');c.check(h['content-type']===files.MEDIA[format],'EXACT_EXPORT_HEADERS_REQUIRED');
+    markDownload('CHECK_EXPORT_DISPOSITION');c.check(h['content-disposition']===`attachment; filename="${filename}"`,'EXACT_EXPORT_HEADERS_REQUIRED');
+    markDownload('CHECK_EXPORT_CSP');c.check(h['content-security-policy']==="default-src 'none'; sandbox",'EXACT_EXPORT_HEADERS_REQUIRED');
+    markDownload('CHECK_CONTENT_LENGTH');
     c.check(/^[0-9]+$/.test(h['content-length']||'')&&Number(h['content-length'])>0&&Number(h['content-length'])<=c.MAX_DOWNLOAD_BYTES,'BOUNDED_CONTENT_LENGTH_REQUIRED');
-    const responseBytes=await response.body();c.check(responseBytes.length===Number(h['content-length'])&&responseBytes.length<=c.MAX_DOWNLOAD_BYTES,'BOUNDED_RESPONSE_BYTES_REQUIRED');
-    await expect(scope.getByRole('button',{name:`Сохранить ${format.toUpperCase()}`,exact:true})).toBeVisible();
-    c.check(observed===0,'NO_SAVE_BEFORE_SECOND_GESTURE_REQUIRED');
+    markDownload('READ_RESPONSE_BYTES');const responseBytes=await response.body();markDownload('CHECK_RESPONSE_SIZE');c.check(responseBytes.length===Number(h['content-length'])&&responseBytes.length<=c.MAX_DOWNLOAD_BYTES,'BOUNDED_RESPONSE_BYTES_REQUIRED');
+    markDownload('WAIT_SAVE_CONTROL');await expect(scope.getByRole('button',{name:`Сохранить ${format.toUpperCase()}`,exact:true})).toBeVisible();
+    markDownload('CHECK_NO_EARLY_SAVE');c.check(observed===0,'NO_SAVE_BEFORE_SECOND_GESTURE_REQUIRED');
     const gets=network.export_gets;
-    const [saved]=await Promise.all([master.page.waitForEvent('download'),scope.getByRole('button',{name:`Сохранить ${format.toUpperCase()}`,exact:true}).click()]);
-    c.check(saved.suggestedFilename()===filename&&await saved.failure()===null,'BROWSER_DOWNLOAD_COMPLETION_REQUIRED');
+    markDownload('WAIT_SAVE_DOWNLOAD');const [saved]=await Promise.all([master.page.waitForEvent('download'),scope.getByRole('button',{name:`Сохранить ${format.toUpperCase()}`,exact:true}).click()]);
+    markDownload('CHECK_SUGGESTED_FILENAME');c.check(saved.suggestedFilename()===filename,'BROWSER_DOWNLOAD_COMPLETION_REQUIRED');
+    markDownload('WAIT_DOWNLOAD_COMPLETION');c.check(await saved.failure()===null,'BROWSER_DOWNLOAD_COMPLETION_REQUIRED');
     const savePath=path.join(c.artifactDir(),`saved-${kind}.${format}`);
-    c.check(!fs.existsSync(savePath),'FRESH_DOWNLOAD_DESTINATION_REQUIRED');await saved.saveAs(savePath);
-    const stat=fs.lstatSync(savePath);c.check(stat.isFile()&&!stat.isSymbolicLink()&&stat.size>0&&stat.size<=c.MAX_DOWNLOAD_BYTES,'BOUNDED_SAVED_FILE_REQUIRED');
-    const bytes=fs.readFileSync(savePath);c.check(bytes.equals(responseBytes)&&observed===1&&network.export_gets===gets,'SAVED_EXACT_PREPARED_RESPONSE_REQUIRED');
+    markDownload('SAVE_FILE');c.check(!fs.existsSync(savePath),'FRESH_DOWNLOAD_DESTINATION_REQUIRED');await saved.saveAs(savePath);
+    markDownload('CHECK_SAVED_FILE');const stat=fs.lstatSync(savePath);c.check(stat.isFile()&&!stat.isSymbolicLink()&&stat.size>0&&stat.size<=c.MAX_DOWNLOAD_BYTES,'BOUNDED_SAVED_FILE_REQUIRED');
+    markDownload('COMPARE_SAVED_BYTES');const bytes=fs.readFileSync(savePath);c.check(bytes.equals(responseBytes)&&observed===1&&network.export_gets===gets,'SAVED_EXACT_PREPARED_RESPONSE_REQUIRED');
     master.page.off('download',watch);
-    const expectedPath=path.join(c.artifactDir(),`expected-${kind}-${format}.json`);
+    markDownload('WRITE_EXPECTED_VALUES');const expectedPath=path.join(c.artifactDir(),`expected-${kind}-${format}.json`);
     fs.writeFileSync(expectedPath,c.stable(expected),{flag:'wx',mode:0o600});
     const env={PATH:process.env.PATH,LANG:'C.UTF-8',PYTHONDONTWRITEBYTECODE:'1'};
-    const {stdout}=await runFile(process.env.DALA_C113_INSPECT_PYTHON||'python',[path.join(__dirname,'c113_inspect_download.py'),savePath,format,expectedPath],{env,timeout:15000,maxBuffer:16384});
-    const inspection=JSON.parse(stdout);files.validateInspection(inspection,expected,format);
+    markDownload('RUN_INSPECTOR');let stdout;
+    try{({stdout}=await runFile(process.env.DALA_C113_INSPECT_PYTHON||'python',[path.join(__dirname,'c113_inspect_download.py'),savePath,format,expectedPath],{env,timeout:15000,maxBuffer:16384}));}
+    catch(error){e.download_diagnostic.inspector=files.inspectorFailure(error);throw new Error('C113 BLOCKED: inspector failed; private details suppressed');}
+    markDownload('PARSE_INSPECTOR_RESULT');const inspection=JSON.parse(stdout);
+    markDownload('CHECK_INSPECTOR_BINDING');files.validateInspection(inspection,expected,format);e.download_diagnostic.inspector='PASS';
     const row={kind,format,path:pathname,filename,status:200,cache:'private,no-store',vary:'Cookie',nosniff:true,media:files.MEDIA[format],csp:"default-src 'none'; sandbox",
       prepare_via_ui:true,save_via_ui:true,download_completed:true,no_save_before_gesture:true,same_response_bytes:true,no_network_on_save:true,
       response_sha256:bytesHash(responseBytes),saved_sha256:bytesHash(bytes),bytes:bytes.length,inspection};
-    files.validateDownload(row,expected,format);e.downloads.push(row);
+    markDownload('RECORD_DOWNLOAD');files.validateDownload(row,expected,format);e.downloads.push(row);markDownload('DONE');
   });
   try{
     await stage(c.REQUIRED_STEPS[0],async()=>{before=await observe();e.database_before=before;});
@@ -168,18 +180,20 @@ test(c.TITLE,async({browser,browserName},info)=>{
       c.check(e.facts.identity_mapping_sha256===before.identity_mapping_sha256,'API_DATABASE_PROVENANCE_REQUIRED');
     });
     await stage(c.REQUIRED_STEPS[4],async()=>{
+      markDownload('OPEN_SHIFT_REPORT','SHIFT_PDF');
       const report=await uiReport('/api/v1/reports/shift',()=>master.page.getByRole('button',{name:'Открыть отчёт смены / периода',exact:true}).click());
       c.historicalCounts(report.provenance);c.check(report.report_kind==='shift','SHIFT_REPORT_REQUIRED');
-      await expect(master.page.getByRole('region',{name:'Выбранный отчёт',exact:true}).getByRole('heading',{name:'Защищённый отчёт смены / периода',exact:true})).toBeVisible();
+      markDownload('WAIT_SHIFT_REPORT_UI');await expect(master.page.getByRole('region',{name:'Выбранный отчёт',exact:true}).getByRole('heading',{name:'Защищённый отчёт смены / периода',exact:true})).toBeVisible();
       await download('shift','pdf');await download('shift','xlsx');
     });
     await stage(c.REQUIRED_STEPS[5],async()=>{
       const selector=master.page.getByRole('region',{name:'Аналитика и отчёты',exact:true}).getByRole('combobox',{name:'Наряд для отчёта',exact:true});
       await expect(selector).toHaveCount(1);c.check(c.stable(await selector.selectOption({value:selected.order.id}))===c.stable([selected.order.id]),'EXACT_ORDER_SELECTION_REQUIRED');await expect(selector).toHaveValue(selected.order.id);
+      markDownload('OPEN_ORDER_REPORT','ORDER_PDF');
       const report=await uiReport(`/api/v1/reports/orders/${selected.order.id}`,()=>master.page.getByRole('button',{name:'Открыть отчёт наряда',exact:true}).click());
       c.check(report.report_kind==='order'&&c.stable(report.order)===c.stable(selected),'EXACT_ORDER_REPORT_REQUIRED');
       c.historicalCounts(report.provenance,1,e.selected.attempts,e.selected.photos);
-      await expect(master.page.getByRole('region',{name:'Выбранный отчёт',exact:true}).getByRole('heading',{name:`Защищённый отчёт: наряд №${selected.order.number}`,exact:true})).toBeVisible();
+      markDownload('WAIT_ORDER_REPORT_UI');await expect(master.page.getByRole('region',{name:'Выбранный отчёт',exact:true}).getByRole('heading',{name:`Защищённый отчёт: наряд №${selected.order.number}`,exact:true})).toBeVisible();
       await download('order','pdf');await download('order','xlsx');
     });
     await stage(c.REQUIRED_STEPS[6],async()=>{

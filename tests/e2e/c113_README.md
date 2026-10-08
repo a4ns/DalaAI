@@ -172,3 +172,22 @@ PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests/e2e -p 'c113_*tes
 These test dummy contracts/gates and offline generated files with existing locked
 renderer dependencies. They never read operator input, launch browsers, connect
 to a database or create an execution receipt. A owns final browser/DB validation.
+
+## Failure localization (A0-0085)
+
+`download_diagnostic` emits only fixed target/substep/HTTP-status/encoding/
+Content-Length/inspector-stage categories. It distinguishes report opening,
+Prepare response, each fixed header check, declared size, actual response bytes,
+Save gesture, browser completion, saved-byte equality, inspector process and
+content validation. A missing completed download row does not mean no response
+or saved bytes existed. Content-Encoding is classified (identity/gzip/zstd/br/
+other) without retaining headers; declared length is only a bounded category.
+All acceptance predicates remain unchanged, including declared/actual size checks.
+
+The inspector's failure output is exactly a fixed status/code/stage object. The
+runner accepts only its allowlisted stages from bounded stdout; malformed,
+extra-field or unrecognized output becomes `PROCESS_FAILED`. It never copies
+child exception text, stderr, paths, content, arbitrary headers or raw output.
+The mandatory dummy-failure preflight exercises these sanitizers with private-
+shaped sentinels. Diagnosis is advisory and cannot promote failed evidence.
+This source change requires a fresh exact-integrated-HEAD C113 proof.
