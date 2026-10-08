@@ -36,12 +36,22 @@ test(PREFLIGHT_TITLE, async ({ page }, testInfo) => {
     try { await privateOperationBoundary(async () => { throw new Error(dummyPath + sentinels.join(' ')); }); }
     catch (error) { expect(error.message).toBe('C113 BLOCKED: operation failed; private details suppressed'); protectedFailures++; }
   }
-  expect(protectedFailures).toBe(6);
+  try{await privateOperationBoundary(()=>downloads.boundedResponseBody({body:()=>Promise.reject(new Error(sentinels.join(' ')))}));}
+  catch(error){expect(error.message).toBe('C113 BLOCKED: operation failed; private details suppressed');protectedFailures++;}
+  expect(protectedFailures).toBe(7);
   const diagnostic=downloads.createDownloadDiagnostic();
   downloads.downloadCheckpoint(diagnostic,sentinels[0],sentinels[1]);
   downloads.downloadResponse(diagnostic,sentinels[2]);
   downloads.downloadTransport(diagnostic,{'content-encoding':sentinels[0],'content-length':sentinels[1]});
   diagnostic.inspector=downloads.inspectorFailure({stdout:JSON.stringify({status:'BLOCKED',code:'C113_DOWNLOAD_INSPECTION_FAILED',stage:sentinels[3]})});
+  const pageEvents=new (require('node:events').EventEmitter)();
+  const dummyRequest={failure:()=>({errorText:sentinels[0]})};
+  const observer=downloads.requestCompletionObserver(pageEvents);
+  pageEvents.emit('requestfailed',dummyRequest);observer.bind(dummyRequest);
+  diagnostic.request_after_body=observer.snapshot();observer.dispose();
+  diagnostic.body_failure=downloads.bodyFailure(new Error(`Protocol error (Network.getResponseBody): ${sentinels[1]}`));
+  diagnostic.frontend_before_body=await downloads.sampleDownloadUi({getByRole(){throw new Error(sentinels[3]);}},'pdf');
+  diagnostic.frontend_after_body=downloads.frontendState([sentinels[2],false,false,false]);
   await testInfo.attach('c113_safe_download_diagnostic',{body:Buffer.from(JSON.stringify(diagnostic)),contentType:'application/json'});
   // Intentionally unexpected failure: wrapper must require exit 1 and 1 failure.
   // It is not a core test, expected-failure annotation or successful journey.

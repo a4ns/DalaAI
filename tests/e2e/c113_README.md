@@ -191,3 +191,26 @@ child exception text, stderr, paths, content, arbitrary headers or raw output.
 The mandatory dummy-failure preflight exercises these sanitizers with private-
 shaped sentinels. Diagnosis is advisory and cannot promote failed evidence.
 This source change requires a fresh exact-integrated-HEAD C113 proof.
+
+### Original response-body boundary (A0-0091–0093)
+
+The same-head deliberate repeat reached `READ_RESPONSE_BYTES` after successful
+200/protected-header/identity-encoding/bounded-length checks, then failed before
+Save or inspection. The earlier full PASS is retained; the repeat is an unresolved
+intermittent result, not a reliable all-green claim.
+
+Request-finished/failed listeners are registered before Prepare. A weak identity
+map captures early terminal events, and observations bind only to the exact
+matched `response.request()`. Evidence records `FINISHED`, `FAILED` or
+`NOT_OBSERVED` plus a failure-present boolean, never the failure text or URL.
+Listeners are removed on every download outcome.
+
+The original single `response.body()` call has a 20-second real-time bound.
+Before and after it, an independently bounded one-second probe observes only
+fixed scoped Save-button/alert/loading/expired states. A failure is classified
+only as timeout, body-protocol-failure, body-unavailable, target-closed or other;
+raw exception text is never serialized. The original failure is rethrown into
+the existing private boundary. No unbounded `response.finished()` wait, GET
+retry, alternate body, blob substitution or inferred transfer success is used.
+Byte equality, saved-file/content checks and every acceptance gate are unchanged.
+All added paths participate in the fresh dummy-failure secrecy proof.
