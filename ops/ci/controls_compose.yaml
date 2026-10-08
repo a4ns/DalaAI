@@ -1,0 +1,68 @@
+# C113-only overlay, after A5's unchanged base and full-profile Compose files.
+services:
+  prepare:
+    environment:
+      DALA_DEMO_FIXTURE_MODE: history
+      DALA_DEMO_CLOCK_ENABLED: 'true'
+      DALA_DEMO_CLOCK_INSTANCE_ID: ${DALA_DEMO_CLOCK_INSTANCE_ID:?Use fresh controls runner}
+  api:
+    environment:
+      DALA_DEMO_CLOCK_ENABLED: 'true'
+      DALA_DEMO_CLOCK_INSTANCE_ID: ${DALA_DEMO_CLOCK_INSTANCE_ID:?Use fresh controls runner}
+      DALA_DOMAIN: localhost
+      DALA_ALLOWED_ORIGIN: https://localhost:18443
+      OPENAI_API_KEY: ''
+      DALA_WEB_PUSH_ENABLED: 'false'
+      DALA_VAPID_PUBLIC_KEY: ''
+      DALA_VAPID_PRIVATE_KEY: ''
+      DALA_VAPID_SUBJECT: ''
+  worker:
+    profiles: [c113-inactive]
+    environment:
+      OPENAI_API_KEY: ''
+      DALA_MODEL_FORCE_OFF: 'true'
+      DALA_WORKER_ENABLED: 'false'
+      DALA_WORKER_AI_ENABLED: 'false'
+      DALA_WORKER_NOTIFY_ENABLED: 'false'
+      DALA_DEMO_CLOCK_ENABLED: 'true'
+      DALA_DEMO_CLOCK_INSTANCE_ID: ${DALA_DEMO_CLOCK_INSTANCE_ID:?Use fresh controls runner}
+      DALA_WEB_PUSH_ENABLED: 'false'
+      DALA_VAPID_PUBLIC_KEY: ''
+      DALA_VAPID_PRIVATE_KEY: ''
+      DALA_VAPID_SUBJECT: ''
+  budget-directory:
+    profiles: [c113-inactive]
+  web:
+    volumes:
+      - ${DALA_CI_SOURCE_DIR:?Use controls runner}/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${DALA_CI_PRIVATE_DIR:?Use controls runner}/tls/server.crt:/run/ci-tls/server.crt:ro
+      - ${DALA_CI_PRIVATE_DIR:?Use controls runner}/tls/server.key:/run/ci-tls/server.key:ro
+  observer:
+    build: {context: ../.., dockerfile: ops/demo/Dockerfile.api}
+    network_mode: service:db
+    user: '10001:10001'
+    command: [python, -c, 'import time; time.sleep(3600)']
+    environment:
+      DALA_C113_AUTHORIZED: operator-provisioned-synthetic-only
+      DALA_C113_DATABASE_SCHEMA: dalaai_demo
+    secrets: [runtime_dsn]
+    volumes:
+      - ${DALA_CI_ROOT_DIR:?Use controls runner}/tests/e2e/c113_observe.py:/ci/c113_observe.py:ro
+      - ${DALA_CI_SOURCE_DIR:?Use controls runner}/controls_observer_in_container.py:/ci/controls_observer_in_container.py:ro
+    depends_on:
+      db: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+secrets:
+  postgres_owner_password: {file: '${DALA_CI_PRIVATE_DIR}/postgres_owner_password'}
+  postgres_runtime_password: {file: '${DALA_CI_PRIVATE_DIR}/postgres_runtime_password'}
+  postgres_worker_password: {file: '${DALA_CI_PRIVATE_DIR}/postgres_worker_password'}
+  owner_dsn: {file: '${DALA_CI_PRIVATE_DIR}/owner_dsn'}
+  runtime_dsn: {file: '${DALA_CI_PRIVATE_DIR}/runtime_dsn'}
+  worker_dsn: {file: '${DALA_CI_PRIVATE_DIR}/worker_dsn'}
+  master_pin: {file: '${DALA_CI_PRIVATE_DIR}/master_pin'}
+  executor_pin: {file: '${DALA_CI_PRIVATE_DIR}/executor_pin'}
+  model_policy: {file: '${DALA_CI_PRIVATE_DIR}/model_policy.json'}

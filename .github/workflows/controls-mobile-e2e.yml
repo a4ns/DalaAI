@@ -1,0 +1,85 @@
+name: Demo clock and protected downloads (Android emulation)
+'on':
+  push:
+    branches: [main, 'pod-a/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: controls-mobile-e2e-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  clock-downloads:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Set isolated browser installation path
+        run: printf 'PLAYWRIGHT_BROWSERS_PATH=%s/dalaai-controls-playwright\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: faef5d3d8b4c640fae013dbfa78074382e512e8f
+          path: .ci-c113-frontend-reference
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.15'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Install locked validation dependencies and official Chromium
+        timeout-minutes: 10
+        run: |
+          python -m pip install -r backend/requirements.lock -r backend/requirements-dev.lock
+          python -m pip check
+          npm ci --prefix tests/e2e --ignore-scripts
+          node tests/e2e/node_modules/@playwright/test/cli.js install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libnss3-tools
+          docker compose version
+      - name: Verify distinct C113 proof sources and isolated setup
+        run: |
+          python -m unittest discover -s ops/ci/tests -v
+          python -m unittest discover -s ops/ci/controls_tests -v
+          node --check ops/ci/controls_transport_probe.cjs
+          python ops/ci/controls_runner.py --check-inputs
+          node --test tests/e2e/c113_*.test.cjs
+          python -m unittest discover -s tests/e2e -p 'c113_*test.py' -v
+      - name: Fresh C113 proof, synthetic clock UI and four actual saved files
+        run: python ops/ci/controls_runner.py --report controls-ci-summary.json
+      - name: Publish bounded controls scope summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          file=Path('controls-ci-summary.json')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
+              if file.is_file():
+                  result=json.loads(file.read_text())
+                  out.write('Clock/download acceptance: '+result['status']+'\n\n')
+                  out.write('Stage: '+result['stage']+'\n\n')
+                  out.write('Exact source: '+result.get('source_sha','not established')+'\n\n')
+                  out.write('Passed: '+str(result.get('tests_passed',0))+'\n\n')
+                  out.write('Saved and inspected files: '+str(result.get('downloads_saved_and_inspected',0))+'\n\n')
+              else: out.write('Clock/download acceptance: BLOCKED before executable gate\n\n')
+              out.write('Fresh synthetic fixture and Android emulation only. C110 and read-only C112 are separate gates.\n')
+              out.write('Physical Android, native PDF/Excel apps, live providers, worker execution and security-clock expiry are not claimed.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: controls-android-ci-${{ github.sha }}
+          path: |
+            controls-ci-summary.json
+            controls-ci-gate.json
+            controls-ci-evidence.json
+          if-no-files-found: ignore
+          retention-days: 7
