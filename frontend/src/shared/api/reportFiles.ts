@@ -12,7 +12,7 @@ export async function readReportFile(response:Response,format:ReportFileFormat,f
   if(!response.body)throw new Error('Missing report body');
   const reader=response.body.getReader();const chunks:Uint8Array<ArrayBuffer>[]=[];let size=0;
   try{for(;;){const item=await reader.read();assertCurrent();if(item.done)break;size+=item.value.byteLength;if(size>REPORT_FILE_LIMIT)throw new Error('Report exceeds byte limit');chunks.push(new Uint8Array(item.value));}}
-  catch(error){await reader.cancel().catch(()=>undefined);throw error;}
+  catch(error){void reader.cancel().catch(()=>undefined);throw error;}
   finally{reader.releaseLock();}
   if(size===0)throw new Error('Empty report');
   // The network body is complete. Inspect its owned bytes without another async

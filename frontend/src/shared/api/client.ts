@@ -176,7 +176,7 @@ export class ApiClient {
       }
       if (options.reportFile) {
         try { return await readReportFile(response, options.reportFile.format, options.reportFile.filename, () => { this.#assertEpoch(epoch); controller.signal.throwIfAborted(); }) as T; }
-        catch(error) { await response.body?.cancel().catch(()=>undefined); if(error instanceof SessionChangedError) throw error; throw new ApiError('Файл отчёта не прошёл проверку формата или размера. Сохранение не начато.', response.status); }
+        catch(error) { void response.body?.cancel().catch(()=>undefined); if(error instanceof SessionChangedError) throw error; throw new ApiError('Файл отчёта не прошёл проверку формата или размера. Сохранение не начато.', response.status); }
       }
       if (options.image) {
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(response.headers.get('Content-Type')?.split(';')[0] ?? '')) throw new ApiError('Сервер вернул неподдерживаемое изображение.', response.status);
