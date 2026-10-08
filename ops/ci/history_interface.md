@@ -1,7 +1,7 @@
 # C112 history/analytics Android CI seam (source preparation)
 
-Source-ready binding: C112 `6c6627c4280b3f5275a939759c90e6e8a6b34bc6` against frontend
-`da83e9c417a7c6bf7e91b5100e8f2d7616d9f24e`. Actual C112 execution is pending. Existing
+Source-ready binding: C112 `a06bc57af3f7045bfccad4506debcbe7dd2e4aa4` against frontend
+`8e8087103821b6334ba8d5de0a40c91ee58276f9`. Actual C112 execution is pending. Existing
 C110 remains an independent exact-one-journey gate; its prior green results do
 not establish this new history journey.
 
@@ -204,3 +204,9 @@ unchanged actual C gates for its exact product. The fourteen focused source
 cases and independent real-timer checks remain separate from browser evidence.
 Earlier 7985 C110/C112/C113 passes and historical intermittent capture failures
 retain their exact-head scope; this correction makes no capture-repair claim.
+
+The in-app notification product requires fresh source-bound proofs and unchanged
+actual C gates. Its separate eighteen-case mounted notice/polling browser suite
+uses production preview, desktop Chromium and synthetic intercepted HTTP; it
+does not establish backend authorization or OS/WebPush delivery. Earlier 348b
+C110/C112 passes and C113 ORDER_PDF capture failure retain their exact-head scope.

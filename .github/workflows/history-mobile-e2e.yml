@@ -24,7 +24,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: da83e9c417a7c6bf7e91b5100e8f2d7616d9f24e
+          ref: 8e8087103821b6334ba8d5de0a40c91ee58276f9
           path: .ci-c112-frontend-reference
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
