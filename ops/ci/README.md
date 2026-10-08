@@ -12,8 +12,8 @@ and report export remain separate gates. No deployment is performed.
 ## C-110 accepted source and build provenance
 
 `scenarios.json` accepts exact C source
-`d674d8a1cc261760c89b04b555123ca775f3c845` and analytics frontend
-`9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`. C includes the bounded resume/Back
+`afeef803d01d7e056b7ad87e0cd4b1a437092db3` and final frontend
+`faef5d3d8b4c640fae013dbfa78074382e512e8f`. C includes the bounded resume/Back
 render waits and version-2 frontend/source-bound receipt. Missing or altered
 source still blocks before private execution. Do not lower counts or silently
 skip a missing input.
@@ -184,3 +184,5 @@ delivery. The separate required C-110 core remains fail-closed.
 The original desktop390px delta is preserved as a frozen earlier artifact; this
 replacement delta moves only the separate synthetic job to the accepted Pixel 9
 pair. It does not edit B product/harness source or the C-110 tests.
+
+Historical B9a C110 and C112 both passed on exact main347119c47b9a0ec70cd30cbc8bce2a2774a439e0. The final Bfaef target needs fresh separate C-owned proofs and real runs; neither historical acceptance nor the separate153+13 final-B synthetic job substitutes for them. C113 clock/download acceptance remains a separate scenario. The early PyYAML setup from ae62 is preserved before broad CI discovery.

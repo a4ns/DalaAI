@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const { inflateSync } = require('node:zlib');
 const { FRONTEND_SHA, TITLE, fixtureFromEnv, syntheticPng, dueLocal } = require('./c110_contract.cjs');
 const { REQUIRED_STEPS, validate } = require('./c110_gate.cjs');
-const OLD_FRONTEND_SHA = '3ef269bba80dbd6eafaff0d5e557da21f2d96244';
+const OLD_FRONTEND_SHA = '9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c';
 // These values are input-validation data only, never accounts or a live DB.
 const uuid = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 function env() {
@@ -84,10 +84,10 @@ test('gate rejects absent DB, receipt loss, missing steps and physical-phone pro
   }
 });
 
-test('only exact repinned 9a1d6109 source is accepted and preserved', () => {
-  assert.equal(FRONTEND_SHA, '9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c');
+test('only exact final faef5d3d source is accepted and preserved', () => {
+  assert.equal(FRONTEND_SHA, 'faef5d3d8b4c640fae013dbfa78074382e512e8f');
   assert.equal(load().frontend_sha, FRONTEND_SHA);
-  for (const selected of [undefined, '', '9a1d6109', OLD_FRONTEND_SHA, 'ca320bf692c01d89dd79496fe18d1bc2742052df', '2beb2244c4639c09004e4cdb5a7598d447ad68f6', '45a65ae2b0b23c1a717fec9baa7a30369b2dd117', 'f'.repeat(40), FRONTEND_SHA.toUpperCase()]) {
+  for (const selected of [undefined, '', 'faef5d3d', OLD_FRONTEND_SHA, '3ef269bba80dbd6eafaff0d5e557da21f2d96244', 'ca320bf692c01d89dd79496fe18d1bc2742052df', '2beb2244c4639c09004e4cdb5a7598d447ad68f6', '45a65ae2b0b23c1a717fec9baa7a30369b2dd117', 'f'.repeat(40), FRONTEND_SHA.toUpperCase()]) {
     let reads = 0;
     assert.throws(() => fixtureFromEnv({ ...env(), DALA_E2E_FRONTEND_SHA: selected }, () => { reads++; return '{}'; }, () => {}), /reviewed frontend/);
     assert.equal(reads, 0);

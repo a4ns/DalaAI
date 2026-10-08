@@ -1,14 +1,14 @@
 # C-110: real composed browser/API/PostgreSQL core journey
 
-Current analytics-UI product target: **browser/API/DB rerun NOT_RUN** in C0's environment.
+Current final product target: **browser/API/DB rerun NOT_RUN** in C0's environment.
 Source/parser tests are separate evidence. This is an executable Playwright
 journey, not a completed runtime result. No successful business response is
-mocked. For the next C110 manual-core gate, the analytics-UI frontend is pinned
-**only** to `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`, per
-[A0-0056](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6048842900).
+mocked. For the next C110 manual-core gate, the final frontend is pinned
+**only** to `faef5d3d8b4c640fae013dbfa78074382e512e8f`, per
+[A0-0076](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050279185).
 
 A5 builds/binds that exact candidate and records its exact backend source SHA.
-The previous `3ef269b` / `ca320bf` / `2beb2244` baselines, intermediate `45a65ae`, shortened
+The previous `9a1d6109` / `3ef269b` / `ca320bf` / `2beb2244` baselines, intermediate `45a65ae`, shortened
 SHAs and unknown candidates are rejected. Earlier baseline evidence is not relabeled.
 
 Historical ca320bf manual-core PASS was reported by A0 on exact main
@@ -17,8 +17,12 @@ Historical ca320bf manual-core PASS was reported by A0 on exact main
 Historical optional-UI 3ef269b manual-core PASS was later reported by A0 on
 `3d4312b815fd7ca60baa176dc1e3449f9ca3a34f` in
 [this dedicated CI job](https://github.com/a4ns/DalaAI/actions/runs/37701307143/job/113065128591).
-Neither result covers the new 9a1d6109 target or establishes a wholly green
-aggregate. A5 must run fresh preflight and core for the current exact product.
+Those results cover only their recorded older targets. A0 subsequently reported
+9a1d6109 manual-core PASS on main `2471afde` in
+[run 37710664244, job 113095586907](https://github.com/a4ns/DalaAI/actions/runs/37710664244/job/113095586907),
+bound to harness `d674d8a1cc261760c89b04b555123ca775f3c845`.
+No historical result covers faef5d3d. A5 must run fresh preflight and core for
+the current exact product; source review does not establish aggregate success.
 
 ## Stable A5 integration seam
 
@@ -47,7 +51,7 @@ Required inputs:
 | `DALA_E2E_FIXTURE_FILE` | Public fixture object from A0-0036, without dry-run wrapper |
 | `DALA_E2E_MASTER_PIN_FILE` | Operator-private file for the synthetic master |
 | `DALA_E2E_EXECUTOR_PIN_FILE` | Operator-private file for the synthetic executor |
-| `DALA_E2E_FRONTEND_SHA` | Exactly `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`, required for preflight, core and evidence gate |
+| `DALA_E2E_FRONTEND_SHA` | Exactly `faef5d3d8b4c640fae013dbfa78074382e512e8f`, required for preflight, core and evidence gate |
 | `DALA_E2E_BACKEND_SHA` | Exact 40-hex source SHA used to build the running backend |
 | `DALA_C110_RUN_ID` | Unique non-secret lowercase identifier, 8–64 chars, digits/hyphens allowed |
 | `DALA_C110_PREFLIGHT_RECEIPT` | New absolute public receipt path written by the mandatory executable preflight below |
@@ -229,7 +233,7 @@ blocked; native push/provider delivery remains NOT_RUN. This source compatibilit
 review did not itself establish a runtime pass; its later exact runtime result
 is recorded separately above.
 
-## Analytics-UI product compatibility (source-only)
+## Historical analytics-UI product compatibility (source-only)
 
 Compared exact `3ef269bba80dbd6eafaff0d5e557da21f2d96244` with
 `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`. Master/executor screens, photo controls,
@@ -242,7 +246,38 @@ changes; its initial state is idle. Facts/reports are requested by explicit
 analytics actions, which C110 never invokes. Existing core API request handling
 is preserved; analytics-only validators and response limits are additive.
 
-This is only the manual-core source binding. The separate C112 journey owns
-analytics/report browser acceptance. Future download-control candidates are not
-accepted by this exact pin, and no analytics, download or new-product runtime
-PASS is inferred from selector inspection or older core evidence.
+That checkpoint bound only the manual core to 9a1d6109. The separate C112 journey
+owns analytics/report browser acceptance. It did not accept later download-control
+candidates or infer any analytics, download or new-product runtime PASS.
+
+## Final faef5d3d compatibility review (source-only)
+
+Compared immutable `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c` with
+`faef5d3d8b4c640fae013dbfa78074382e512e8f` before changing the exact pin.
+Master/executor screens, executor modes and result disclosure, photo/review
+controls, panel/history, order store, push mount and dependency lockfiles are
+byte-unchanged. The existing login, default «Наряды», «Обзор смены» and all
+C110 control labels remain compatible. Resume still waits for Back, clicks it,
+then waits for the result field with the same bounded waits.
+
+App preserves the session-keyed Workspace lifetime inside a visibility wrapper.
+Its draft, photo, executor and analytics controllers stay mounted across tabs;
+the session epoch still clears the workspace on identity changes. The new
+master-only demo-clock controller starts idle and attach only subscribes to
+session changes. Clock GET requires the explicit access/refresh button and POST
+requires an explicit control action after a ready snapshot. C110 never opens or
+operates that tab. No clock request, time freeze or mutation is implied by mount.
+Download preparation and save are also explicit controls outside this journey.
+The shared API additions leave existing JSON and business-command paths intact.
+
+Only this target is accepted by fixture selection, reporter metadata, evidence
+and proof validation. Old 9a1d6109, unknown/shortened SHAs and stale or mismatched
+proofs are rejected. Changing the bound contract invalidates the old file hash
+and the new committed harness HEAD requires a fresh target/source-bound preflight.
+The exact-one test, six stages, command/event counts, timeouts, security controls
+and separate NOT_RUN gates are unchanged. No browser was launched for this
+review; A owns fresh runtime acceptance on the final built target.
+
+Source-only checks for this delta: 19 Node tests and 4 Python observer tests PASS,
+plus all C110 JavaScript syntax checks and `git diff --check`. No executable
+preflight receipt or runtime acceptance artifact was produced in C0.

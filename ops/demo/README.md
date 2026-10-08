@@ -120,9 +120,9 @@ as both supplied demo accounts, then follow ops/provision/C5_TWO_ROLE_RUNBOOK.md
 A10-minute two-physical-Android check still requires real devices and explicit
 camera/notification permissions. CI Android emulation does not replace it.
 
-Current source assembly: exact B analytics product9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c.
-C-110 is strictly rebound atd674d8a1cc261760c89b04b555123ca775f3c845; every new integration head must pass a
-fresh secrecy preflight and actual Android-emulated browser/API/PostgreSQL run.
+Current source assembly: exact B product `faef5d3d8b4c640fae013dbfa78074382e512e8f`, including explicit report-file preparation/save controls and optional demo-clock controls.
+C110 is bound by `afeef803d01d7e056b7ad87e0cd4b1a437092db3`; C112 by `118b81580cc658150eeca62e1b994e44ff015c6d`. Every new integration head must pass a fresh source-bound secrecy preflight and actual Android-emulated browser/API/PostgreSQL gates.
+The new controls have source and synthetic-rendering evidence; actual clock mutations and file-content/download behavior belong to the separate C113 gate. No native OS save or physical-device behavior is implied.
 The separate13-case synthetic Pixel9 job retains its explicitly historical B
 source pins. The full Compose HTTPS smoke verifies the actual rules worker,
 physical photo and master closure, plus protected PDF/XLSX exports. In history

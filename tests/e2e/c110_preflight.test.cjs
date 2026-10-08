@@ -27,7 +27,7 @@ function report() {
 test('preflight requires one intentional unexpected failure and exact nonzero exit', () => {
   assert.equal(preflightOutcome(report(), 1), true);
   for (const exit of [0, 2, null]) assert.equal(preflightOutcome(report(), exit), false);
-  for (const alter of [r => r.suites = [], r => r.stats.skipped = 1, r => r.stats.unexpected = 2, r => r.errors.push({}),
+  for (const alter of [r => r.config.metadata.frontend_sha = '9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c', r => r.suites = [], r => r.stats.skipped = 1, r => r.stats.unexpected = 2, r => r.errors.push({}),
     r => r.suites[0].specs[0].tests[0].results[0].retry = 1,
     r => r.suites[0].specs[0].tests[0].results[0].errors[0].message = 'Browser failed to launch']) {
     const r = report(); alter(r); assert.equal(Boolean(preflightOutcome(r, 1)), false);
@@ -42,8 +42,9 @@ test('proof is bound to exact source hashes version freshness count and zero lea
   const now = Date.parse('2026-10-07T21:00:00Z'); const p = proof(now);
   assert.equal(validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now, FRONTEND_SHA), p);
   assert.throws(() => validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now, '3ef269bba80dbd6eafaff0d5e557da21f2d96244'));
+  assert.throws(() => validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now, '9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c'));
   assert.throws(() => validateProof(p, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now));
-  for (const patch of [{ frontend_sha: '3ef269bba80dbd6eafaff0d5e557da21f2d96244' }, { source_sha: 'd'.repeat(40) }, { source_files: { helper: 'd'.repeat(64) } }, { playwright: '1.62.0' },
+  for (const patch of [{ frontend_sha: '9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c' }, { frontend_sha: '3ef269bba80dbd6eafaff0d5e557da21f2d96244' }, { source_sha: 'd'.repeat(40) }, { source_files: { helper: 'd'.repeat(64) } }, { playwright: '1.62.0' },
     { sentinel_matches: 1 }, { observed_dummy_failures: 0 }, { scanned_outputs: 2 }, { result: 'NOT_RUN' },
     { created_at: new Date(now - 31 * 60_000).toISOString() }, { created_at: new Date(now + 1).toISOString() }]) {
     assert.throws(() => validateProof({ ...p, ...patch }, 'a'.repeat(40), { helper: 'b'.repeat(64) }, now, FRONTEND_SHA));

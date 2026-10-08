@@ -6,7 +6,8 @@ It never selects or changes C110's exact-one lifecycle test or existing gate.
 
 ## Frozen target and scenario
 
-- Frontend: `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c` (B analytics UI)
+- Frontend: `faef5d3d8b4c640fae013dbfa78074382e512e8f` (final B UI, per
+  [A0-0076](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050279185))
 - Harness base: `4d38c71164a56b0eeefa9eb0430eb9100bcd7a3d`
 - Exactly one test: `C112 real history analytics and protected reports`
 - Exactly one project: `c112-android-chromium`; Playwright `1.63.0`, Chromium,
@@ -165,3 +166,38 @@ The diagnostic-source change requires a new receipt on the exact accepted HEAD.
 The date-fill and semantic order-selector corrections change source-bound files:
 A5 must generate a fresh preflight receipt for the exact newly accepted HEAD
 before the actual rerun.
+
+## Final target compatibility and historical evidence
+
+Read-only comparison of `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c` with the final
+target verified that `AnalyticsView.tsx`, `Reports.tsx`, the period model,
+analytics protocol, order store, login fields and existing lifecycle selectors
+are unchanged. The navigation button, canonical date fields, exact scoped
+`Наряд для отчёта` combobox and report/provenance regions remain compatible.
+The existing minute-only fills and unique-selection/value checks stay intact.
+
+`AnalyticsScreen` appends download controls after the existing view. They only
+subscribe on mount; fetching requires «Подготовить PDF/XLSX» and saving requires
+a further explicit gesture. C112 never invokes either. Their auth/session/report
+guards and cancellation lifecycle do not modify the JSON report flow when idle.
+The shared API additions preserve the old JSON analytics/report request paths.
+
+App keeps the session-keyed Workspace mounted inside a visibility wrapper and
+adds a separate master-only demo-clock mount. Its controller starts idle and
+attach only subscribes; neither mount nor tab switching performs clock GET/POST.
+Reads and CAS controls require explicit buttons, which C112 never clicks.
+Workspace/analytics state and session-epoch cleanup remain in place. This source
+review does not establish runtime behavior or download/demo-clock acceptance.
+
+A0 reported the historical 9a1d6109 C112 full PASS on main
+`347119c47b9a0ec70cd30cbc8bce2a2774a439e0`,
+[run 37712740639, job 113102167252](https://github.com/a4ns/DalaAI/actions/runs/37712740639/job/113102167252).
+That result remains attached only to 9a1d6109. The final faef5d3d browser/API/DB
+run is **NOT_RUN in C0** and needs A's fresh runtime acceptance.
+
+Only the final exact target is accepted. Old/unknown/shortened selections,
+old report/evidence identities and old frontend/source/hash/run-bound receipts
+fail closed. This contract change invalidates its bound file hash; A must create
+a fresh preflight on the final accepted committed harness HEAD, with a new C112
+run ID and receipt. No old PASS or proof may be relabeled. Test/project/stage
+counts, periods, fixture counts, timeouts, security and separate gates are unchanged.

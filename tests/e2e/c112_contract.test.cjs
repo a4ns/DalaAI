@@ -12,6 +12,7 @@ const copy = x => JSON.parse(JSON.stringify(x));
 const manifest = JSON.parse(execFileSync('python', ['-c', "import sys,json;sys.path.insert(0,'ops/provision');from history_demo import public_manifest;print(json.dumps(public_manifest()))"], { cwd: path.resolve(__dirname, '../..'), encoding: 'utf8', env: { PATH: process.env.PATH, PYTHONDONTWRITEBYTECODE: '1' } }));
 const id = n => `00000000-0000-4000-8000-${n.toString(16).padStart(12, '0')}`;
 const now = Date.parse('2026-10-07T23:35:00Z');
+const OLD_FRONTEND_SHA = '9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c';
 function fixture() {
   const source_files = p.fingerprint(), expected = { frontend_sha: c.FRONTEND_SHA, backend_sha: 'b'.repeat(40), harness_sha: 'a'.repeat(40), source_files, run_id: 'c112-source-test-0001' };
   const proof = { version: p.PROOF_VERSION, result: 'PASS', playwright: '1.63.0', source_sha: expected.harness_sha, frontend_sha: c.FRONTEND_SHA, source_files, run_id: expected.run_id, created_at: new Date(now - 10_000).toISOString(), expected_dummy_failures: 1, observed_dummy_failures: 1, scanned_outputs: 3, sentinel_matches: 0, scanned_output_sha256: 'c'.repeat(64) };
@@ -27,6 +28,28 @@ function fixture() {
   return { report, evidence, expected };
 }
 test('actual public_manifest object is accepted without any private file', () => { const users=c.validateManifest(manifest); assert.equal(users.master.section_ids.length,4); assert.equal(users.executor.section_ids.length,1); assert.equal(manifest.history_orders,540); });
+test('only explicit exact final faef5d3d is accepted; old and unknown source selections fail', () => {
+  assert.equal(c.FRONTEND_SHA, 'faef5d3d8b4c640fae013dbfa78074382e512e8f');
+  assert.equal(c.selectedFrontendSha({ DALA_E2E_FRONTEND_SHA: c.FRONTEND_SHA }), c.FRONTEND_SHA);
+  for (const selected of [undefined, '', 'faef5d3d', OLD_FRONTEND_SHA, '3ef269bba80dbd6eafaff0d5e557da21f2d96244', 'f'.repeat(40), c.FRONTEND_SHA.toUpperCase()]) {
+    assert.throws(() => c.selectedFrontendSha({ DALA_E2E_FRONTEND_SHA: selected }), /REVIEWED_FRONTEND_REQUIRED/);
+    let reads = 0;
+    assert.throws(() => c.fixtureFromEnv({ DALA_C112_AUTHORIZED: 'operator-provisioned-synthetic-only', DALA_C112_WORKERS_DISABLED: 'ai,delivery,providers', DALA_E2E_FRONTEND_SHA: selected }, () => { reads++; }, () => ({})), /REVIEWED_FRONTEND_REQUIRED/);
+    assert.equal(reads, 0);
+  }
+});
+test('old-source evidence, metadata, selected target and secrecy proof cannot be relabeled', () => {
+  for (const mutate of [f => { f.expected.frontend_sha = OLD_FRONTEND_SHA; }, f => { f.report.config.metadata.frontend_sha = OLD_FRONTEND_SHA; }, f => { f.evidence.frontend_sha = OLD_FRONTEND_SHA; }, f => { f.evidence.secrecy_proof.frontend_sha = OLD_FRONTEND_SHA; }]) {
+    const f = fixture(); mutate(f); assert.throws(() => gate.validate(f.report, f.evidence, f.expected, now));
+  }
+  const f = fixture(), receipt = f.evidence.secrecy_proof;
+  assert.throws(() => p.validateProof(receipt, f.expected.harness_sha, f.expected.source_files, now, OLD_FRONTEND_SHA, f.expected.run_id));
+  assert.throws(() => p.validateProof({ ...receipt, frontend_sha: OLD_FRONTEND_SHA }, f.expected.harness_sha, f.expected.source_files, now, c.FRONTEND_SHA, f.expected.run_id));
+  const oldReport = { config: { metadata: { frontend_sha: OLD_FRONTEND_SHA, run_id: f.expected.run_id } }, errors: [], stats: { expected: 0, unexpected: 1, skipped: 0, flaky: 0 }, suites: [{ specs: [{ title: p.PREFLIGHT_TITLE, tests: [{ expectedStatus: 'passed', status: 'unexpected', results: [{ status: 'failed', retry: 0, errors: [{ message: 'C112_DUMMY_FAILURE_EXPECTED' }] }] }] }] }] };
+  assert.equal(p.preflightOutcome(oldReport, 1, f.expected.run_id), false);
+  oldReport.config.metadata.frontend_sha = c.FRONTEND_SHA;
+  assert.equal(p.preflightOutcome(oldReport, 1, f.expected.run_id), true);
+});
 test('canonical minute-only UTC+5 UI dates retain the exact UTC interval', () => {
   assert.deepEqual(c.LOCAL_PERIOD, { start: '2026-07-01T05:00', end: '2026-10-01T05:00' });
   assert.deepEqual(c.PERIOD, { start: '2026-07-01T00:00:00Z', end: '2026-10-01T00:00:00Z' });

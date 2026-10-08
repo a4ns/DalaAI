@@ -2,7 +2,7 @@
 
 - Task: C112, generation 1, C-owned separate read-only historical analytics gate
 - Base: `4d38c71164a56b0eeefa9eb0430eb9100bcd7a3d`
-- Reviewed UI: `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`
+- Initial reviewed UI: `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`
 - Scope: new `tests/e2e/c112_*` and this `docs/evidence/e2e/c112_*` file only
 - Existing C110, package/lockfiles, frontend/backend, runner, workflow and Compose:
   unchanged
@@ -98,3 +98,33 @@ duplicate controls, empty/wrong returned IDs and a wrong actual field value.
 These checks are not a browser reproduction or an actual acceptance pass.
 Browser, preflight, UI/API and PostgreSQL execution remain NOT_RUN in C0.
 A must produce a fresh exact-HEAD secrecy preflight receipt and C112 run ID.
+
+## Final explicit frontend binding after A0-0076
+
+Delta base: local `428cc8e6a3ff3b48d1be52a1166d19246e5219e3`, tree-identical to
+published `d34455d877f9d3853421cad4cf6d3f92056254f7`.
+[A0-0076](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050279185) authorizes
+binding this separate C112 gate to exact `faef5d3d8b4c640fae013dbfa78074382e512e8f`.
+Read-only compatibility review against 9a1d6109 found the existing analytics
+controls, semantic order selector, date model and report/provenance views
+unchanged. New download and demo-clock controllers are dormant until explicit
+controls are used; App retains session-keyed Workspace/controller lifetimes.
+Full compatibility details are appended to `tests/e2e/c112_README.md`.
+
+A0 reported the original 9a1d6109 full PASS on exact main
+`347119c47b9a0ec70cd30cbc8bce2a2774a439e0`,
+[run 37712740639, job 113102167252](https://github.com/a4ns/DalaAI/actions/runs/37712740639/job/113102167252).
+That historical result and the preceding failures/corrections are preserved;
+none is a PASS for faef5d3d. Actual final-target preflight/browser/API/PostgreSQL
+execution remains NOT_RUN in C0 and belongs to A.
+
+Only the exact pin changes executable behavior. Source tests additionally reject
+old/unknown selections before fixture reads, old-source evidence/metadata and
+old target-bound preflight reports/receipts. Existing stale proof, source hash,
+run ID, count, period, security and timeout checks remain unchanged. A needs a
+fresh target/source-bound preflight for the final committed harness and a new
+run ID. No shared package, runner, frontend, backend, main or contract is edited.
+
+Source-only verification for this delta: 65 Node tests and 5 Python observer
+tests PASS, plus all C112 JavaScript syntax checks and `git diff --check`.
+No browser launch, private input read or executable secrecy receipt occurred.
