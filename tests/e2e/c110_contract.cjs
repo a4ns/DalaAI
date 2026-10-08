@@ -1,7 +1,7 @@
 'use strict';
 // Non-secret, fail-closed integration contract. No file containing credentials is read.
 const { deflateSync } = require('node:zlib');
-const FRONTEND_SHA = '6fa27276f14ef31757cb0da5ee9d7acc15789111';
+const FRONTEND_SHA = 'bbe897514e58a4b8f8b6d4f580e5273e34cb5c75';
 const TITLE = 'C110 real composed master executor lifecycle';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function check(ok, code) { if (!ok) throw new Error(`C110 BLOCKED: ${code}`); }
