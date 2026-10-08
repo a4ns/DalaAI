@@ -9,7 +9,8 @@ const PROJECT = 'c112-android-chromium';
 const HISTORY_SHA256 = '7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1';
 const HISTORY_SOURCE = '8af3897f03aa2f41f0af07ec74ec2c807a4a535a';
 const PERIOD = { start: '2026-07-01T00:00:00Z', end: '2026-10-01T00:00:00Z' };
-const LOCAL_PERIOD = { start: '2026-07-01T05:00:00', end: '2026-10-01T05:00:00' };
+// datetime-local normalizes zero seconds away; fill its canonical minute form.
+const LOCAL_PERIOD = { start: '2026-07-01T05:00', end: '2026-10-01T05:00' };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA = /^[0-9a-f]{40}$/;
 const HASH = /^[0-9a-f]{64}$/;

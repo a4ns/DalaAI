@@ -7,7 +7,7 @@ const PROOF_VERSION = 'c112-failure-output-v1';
 const { FRONTEND_SHA, selectedFrontendSha } = require('./c112_contract.cjs');
 const PREFLIGHT_TITLE = 'C112 dummy credential failure output';
 const BOUND_FILES = ['c112_analytics.spec.cjs', 'c112_playwright.config.cjs', 'c112_contract.cjs',
-  'c112_private_boundary.cjs', 'c112_preflight_proof.cjs', 'c112_secrecy_preflight.cjs',
+  'c112_private_boundary.cjs', 'c112_diagnostics.cjs', 'c112_preflight_proof.cjs', 'c112_secrecy_preflight.cjs',
   'c112_preflight.config.cjs', 'c112_preflight.spec.cjs', 'c112_gate.cjs', 'c112_observe.py',
   'package.json', 'package-lock.json'];
 function fingerprint() {

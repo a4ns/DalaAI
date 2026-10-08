@@ -35,3 +35,37 @@ access expansion is authorized by this handoff.
 Observer architecture follows A0-0059: existing accepted C110 restricted runtime
 LOGIN, enforced READ ONLY transaction, unchanged-data corroboration; no
 SELECT-only-role claim and no new credentials/grants/access.
+
+## Forward diagnostic delta after A0-0062
+
+A's actual run 37705017534 on main
+`b2eda8c2537f1f0ed78583038d69964ee23b6107` reported database corroboration and
+both sessions PASS, then failed the master analytics stage. Its empty complete
+observations list does not localize the failure, because that record is added
+only after the stage's API and DOM checks. No specific defect is claimed yet.
+
+The additive diagnostics are fixed source-defined substep/status categories only,
+with no exception, body, URL, header or DOM text. The mandatory secrecy preflight
+exercises the new source-bound helper. Existing acceptance predicates, selectors,
+counts, periods, protected response requirements and exact-one gate remain
+unchanged. Source verification after this delta: 55 Node and 5 Python tests PASS;
+actual rerun belongs to A and remains NOT_RUN here.
+
+## Canonical date-fill correction
+
+Delta base: `ad5b03c7bcee16f989cb2122b6074394340d70eb` (diagnostic source).
+A0's run `d4a293` was reported to stop at the first `datetime-local` fill.
+The zero-second inputs are replaced with canonical minute-only values
+`2026-07-01T05:00` and `2026-10-01T05:00`. Both actual field values must match
+after filling and before the analytics request. The UTC interval remains exactly
+`[2026-07-01T00:00:00Z, 2026-10-01T00:00:00Z)`; all existing counts, provenance,
+security requirements, source binding, timeouts and exact-one gate are unchanged.
+
+Source verification after this delta: 57 Node and 5 Python source-only tests PASS,
+plus C112 JavaScript syntax checks. Regression checks require minute-only inputs,
+both field assertions before the request, and rejection of shifted or stale UI
+period evidence. These are source/mock checks, not a browser reproduction or an
+actual acceptance pass. Browser normalization remains the suspected cause until
+A's rerun verifies it. Browser, preflight, UI/API and PostgreSQL execution remain
+NOT_RUN in C0. A must regenerate the source-bound preflight receipt on the exact
+newly accepted HEAD and run with a fresh C112 run ID.

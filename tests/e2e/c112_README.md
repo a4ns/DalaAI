@@ -23,8 +23,10 @@ section. Users and section/dictionary IDs come from the actual
 C110's minimal manifest. Do not supply the enclosing CLI `{status, fixture}`.
 The manifest reader rejects extra fields, links and files over 16 KiB.
 
-The UI is explicitly filled with **2026-07-01T05:00:00** and
-**2026-10-01T05:00:00** in UTC+5. These map to the canonical API interval
+The UI is explicitly filled with **2026-07-01T05:00** and
+**2026-10-01T05:00** in UTC+5, the canonical minute-only `datetime-local` form.
+Both normalized field values are asserted after filling and before requesting
+analytics. These map to the unchanged canonical API interval
 `[2026-07-01T00:00:00Z, 2026-10-01T00:00:00Z)`. Local midnight would be a
 different interval and is deliberately not used. Period metrics and whole-snapshot
 historical provenance are separate assertions.
@@ -142,3 +144,21 @@ These use isolated mocks and the offline public-manifest function. They do not
 read private files, connect to PostgreSQL, launch browsers or issue an execution
 receipt. C110 lifecycle, physical Android, native camera, push delivery, model
 provider, live closure and report export remain separate NOT_RUN gates.
+
+## Failure localization without private diagnostics
+
+`evidence.diagnostics` adds only three fixed-label fields: `substep`,
+`failure_category`, and `analytics_response`. The latter is a category such as
+`NOT_OBSERVED`, `HTTP_OK`, `HTTP_VALIDATION` or `HTTP_UNAVAILABLE`, never a raw
+status/body/URL. Checkpoints distinguish navigation, period inputs, matching
+response, each protected-header requirement, JSON/period/provenance/count/DB
+checks, unavailable-photo notice, disclosure expansion and issued metric.
+No exception text, DOM text, request data or response headers are copied.
+
+An empty `observations` list alone does not mean no API response: the original
+stage records its complete API/UI observation only after every assertion passes.
+The fixed diagnostics are advisory and cannot make a failed gate pass. Their
+helper is source-bound and exercised by the mandatory dummy-failure preflight.
+The diagnostic-source change requires a new receipt on the exact accepted HEAD.
+The date-fill correction also changes source-bound files: A5 must generate a
+fresh preflight receipt for the exact newly accepted HEAD before the actual rerun.

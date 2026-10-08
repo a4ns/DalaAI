@@ -39,6 +39,21 @@ class Diagnostics(unittest.TestCase):
                                  'observations':['CANARY']*40})
         self.assertEqual(result['completed_steps'],1);self.assertEqual(result['failed_step'],2)
         self.assertEqual(result['observations'],3);self.assertNotIn('CANARY',json.dumps(result))
+    def test_c_owned_fixed_diagnostic_labels_are_preserved(self):
+        fields={'substep':'FILL_PERIOD_START','failure_category':'ASSERTION_OR_OPERATION_FAILED','analytics_response':'NOT_OBSERVED'}
+        result=self.project({}, {'diagnostics':fields})
+        self.assertEqual(result['c112_diagnostics'],fields)
+    def test_c_diagnostics_extra_values_and_invalid_types_are_excluded(self):
+        result=self.project({}, {'diagnostics':{'substep':'CANARY','failure_category':{'secret':'CANARY'},
+            'analytics_response':422,'raw_error':'CANARY'}})
+        self.assertEqual(result['c112_diagnostics'],{'substep':'UNCLASSIFIED_STEP',
+            'failure_category':'ASSERTION_OR_OPERATION_FAILED','analytics_response':'HTTP_OTHER_OR_UNAVAILABLE'})
+        self.assertNotIn('CANARY',json.dumps(result))
+    def test_c_http_categories_preserve_meaning_without_numeric_status(self):
+        result=self.project({}, {'diagnostics':{'substep':'CHECK_RESPONSE_IDENTITY_STATUS',
+            'failure_category':'NONE','analytics_response':'HTTP_VALIDATION'}})
+        self.assertEqual(result['c112_diagnostics']['analytics_response'],'HTTP_VALIDATION')
+        self.assertNotIn('422',json.dumps(result))
     def test_passing_step_location_not_misreported_as_failure(self):
         result=self.project({'steps':[{'location':{'file':'c112_contract.cjs','line':12},'title':'PASS'}]})
         self.assertEqual(result['source_locations'],[])

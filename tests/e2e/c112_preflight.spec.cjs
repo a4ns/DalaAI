@@ -5,6 +5,7 @@ const root = process.env.DALA_C112_PLAYWRIGHT_PACKAGE || path.dirname(require.re
 const { test, expect } = createRequire(path.join(root, 'package.json'))(root);
 const { PRIVATE_ACTION_TIMEOUT_MS, privateLoginBoundary } = require('./c112_private_boundary.cjs');
 const { validateEffectiveRunner } = require('./c112_contract.cjs');
+const { createDiagnostics, checkpoint, observeAnalyticsStatus, failDiagnostic } = require('./c112_diagnostics.cjs');
 const { PREFLIGHT_TITLE } = require('./c112_preflight_proof.cjs');
 test(PREFLIGHT_TITLE, async ({ page }, testInfo) => {
   validateEffectiveRunner(testInfo.config, testInfo.project, path.join(__dirname, 'c112_preflight.config.cjs'),
@@ -32,6 +33,13 @@ test(PREFLIGHT_TITLE, async ({ page }, testInfo) => {
     protectedFailures++;
   }
   expect(protectedFailures).toBe(2);
+  // Exercise the actual output diagnostic helper with secret-shaped dummy input.
+  // It can emit only fixed labels, never the supplied string or exception.
+  const diagnostic = createDiagnostics();
+  checkpoint(diagnostic, sentinels[0]);
+  observeAnalyticsStatus(diagnostic, sentinels[1]);
+  failDiagnostic(diagnostic);
+  await testInfo.attach('c112_safe_diagnostic', { body: Buffer.from(JSON.stringify(diagnostic)), contentType: 'application/json' });
   // Intentionally unexpected failure: wrapper must require exit 1 and 1 failure.
   // It is not a core test, expected-failure annotation or successful journey.
   throw new Error('C112_DUMMY_FAILURE_EXPECTED');

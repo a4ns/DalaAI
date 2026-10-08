@@ -28,7 +28,7 @@ def contract_inputs(root):
             or any(not re.fullmatch('[a-f0-9]{40}',c.get(k,'')) for k in ('frontend_sha','c112_source_sha'))):
         raise HistoryBlocked('C112_EXACT_SOURCE_CONTRACT_REQUIRED')
     expected=c.get('source_blobs',{})
-    if len(expected)!=16:
+    if len(expected)!=18:
         raise HistoryBlocked('C112_COMPLETE_SOURCE_MANIFEST_REQUIRED')
     for name,digest in expected.items():
         if not re.fullmatch(r'tests/e2e/(?:c112_[A-Za-z0-9_.]+|package(?:-lock)?\.json)',name):

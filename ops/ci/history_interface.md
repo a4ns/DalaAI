@@ -1,6 +1,6 @@
 # C112 history/analytics Android CI seam (source preparation)
 
-Source-ready binding: C112 `13d8d9f572f257186b0a6428178d180a15583559` against frontend
+Source-ready binding: C112 `edd109d2111e798db0440c7d3050e7e4fca80e42` against frontend
 `9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`. Actual C112 execution is pending. Existing
 C110 remains an independent exact-one-journey gate; its prior green results do
 not establish this new history journey.
@@ -78,7 +78,7 @@ The exact single title is `C112 real history analytics and protected reports`;
 project `c112-android-chromium`, seven required steps, Pixel 7 emulation with two
 contexts. C112 owns `c112_playwright.config.cjs`, `c112_secrecy_preflight.cjs`,
 `c112_preflight_proof.cjs` and `c112_gate.cjs`. The source manifest binds all
-14 C112 files and both existing package/lock files. The C112 proof binds the new
+16 C112 files and both existing package/lock files. The C112 proof binds the new
 C112 test/config/capture/observer code and shared login boundary actually used;
 a previous C110 receipt alone cannot authorize unrelated test code. No alternate
 reporter/config, skipped mandatory cases, fake API success or reused proof is a pass.
@@ -113,7 +113,7 @@ Docker and its Compose plugin must be available; no local browser/DB execution
 is claimed by source-only checks. A5 alone publishes and triggers this workflow.
 
 Preparation explicitly selects history and disables the optional demo clock.
-C's UI inputs are 2026-07-01T05:00:00 to 2026-10-01T05:00:00 at UTC+5, exactly
+C's UI inputs are 2026-07-01T05:00 to 2026-10-01T05:00 at UTC+5, exactly
 mapping to the canonical midnight-UTC interval. The history dates are unchanged.
 The worker and budget-init service are inactive profiles and worker flags are off.
 Declared configuration and actual six-service inventory are checked independently.
@@ -128,3 +128,11 @@ counts. Raw Playwright/stdout/Compose outputs are not uploaded. All private
 fixture files, disposable trust and raw artifact trees are removed; stack cleanup
 failure fails the job. Existing profiles, source and other Compose projects are
 never adopted or removed.
+
+The accepted C correction uses canonical minute-form datetime-local values and
+asserts both normalized fields before the request; UTC bounds and all count/time
+assertions are unchanged. Its 13 executable/package proof inputs now include the
+C-owned fixed diagnostic helper. Fresh proof is mandatory after this source
+change. Historical b2eda8c/d4a293 failures remain failures, localized to the old
+first date-field fill. CI projects only the helper's fixed substep/failure/HTTP
+category labels when a later run fails; diagnostic labels cannot promote a pass.

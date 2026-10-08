@@ -31,12 +31,30 @@ SIGNATURES={
 }
 
 
+C_SUBSTEPS=set(["NOT_STARTED","NAVIGATE_ANALYTICS","FILL_PERIOD_START","FILL_PERIOD_END","WAIT_MATCHING_UI_RESPONSE","CHECK_RESPONSE_IDENTITY_STATUS","CHECK_PROTECTED_HEADERS","CHECK_CACHE_PRIVATE","CHECK_CACHE_NO_STORE","CHECK_VARY_COOKIE","CHECK_NOSNIFF","CHECK_SERVICE_WORKER_ABSENCE","PARSE_RESPONSE_JSON","CHECK_RESPONSE_PERIOD","CHECK_HISTORICAL_PROVENANCE","CHECK_FACTS_SCHEMA","CHECK_ORDER_COUNT","CHECK_API_DATABASE_IDENTITIES","CHECK_PHOTO_REFERENCES","SELECT_OBSERVED_HISTORICAL_ORDER","WAIT_SYNTHETIC_WATERMARK","WAIT_UNAVAILABLE_PHOTO_NOTICE","CHECK_UNAVAILABLE_PHOTO_COUNTS","CHECK_PHYSICAL_EVIDENCE_DISCLOSURE","EXPAND_PROVENANCE_DISCLOSURE","CHECK_PROVENANCE_HASHES","WAIT_PERIOD_METRICS_HEADING","WAIT_EXECUTOR_METRICS_HEADING","CHECK_ISSUED_API_METRIC","CHECK_ISSUED_UI_METRIC","RECORD_ANALYTICS_OBSERVATION","OTHER_JOURNEY_STEP","UNCLASSIFIED_STEP"])
+C_HTTP_CATEGORIES=set(["NOT_OBSERVED","HTTP_OTHER_OR_UNAVAILABLE","HTTP_OK","HTTP_BAD_REQUEST","HTTP_UNAUTHENTICATED","HTTP_FORBIDDEN","HTTP_NOT_FOUND","HTTP_VALIDATION","HTTP_RATE_LIMITED","HTTP_SERVER_ERROR","HTTP_GATEWAY_ERROR","HTTP_UNAVAILABLE","HTTP_GATEWAY_TIMEOUT"])
+C_FAILURE_CATEGORIES={'NONE','ASSERTION_OR_OPERATION_FAILED'}
+
+
+def c112_diagnostic_projection(value):
+    if not isinstance(value,dict): return None
+    result={}
+    for key,allowed,fallback in [('substep',C_SUBSTEPS,'UNCLASSIFIED_STEP'),
+                                ('failure_category',C_FAILURE_CATEGORIES,'ASSERTION_OR_OPERATION_FAILED'),
+                                ('analytics_response',C_HTTP_CATEGORIES,'HTTP_OTHER_OR_UNAVAILABLE')]:
+        item=value.get(key)
+        result[key]=item if isinstance(item,str) and item in allowed else fallback
+    return result
+
+
 def failure_projection(report, evidence):
     output={'scope':'diagnostic_only_no_history_pass','completed_steps':0,'failed_step':None,
             'observations':0,'restrictions':0,'report':'unavailable','error_classes':[],'source_locations':[]}
     try:
         if evidence.is_file() and not evidence.is_symlink() and evidence.stat().st_size<=4*1024*1024:
             body=json.loads(evidence.read_text())
+            fixed=c112_diagnostic_projection(body.get("diagnostics"))
+            if fixed is not None: output["c112_diagnostics"]=fixed
             for index,row in enumerate(body.get('steps',[])[:len(STEPS)]):
                 if row.get('name')!=STEPS[index]: break
                 if row.get('result')=='PASS': output['completed_steps']+=1
