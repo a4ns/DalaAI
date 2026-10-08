@@ -142,3 +142,19 @@ These use isolated mocks and the offline public-manifest function. They do not
 read private files, connect to PostgreSQL, launch browsers or issue an execution
 receipt. C110 lifecycle, physical Android, native camera, push delivery, model
 provider, live closure and report export remain separate NOT_RUN gates.
+
+## Failure localization without private diagnostics
+
+`evidence.diagnostics` adds only three fixed-label fields: `substep`,
+`failure_category`, and `analytics_response`. The latter is a category such as
+`NOT_OBSERVED`, `HTTP_OK`, `HTTP_VALIDATION` or `HTTP_UNAVAILABLE`, never a raw
+status/body/URL. Checkpoints distinguish navigation, period inputs, matching
+response, each protected-header requirement, JSON/period/provenance/count/DB
+checks, unavailable-photo notice, disclosure expansion and issued metric.
+No exception text, DOM text, request data or response headers are copied.
+
+An empty `observations` list alone does not mean no API response: the original
+stage records its complete API/UI observation only after every assertion passes.
+The fixed diagnostics are advisory and cannot make a failed gate pass. Their
+helper is source-bound and exercised by the mandatory dummy-failure preflight.
+The diagnostic-source change requires a new receipt on the exact accepted HEAD.

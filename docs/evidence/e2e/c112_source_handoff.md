@@ -35,3 +35,18 @@ access expansion is authorized by this handoff.
 Observer architecture follows A0-0059: existing accepted C110 restricted runtime
 LOGIN, enforced READ ONLY transaction, unchanged-data corroboration; no
 SELECT-only-role claim and no new credentials/grants/access.
+
+## Forward diagnostic delta after A0-0062
+
+A's actual run 37705017534 on main
+`b2eda8c2537f1f0ed78583038d69964ee23b6107` reported database corroboration and
+both sessions PASS, then failed the master analytics stage. Its empty complete
+observations list does not localize the failure, because that record is added
+only after the stage's API and DOM checks. No specific defect is claimed yet.
+
+The additive diagnostics are fixed source-defined substep/status categories only,
+with no exception, body, URL, header or DOM text. The mandatory secrecy preflight
+exercises the new source-bound helper. Existing acceptance predicates, selectors,
+counts, periods, protected response requirements and exact-one gate remain
+unchanged. Source verification after this delta: 55 Node and 5 Python tests PASS;
+actual rerun belongs to A and remains NOT_RUN here.
