@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { ResourceState } from '../shared/ui/types';
 import { employeeActivityLabel, filterPanelOrders, formatPanelTime, isConfirmedEmpty, sortedPanelEvents } from './model';
 import { eventLabel, panelStatuses, priorityLabel, statusLabel } from './ru';
@@ -98,8 +98,23 @@ export function PanelScreen({ orders, employees, selectedOrderId, history, onSel
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('all');
   const [overdueOnly, setOverdueOnly] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const resetFocus = useRef<{ button: HTMLButtonElement; selectedOrderId: string | null } | null>(null);
   const historyRegion = useRef<HTMLElement>(null);
   const previousSelection = useRef(selectedOrderId);
+
+  useLayoutEffect(() => {
+    const request = resetFocus.current;
+    // Only the commit after an explicit focused reset can restore focus, never a poll.
+    resetFocus.current = null;
+    const search = searchInput.current;
+    if (!request || access !== 'allowed' || request.selectedOrderId !== selectedOrderId ||
+      !search?.isConnected || search.closest('[hidden], [inert]') || request.button.isConnected) return;
+    const document = search.ownerDocument;
+    if (document.activeElement === request.button || document.activeElement === document.body) {
+      search.focus({ preventScroll: true });
+    }
+  });
 
   useEffect(() => {
     if (access === 'allowed' && selectedOrderId && previousSelection.current !== selectedOrderId) {
@@ -139,7 +154,7 @@ export function PanelScreen({ orders, employees, selectedOrderId, history, onSel
           <h2 id={`${id}-orders-title`} tabIndex={-1}>Список нарядов</h2>
           <div className="panel-filters" role="search" aria-label="Фильтры загруженных нарядов">
             <div className="panel-field panel-field--search"><label htmlFor={`${id}-search`}>Поиск в загруженных нарядах</label>
-              <input id={`${id}-search`} type="search" value={query} placeholder="Номер, оборудование, исполнитель"
+              <input ref={searchInput} id={`${id}-search`} type="search" value={query} placeholder="Номер, оборудование, исполнитель"
                 onChange={(event) => setQuery(event.target.value)} /></div>
             <div className="panel-field"><label htmlFor={`${id}-status`}>Статус</label>
               <select id={`${id}-status`} value={status} onChange={(event) => setStatus(event.target.value)}>
@@ -150,7 +165,9 @@ export function PanelScreen({ orders, employees, selectedOrderId, history, onSel
               <input id={`${id}-overdue`} type="checkbox" checked={overdueOnly}
                 onChange={(event) => setOverdueOnly(event.target.checked)} />Только с истёкшим сроком
             </label>
-            {filtersActive && <button type="button" className="panel-button panel-button--secondary" onClick={() => {
+            {filtersActive && <button type="button" className="panel-button panel-button--secondary" onClick={(event) => {
+              const button = event.currentTarget;
+              resetFocus.current = button.ownerDocument.activeElement === button ? { button, selectedOrderId } : null;
               setQuery(''); setStatus('all'); setOverdueOnly(false);
             }}>Сбросить фильтры</button>}
           </div>
