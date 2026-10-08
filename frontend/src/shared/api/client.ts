@@ -132,7 +132,7 @@ export class ApiClient {
   subscribe(listener: () => void): () => void { this.#listeners.add(listener); return () => { this.#listeners.delete(listener); }; }
   clearIdentity(): void { this.#epoch += 1; this.#session = null; this.#listeners.forEach(listener => listener()); }
   #assertEpoch(epoch: number): void { if (epoch !== this.#epoch) throw new SessionChangedError(); }
-  async #request<T>(path: string, options: { method?: 'GET' | 'POST'; body?: string | Blob; contentType?: string; schema?: SchemaName; successStatus?: number; epoch?: number; auth?: boolean; mutation?: boolean; signal?: AbortSignal; image?: boolean; validate?: (data: unknown) => boolean; push?: boolean; emptyBody?: boolean; analytics?: boolean; maxBytes?: number; reportFile?: {format:ReportFileFormat;filename:string} } = {}): Promise<T> {
+  async #request<T>(path: string, options: { method?: 'GET' | 'POST'; body?: string | Blob; contentType?: string; schema?: SchemaName; successStatus?: number; epoch?: number; auth?: boolean; mutation?: boolean; signal?: AbortSignal; image?: boolean; validate?: (data: unknown) => boolean; push?: boolean; emptyBody?: boolean; analytics?: boolean; maxBytes?: number; streamJson?: boolean; reportFile?: {format:ReportFileFormat;filename:string} } = {}): Promise<T> {
     const epoch = options.epoch ?? this.#epoch;
     this.#assertEpoch(epoch);
     if (!this.#online()) throw new ApiError('Нет сети. Изменения не отправлены.');
@@ -184,7 +184,8 @@ export class ApiClient {
       }
       let data: unknown;
       try {
-        if (options.maxBytes) data = await readBoundedJson(response, options.maxBytes, controller.signal, () => this.#assertEpoch(epoch));
+        if (options.maxBytes && options.streamJson) data = await readBoundedJson(response, options.maxBytes, controller.signal, () => this.#assertEpoch(epoch));
+        else if (options.maxBytes) { const text = await response.text(); if (new TextEncoder().encode(text).length > options.maxBytes) throw new Error('Response too large'); data = JSON.parse(text); }
         else data = await response.json();
       } catch (error) { if (error instanceof SessionChangedError) throw error; throw new ApiError('Сервер вернул неподдерживаемый ответ.', response.status, null, Boolean(options.mutation)); }
       this.#assertEpoch(epoch);
@@ -257,7 +258,7 @@ export class ApiClient {
     if (!validAiReportRequest(input)) throw new ApiError('Проверьте период и вид сводки.', 422);
     const epoch = this.#epoch;
     const request = Object.freeze({ operation_id: input.operation_id, start: input.start, end: input.end, report_kind: input.report_kind });
-    const value = await this.#request<AiReport>('/reports/ai-summary', { method: 'POST', contentType: 'application/json', body: JSON.stringify(request), epoch, signal, mutation: true, analytics: true, maxBytes: 1024 * 1024, validate: isAiReport });
+    const value = await this.#request<AiReport>('/reports/ai-summary', { method: 'POST', contentType: 'application/json', body: JSON.stringify(request), epoch, signal, mutation: true, analytics: true, maxBytes: 1024 * 1024, streamJson: true, validate: isAiReport });
     this.#assertEpoch(epoch); this.#assertAssistanceSession();
     try { return decodeAiReport(value, request); }
     catch { throw new ApiError('Ответ сводки не соответствует исходному запросу.', 200, null, true); }
@@ -270,7 +271,7 @@ export class ApiClient {
     if (!this.#session!.principal.section_ids.some(section => sameUuid(section, request.section_id))) throw new ApiError('Нет доступа к выбранному участку.', 403);
     const epoch = this.#epoch; const query = new URLSearchParams({ section_id: request.section_id, limit: String(request.limit) });
     if (request.work_code_id !== null) query.set('work_code_id', request.work_code_id);
-    const value = await this.#request<AssigneeRecommendations>(`/recommendations/assignees?${query}`, { epoch, signal, maxBytes: 512 * 1024, validate: isAssigneeRecommendations });
+    const value = await this.#request<AssigneeRecommendations>(`/recommendations/assignees?${query}`, { epoch, signal, maxBytes: 512 * 1024, streamJson: true, validate: isAssigneeRecommendations });
     this.#assertEpoch(epoch); this.#assertAssistanceSession();
     if (!this.#session!.principal.section_ids.some(section => sameUuid(section, request.section_id))) throw new ApiError('Доступ к выбранному участку изменился.', 403);
     try { return decodeAssigneeRecommendations(value, request); }
