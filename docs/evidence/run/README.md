@@ -1,0 +1,91 @@
+# Evidence: C-106, generation 1
+
+Примечание интеграции: [исходный README](https://github.com/a4ns/DalaAI/blob/ed6b0808de964f5c8898f3c4db96216c9c19c0bd/docs/evidence/run/README.md)
+сохранён в указанном коммите. Отсутствующие в main исторические документы
+доступны ниже по неизменяемым ссылкам; v3 JSON перенесён без изменения байтов.
+
+Этот каталог содержит только разрешённые обезличенные доказательства и
+проверку их структуры. Он не заменяет общий release ledger интегратора.
+[Runbook](https://github.com/a4ns/DalaAI/blob/ed6b0808de964f5c8898f3c4db96216c9c19c0bd/docs/demo/README.md) и сценарии относятся к exact source SHA,
+записанному в [c-106.json](https://github.com/a4ns/DalaAI/blob/ed6b0808de964f5c8898f3c4db96216c9c19c0bd/docs/evidence/run/c-106.json).
+
+Поздние runtime-этапы отделены от исходного ledger:
+[первый exact-SHA срез](https://github.com/a4ns/DalaAI/blob/ed6b0808de964f5c8898f3c4db96216c9c19c0bd/docs/evidence/run/runtime-f101-milestones.json) сохранён без изменений;
+[срез 8 октября v2](https://github.com/a4ns/DalaAI/blob/ed6b0808de964f5c8898f3c4db96216c9c19c0bd/docs/evidence/run/runtime-20261008-v2.json) содержит публичные CI-метаданные
+и явно атрибутированные bounded-отчёты. Final `77ea58ff/faef5d` имеет свежие
+C110/C112 PASS; прежние `347119c4/B9a` PASS и `2471afde` FAIL сохранены.
+C113 downloads/clock остаётся отдельным gate.
+[V3 snapshot](runtime-20261008-v3.json) сохраняет первый `43cd9ca` FAIL и
+`e548c948` attempt 1 PASS и attempt 2 FAIL перед Save/inspection, а также
+новые `34df71ec` attempts 1 и 2 PASS. Причины прежних сбоев не установлены;
+зелёные attempts не являются доказательством общей надёжности или repair.
+V2 сохранён без изменений. Это не локальный повтор runtime со стороны C-106.
+Сценарий показа: [runtime handoff](../../demo/RUNTIME_HANDOFF_RU.md).
+
+## Статусы и уровни
+
+- `PASS`: реально выполнена указанная проверка; есть время, checkout SHA,
+  команда/действия, безопасный артефакт и ограничения
+- `FAIL`: проверка выполнена и не достигла ожидаемого результата
+- `NOT_RUN`: проверка не выполнялась; время выполнения и артефакт результата null
+- `BLOCKED`: зафиксировано конкретное препятствие; это не FAIL/PASS приложения.
+  Время здесь относится к обнаружению блокера
+
+Разделять `documentation`, `source_inspection`, `process_http`,
+`synthetic_unit`, `mock`, `real_database`, `browser_assembled`, `real_model`,
+`physical_device`, `push_delivery`, `timed_rehearsal` и `recorded_video`.
+Mock и synthetic не превращаются в реальные БД/модель/телефон. Проверка
+структуры этого JSON не подтверждает истинность продуктовых заявлений.
+
+В ledger намеренно нет scores готовности. Число зелёных строк не суммируется
+в процент выполненного продукта; не все строки равноценны.
+
+## Привязка к исходникам
+
+- `source_sha` — неизменяемый код, о котором сделаны утверждения
+- `tested_checkout_sha` — реальный HEAD, на котором выполнялась конкретная команда
+- Если добавлялась только документация, исходники приложения могут совпадать
+  с `source_sha`; это подтверждается отдельной командой diff в артефакте
+- Документирование результата создаёт последующий docs-only commit. Его SHA
+  передаётся в handoff отдельно; нельзя объявлять его прогнанным задним числом
+- Интегратор после cherry-pick/merge заново проверяет конечный кандидат и CI
+  именно этого SHA. Branch name и старый зелёный CI не заменяют SHA
+
+Начальные product/application/device/model записи созданы как NOT_RUN.
+Изменять их можно только по фактическому запуску либо зафиксированному blocker.
+Уже выполненные результаты другого автора импортировать только с указанием
+его SHA, command, environment и доступного артефакта; не переписывать их авторство.
+
+## Воспроизведение проверки документации
+
+Это воспроизведение исторической проверки из checkout
+`ed6b0808de964f5c8898f3c4db96216c9c19c0bd`, stdlib Python 3.12.
+В текущем main скрипта `validate_ledger.py` нет; команды ниже не предназначены
+для запуска из текущего main. Используйте
+[исходные инструкции](https://github.com/a4ns/DalaAI/blob/ed6b0808de964f5c8898f3c4db96216c9c19c0bd/docs/evidence/run/README.md)
+и [тот же скрипт](https://github.com/a4ns/DalaAI/blob/ed6b0808de964f5c8898f3c4db96216c9c19c0bd/docs/evidence/run/validate_ledger.py)
+в отдельном checkout исторического source checkpoint:
+
+```sh
+python3 docs/evidence/run/validate_ledger.py
+git diff --check
+```
+
+Скрипт проверяет только форму ledger, связи с локальными артефактами, SHA-256,
+источник контракта, безопасные относительные пути и целостность состояний.
+Он не запускает приложение, БД, модель, браузер и физическое устройство.
+Если файл evidence отсутствует, это ошибка, а не пропущенная успешная проверка.
+
+## Добавление фактического результата
+
+В новой записи сохранить: `id`, `requirement`, `layer`, `source_sha`,
+`tested_checkout_sha`, `executed_at`, `result`, `environment`, `procedure`,
+`expected`, `observed`, `artifact`, `artifact_sha256`, `limitation`, `reviewer`.
+UTC timestamp с зоной обязателен для PASS/FAIL/BLOCKED. Для NOT_RUN сохранять
+null в полях выполненного результата. Не заменять NOT_RUN словом PASS ради
+того, что написан сценарий или выполнен lint.
+
+Разрешённый артефакт должен содержать ровно необходимые обезличенные факты.
+Не публиковать пароли/PIN, cookies/session handles, DSN, ключи, данные людей,
+непубличные сведения предприятия, runtime/thread IDs или частные пути.
+Нет автоматической публикации, отправки уведомлений, деплоя или подачи.

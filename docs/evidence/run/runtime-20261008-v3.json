@@ -1,0 +1,919 @@
+{
+  "schema_version": 1,
+  "kind": "attributed_runtime_milestones_addendum",
+  "snapshot_id": "runtime-20261008-v3",
+  "checked_at": "2026-10-08T03:17:09Z",
+  "checked_by": "C-106 public Actions metadata, exact controls manifest and attributed bounded A0/C0 reports",
+  "documentation_base_sha": "83955b9ba4687261d7af82f2acfefafedf22cf7e",
+  "previous_snapshot": "runtime-20261008-v2.json",
+  "preserved_baseline_runtime_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+  "selected_c113_runtime_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+  "latest_main_claim": false,
+  "own_product_execution": "NOT_RUN",
+  "evidence_access": {
+    "public_workflow_and_source_metadata": true,
+    "issue_bounded_reports": true,
+    "raw_runtime_logs_read": false,
+    "private_artifacts_read_or_downloaded": false,
+    "private_password_pin_dsn_session_files_read": false,
+    "screenshots_or_video_created": false
+  },
+  "source_binding": {
+    "backend_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+    "frontend_sha": "faef5d3d8b4c640fae013dbfa78074382e512e8f",
+    "c113_sha": "0d2ac5e95dcd99b11b144b7871152ed9c0033697",
+    "expected_test_count": 1,
+    "required_test_title": "C113 real protected downloads and demo clock",
+    "manifest_url": "https://github.com/a4ns/DalaAI/blob/34df71ec2aa49e98e7c17baf90f41789a6cb1176/ops/ci/controls_contract.json"
+  },
+  "ci_runs": [
+    {
+      "id": 37716863516,
+      "name": "Actual managed image validation",
+      "head_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+      "head_branch": "validation/managed-image-20261008",
+      "path": ".github/workflows/managed-image-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37716863516",
+      "created_at": "2026-10-08T02:14:08Z",
+      "updated_at": "2026-10-08T02:16:34Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37716832062,
+      "name": "Frontend source and build",
+      "head_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+      "head_branch": "main",
+      "path": ".github/workflows/frontend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37716832062",
+      "created_at": "2026-10-08T02:13:46Z",
+      "updated_at": "2026-10-08T02:14:16Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37716832063,
+      "name": "Backend scaffold",
+      "head_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+      "head_branch": "main",
+      "path": ".github/workflows/backend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37716832063",
+      "created_at": "2026-10-08T02:13:46Z",
+      "updated_at": "2026-10-08T02:15:16Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37716832116,
+      "name": "Isolated C107 historical PostgreSQL gate",
+      "head_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+      "head_branch": "main",
+      "path": ".github/workflows/history-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37716832116",
+      "created_at": "2026-10-08T02:13:46Z",
+      "updated_at": "2026-10-08T02:14:47Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37716832087,
+      "name": "Historical and live demo fixture",
+      "head_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+      "head_branch": "main",
+      "path": ".github/workflows/history-demo-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37716832087",
+      "created_at": "2026-10-08T02:13:46Z",
+      "updated_at": "2026-10-08T02:14:57Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37716832027,
+      "name": "Historical analytics (Android emulation)",
+      "head_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+      "head_branch": "main",
+      "path": ".github/workflows/history-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37716832027",
+      "created_at": "2026-10-08T02:13:46Z",
+      "updated_at": "2026-10-08T02:16:06Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37716832107,
+      "name": "Composed HTTPS photo cycle",
+      "head_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+      "head_branch": "main",
+      "path": ".github/workflows/demo-compose.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37716832107",
+      "created_at": "2026-10-08T02:13:46Z",
+      "updated_at": "2026-10-08T02:15:40Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37716832135,
+      "name": "Demo clock and protected downloads (Android emulation)",
+      "head_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+      "head_branch": "main",
+      "path": ".github/workflows/controls-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37716832135",
+      "created_at": "2026-10-08T02:13:46Z",
+      "updated_at": "2026-10-08T02:16:25Z",
+      "run_attempt": 1,
+      "jobs": [
+        {
+          "id": 113115120902,
+          "name": "clock-downloads",
+          "status": "completed",
+          "conclusion": "failure",
+          "run_id": 37716832135,
+          "steps": [
+            {
+              "name": "Install locked validation dependencies and official Chromium",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Verify distinct C113 proof sources and isolated setup",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Fresh C113 proof, synthetic clock UI and four actual saved files",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 9
+            },
+            {
+              "name": "Publish bounded controls scope summary",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37716832039,
+      "name": "PostgreSQL persistence validation",
+      "head_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+      "head_branch": "main",
+      "path": ".github/workflows/persistence-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37716832039",
+      "created_at": "2026-10-08T02:13:46Z",
+      "updated_at": "2026-10-08T02:17:42Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37716832103,
+      "name": "Mobile composed app (Android emulation)",
+      "head_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+      "head_branch": "main",
+      "path": ".github/workflows/mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37716832103",
+      "created_at": "2026-10-08T02:13:46Z",
+      "updated_at": "2026-10-08T02:18:47Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37718888143,
+      "name": "Actual managed image validation",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "validation/managed-image-20261008",
+      "path": ".github/workflows/managed-image-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718888143",
+      "created_at": "2026-10-08T02:38:49Z",
+      "updated_at": "2026-10-08T02:40:20Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37718867190,
+      "name": "Frontend source and build",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "main",
+      "path": ".github/workflows/frontend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718867190",
+      "created_at": "2026-10-08T02:38:32Z",
+      "updated_at": "2026-10-08T02:38:55Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37718867099,
+      "name": "Backend scaffold",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "main",
+      "path": ".github/workflows/backend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718867099",
+      "created_at": "2026-10-08T02:38:32Z",
+      "updated_at": "2026-10-08T02:39:57Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37718867135,
+      "name": "Composed HTTPS photo cycle",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "main",
+      "path": ".github/workflows/demo-compose.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718867135",
+      "created_at": "2026-10-08T02:38:32Z",
+      "updated_at": "2026-10-08T02:39:51Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37718867138,
+      "name": "Isolated C107 historical PostgreSQL gate",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "main",
+      "path": ".github/workflows/history-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718867138",
+      "created_at": "2026-10-08T02:38:32Z",
+      "updated_at": "2026-10-08T02:39:34Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37718867199,
+      "name": "Historical and live demo fixture",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "main",
+      "path": ".github/workflows/history-demo-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718867199",
+      "created_at": "2026-10-08T02:38:32Z",
+      "updated_at": "2026-10-08T02:39:43Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37718867151,
+      "name": "Mobile composed app (Android emulation)",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "main",
+      "path": ".github/workflows/mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718867151",
+      "created_at": "2026-10-08T02:38:32Z",
+      "updated_at": "2026-10-08T02:40:37Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37718867161,
+      "name": "Historical analytics (Android emulation)",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "main",
+      "path": ".github/workflows/history-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718867161",
+      "created_at": "2026-10-08T02:38:32Z",
+      "updated_at": "2026-10-08T02:40:41Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37718867214,
+      "name": "PostgreSQL persistence validation",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "main",
+      "path": ".github/workflows/persistence-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718867214",
+      "created_at": "2026-10-08T02:38:32Z",
+      "updated_at": "2026-10-08T02:42:27Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37718867179,
+      "name": "Demo clock and protected downloads (Android emulation)",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "main",
+      "path": ".github/workflows/controls-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718867179",
+      "created_at": "2026-10-08T02:46:45Z",
+      "updated_at": "2026-10-08T02:49:16Z",
+      "run_attempt": 2
+    },
+    {
+      "id": 37721460615,
+      "name": "Actual managed image validation",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "validation/managed-image-20261008",
+      "path": ".github/workflows/managed-image-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721460615",
+      "created_at": "2026-10-08T03:10:31Z",
+      "updated_at": "2026-10-08T03:12:04Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37721429375,
+      "name": "PostgreSQL persistence validation",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "main",
+      "path": ".github/workflows/persistence-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429375",
+      "created_at": "2026-10-08T03:10:09Z",
+      "updated_at": "2026-10-08T03:14:11Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37721429309,
+      "name": "Frontend source and build",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "main",
+      "path": ".github/workflows/frontend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429309",
+      "created_at": "2026-10-08T03:10:09Z",
+      "updated_at": "2026-10-08T03:10:34Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37721429409,
+      "name": "Isolated C107 historical PostgreSQL gate",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "main",
+      "path": ".github/workflows/history-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429409",
+      "created_at": "2026-10-08T03:10:09Z",
+      "updated_at": "2026-10-08T03:11:01Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37721429337,
+      "name": "Historical and live demo fixture",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "main",
+      "path": ".github/workflows/history-demo-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429337",
+      "created_at": "2026-10-08T03:10:09Z",
+      "updated_at": "2026-10-08T03:11:25Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37721429379,
+      "name": "Backend scaffold",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "main",
+      "path": ".github/workflows/backend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429379",
+      "created_at": "2026-10-08T03:10:09Z",
+      "updated_at": "2026-10-08T03:11:38Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37721429383,
+      "name": "Composed HTTPS photo cycle",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "main",
+      "path": ".github/workflows/demo-compose.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429383",
+      "created_at": "2026-10-08T03:10:09Z",
+      "updated_at": "2026-10-08T03:11:40Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37721429346,
+      "name": "Historical analytics (Android emulation)",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "main",
+      "path": ".github/workflows/history-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429346",
+      "created_at": "2026-10-08T03:10:09Z",
+      "updated_at": "2026-10-08T03:12:05Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37721429329,
+      "name": "Mobile composed app (Android emulation)",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "main",
+      "path": ".github/workflows/mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429329",
+      "created_at": "2026-10-08T03:10:09Z",
+      "updated_at": "2026-10-08T03:12:37Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37721429331,
+      "name": "Demo clock and protected downloads (Android emulation)",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "main",
+      "path": ".github/workflows/controls-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429331",
+      "created_at": "2026-10-08T03:14:19Z",
+      "updated_at": "2026-10-08T03:16:46Z",
+      "run_attempt": 2
+    }
+  ],
+  "diagnostic_handoff": {
+    "source_sha": "e92f80bac8011fef917dfa0685470475e67ea151",
+    "parent_sha": "80e59f8a802d4e6bf78e6f7e08355d394ea782db",
+    "handoff_at": "2026-10-08T02:30:00Z",
+    "handoff_url": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050952523",
+    "purpose": "Safe phase localization only, including shift-report open/read before entering Prepare/Save/file inspection.",
+    "source_checks_reported": {
+      "node": 71,
+      "python": 13
+    },
+    "source_check_attribution": "C0 exact-remote source rerun and independent review",
+    "runtime_result": "ATTEMPT_1_PASS_ATTEMPT_2_FAIL",
+    "runtime_fix_claim": false,
+    "limitation": "Diagnostic-only source change preserved predicates. Actual attempt 1 passed, deliberate same-head attempt 2 failed at response body capture; root cause is unresolved."
+  },
+  "limitations": [
+    "Selected 34df71ec has ten successful workflow runs; C113 attempt 1 and deliberate fresh attempt 2 both passed. Per-stage/file counts are not inferred from earlier runs.",
+    "Earlier exact e548 C113 evidence remains mixed: attempt 1 full PASS, deliberate attempt 2 FAIL at SHIFT_PDF/READ_RESPONSE_BYTES before Save/inspection.",
+    "Earlier 43cd C113 failure is preserved. No current evidence establishes the cause of either failed boundary or proves a reliability repair.",
+    "Body-seam changes are diagnostic-only and preserve body/hash/content predicates. Two successful attempts do not establish prior failure causes or a general reliability guarantee.",
+    "The 77ea58ff final-product baseline and immutable v2 snapshot remain unchanged.",
+    "Browser-saved/content-inspected files are Android-emulated Chromium evidence, not physical Android storage or native Excel opening.",
+    "Real phone push, live model quality, measured camera/upload SLA, physical devices, public deployment, timed rehearsal, recorded video and submission remain outside demonstrated evidence.",
+    "No C-106 product runtime, private artifact or credential access, provider call, deployment or submission was performed."
+  ],
+  "historical_source_binding": {
+    "backend_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+    "frontend_sha": "faef5d3d8b4c640fae013dbfa78074382e512e8f",
+    "c113_sha": "80e59f8a802d4e6bf78e6f7e08355d394ea782db",
+    "expected_test_count": 1,
+    "required_test_title": "C113 real protected downloads and demo clock",
+    "manifest_url": "https://github.com/a4ns/DalaAI/blob/43cd9ca5823b02eb27e59e3af252f894dcefa2f6/ops/ci/controls_contract.json"
+  },
+  "historical_c113_failure": {
+    "result": "FAIL",
+    "layer": "browser_assembled",
+    "source_sha": "43cd9ca5823b02eb27e59e3af252f894dcefa2f6",
+    "run_id": 37716832135,
+    "job_id": 113115120902,
+    "job_url": "https://github.com/a4ns/DalaAI/actions/runs/37716832135/job/113115120902",
+    "metadata_observed": "Terminal failure; distinct proof/source/setup step passed, actual clock/download journey step failed.",
+    "bounded_attribution_urls": [
+      "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050824207",
+      "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050913081",
+      "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050919978"
+    ],
+    "completed_stages_reported": 4,
+    "clock_observations_reported": 6,
+    "completed_download_rows_reported": 0,
+    "completed_restrictions_reported": 0,
+    "failed_stage_reported": 5,
+    "partial_coverage_reported": "Actual Android-emulated clock UI observations and historical report selection.",
+    "failed_stage_scope": "Opening and validating the shift JSON report, then preparing/saving/inspecting shift PDF/XLSX.",
+    "localization": "No inner phase/status/parser cause established by this run; stage wrapper alone does not show whether download helper started.",
+    "fixed_failure_classes_reported": [
+      "PRIVATE_OPERATION_FAILED",
+      "DOWNLOAD_CLOCK_JOURNEY_FAILED_SEE_SAFE_STAGE_RESULTS"
+    ],
+    "source_locations_reported": [
+      "tests/e2e/c113_download_clock.spec.cjs:37",
+      "tests/e2e/c113_download_clock.spec.cjs:170",
+      "tests/e2e/c113_download_clock.spec.cjs:215",
+      "tests/e2e/c113_private_boundary.cjs:10",
+      "tests/e2e/c113_contract.cjs:23"
+    ],
+    "fresh_proof_reported": "PASS",
+    "trusted_tls_reported": "PASS",
+    "inspector_import_reported": "PASS",
+    "service_inventory_reported": "PASS",
+    "cleanup_reported": "PASS",
+    "limitation": "Four completed stages and six clock observations are partial runtime evidence, not a full C113 pass. No completed download row is not proof that bytes never arrived. The four saved-file checks and remaining C113 restriction checks are not established."
+  },
+  "c113_attempts": [
+    {
+      "id": 37718867179,
+      "name": "Demo clock and protected downloads (Android emulation)",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "main",
+      "path": ".github/workflows/controls-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718867179",
+      "created_at": "2026-10-08T02:38:32Z",
+      "updated_at": "2026-10-08T02:40:44Z",
+      "run_attempt": 1,
+      "jobs": [
+        {
+          "id": 113121626731,
+          "name": "clock-downloads",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37718867179,
+          "steps": [
+            {
+              "name": "Install locked validation dependencies and official Chromium",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-08T02:38:43Z",
+              "completed_at": "2026-10-08T02:39:18Z"
+            },
+            {
+              "name": "Verify distinct C113 proof sources and isolated setup",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-08T02:39:18Z",
+              "completed_at": "2026-10-08T02:39:22Z"
+            },
+            {
+              "name": "Fresh C113 proof, synthetic clock UI and four actual saved files",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-08T02:39:22Z",
+              "completed_at": "2026-10-08T02:40:40Z"
+            },
+            {
+              "name": "Publish bounded controls scope summary",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-08T02:40:40Z",
+              "completed_at": "2026-10-08T02:40:40Z"
+            }
+          ]
+        }
+      ],
+      "result": "PASS",
+      "layer": "browser_assembled",
+      "bounded_attribution_url": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6051088147",
+      "completed_stages_reported": 8,
+      "clock_observations_reported": 6,
+      "master_ui_mutations_reported": 3,
+      "clock_version_range_reported": [
+        0,
+        3
+      ],
+      "browser_saved_and_content_inspected_files_reported": 4,
+      "executor_denials_reported": 6,
+      "unchanged_business_rows_reported": true,
+      "skips_reported": 0,
+      "fresh_proof_reported": "PASS",
+      "trusted_tls_reported": "PASS",
+      "cleanup_reported": "PASS",
+      "limitation": "This successful attempt remains valid, but the deliberate same-SHA repeat failed. Diagnostic-only changes preserved acceptance predicates; neither first 43cd nor repeat failure is rewritten."
+    },
+    {
+      "id": 37718867179,
+      "name": "Demo clock and protected downloads (Android emulation)",
+      "head_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+      "head_branch": "main",
+      "path": ".github/workflows/controls-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37718867179",
+      "created_at": "2026-10-08T02:46:45Z",
+      "updated_at": "2026-10-08T02:49:16Z",
+      "run_attempt": 2,
+      "jobs": [
+        {
+          "id": 113123763239,
+          "name": "clock-downloads",
+          "status": "completed",
+          "conclusion": "failure",
+          "run_id": 37718867179,
+          "steps": [
+            {
+              "name": "Install locked validation dependencies and official Chromium",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-08T02:47:02Z",
+              "completed_at": "2026-10-08T02:47:50Z"
+            },
+            {
+              "name": "Verify distinct C113 proof sources and isolated setup",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-08T02:47:50Z",
+              "completed_at": "2026-10-08T02:47:55Z"
+            },
+            {
+              "name": "Fresh C113 proof, synthetic clock UI and four actual saved files",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 9,
+              "started_at": "2026-10-08T02:47:55Z",
+              "completed_at": "2026-10-08T02:49:12Z"
+            },
+            {
+              "name": "Publish bounded controls scope summary",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-08T02:49:12Z",
+              "completed_at": "2026-10-08T02:49:12Z"
+            }
+          ]
+        }
+      ],
+      "result": "FAIL",
+      "layer": "browser_assembled",
+      "bounded_attribution_url": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6051171178",
+      "purpose": "Deliberate fresh exact-head repeat; own job and run attempt recorded.",
+      "phase_reported": "SHIFT_PDF",
+      "substep_reported": "READ_RESPONSE_BYTES",
+      "response_status_reported": 200,
+      "response_encoding_reported": "identity",
+      "bounded_content_length_reported": "valid",
+      "protected_mime_disposition_csp_checks_reported": "PASS",
+      "failure_boundary_reported": "Playwright response.body() did not complete successfully; Save and inspector were not reached.",
+      "saved_file_reported": false,
+      "cleanup_reported": "PASS",
+      "limitation": "Unresolved intermittent capture/transfer boundary. Browser instrumentation failure versus actual response interruption is not established. Do not claim reliable all-green from attempt 1."
+    }
+  ],
+  "aggregate_c113_result": "LATEST_SHA_TWO_PASSES_PRIOR_FAILURES_UNRESOLVED",
+  "e548_source_binding": {
+    "backend_sha": "e548c9482277f0b19e82f9959be6d25df92b5e97",
+    "frontend_sha": "faef5d3d8b4c640fae013dbfa78074382e512e8f",
+    "c113_sha": "e92f80bac8011fef917dfa0685470475e67ea151",
+    "expected_test_count": 1,
+    "required_test_title": "C113 real protected downloads and demo clock",
+    "manifest_url": "https://github.com/a4ns/DalaAI/blob/e548c9482277f0b19e82f9959be6d25df92b5e97/ops/ci/controls_contract.json"
+  },
+  "latest_c113_run": {
+    "id": 37721429331,
+    "name": "Demo clock and protected downloads (Android emulation)",
+    "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+    "head_branch": "main",
+    "path": ".github/workflows/controls-mobile-e2e.yml",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429331",
+    "created_at": "2026-10-08T03:14:19Z",
+    "updated_at": "2026-10-08T03:16:46Z",
+    "run_attempt": 2,
+    "jobs": [
+      {
+        "id": 113130793896,
+        "name": "clock-downloads",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 37721429331,
+        "steps": [
+          {
+            "name": "Install locked validation dependencies and official Chromium",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-10-08T03:14:32Z",
+            "completed_at": "2026-10-08T03:15:12Z"
+          },
+          {
+            "name": "Verify distinct C113 proof sources and isolated setup",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-10-08T03:15:12Z",
+            "completed_at": "2026-10-08T03:15:17Z"
+          },
+          {
+            "name": "Fresh C113 proof, synthetic clock UI and four actual saved files",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-10-08T03:15:17Z",
+            "completed_at": "2026-10-08T03:16:41Z"
+          },
+          {
+            "name": "Publish bounded controls scope summary",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-10-08T03:16:41Z",
+            "completed_at": "2026-10-08T03:16:41Z"
+          }
+        ]
+      }
+    ],
+    "result": "PASS",
+    "layer": "browser_assembled",
+    "source": "Independently checked public attempt-specific Actions run/job/step metadata and exact controls manifest.",
+    "counts": "No per-stage/file/restriction counts copied from earlier runs.",
+    "limitation": "Successful attempt at exact source; does not establish the cause or repair of prior failures, general reliability, physical-device/native-Excel behavior, live providers or deployment.",
+    "job_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429331/job/113130793896",
+    "observed": "Both separately checked attempts passed source/setup verification and fresh-proof/actual clock/four-files acceptance; latest run is attempt 2."
+  },
+  "body_seam_diagnostic_handoff": {
+    "source_sha": "0d2ac5e95dcd99b11b144b7871152ed9c0033697",
+    "parent_sha": "e92f80bac8011fef917dfa0685470475e67ea151",
+    "handoff_url": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6051298502",
+    "handoff_at": "2026-10-08T03:02:30Z",
+    "source_checks_reported": {
+      "node": 76,
+      "python": 13
+    },
+    "source_check_attribution": "C0 exact-remote source rerun and independent review",
+    "purpose": "Correlate original request completion/failure with bounded fixed client state while preserving body/hash/content acceptance.",
+    "runtime_result": "TWO_SUCCESSFUL_ATTEMPTS_ON_34df71ec",
+    "runtime_fix_claim": false
+  },
+  "latest_c113_attempts": [
+    {
+      "id": 37721429331,
+      "name": "Demo clock and protected downloads (Android emulation)",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "main",
+      "path": ".github/workflows/controls-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429331",
+      "created_at": "2026-10-08T03:10:09Z",
+      "updated_at": "2026-10-08T03:13:06Z",
+      "run_attempt": 1,
+      "jobs": [
+        {
+          "id": 113129722640,
+          "name": "clock-downloads",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37721429331,
+          "steps": [
+            {
+              "name": "Install locked validation dependencies and official Chromium",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-08T03:10:30Z",
+              "completed_at": "2026-10-08T03:11:26Z"
+            },
+            {
+              "name": "Verify distinct C113 proof sources and isolated setup",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-08T03:11:26Z",
+              "completed_at": "2026-10-08T03:11:31Z"
+            },
+            {
+              "name": "Fresh C113 proof, synthetic clock UI and four actual saved files",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-08T03:11:31Z",
+              "completed_at": "2026-10-08T03:13:00Z"
+            },
+            {
+              "name": "Publish bounded controls scope summary",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-08T03:13:00Z",
+              "completed_at": "2026-10-08T03:13:01Z"
+            }
+          ]
+        }
+      ],
+      "result": "PASS",
+      "layer": "browser_assembled",
+      "source": "Independently checked public attempt-specific Actions run/job/step metadata and exact controls manifest.",
+      "counts": "No per-stage/file/restriction counts copied from earlier runs.",
+      "limitation": "Successful attempt at exact source; does not establish the cause or repair of prior failures, general reliability, physical-device/native-Excel behavior, live providers or deployment."
+    },
+    {
+      "id": 37721429331,
+      "name": "Demo clock and protected downloads (Android emulation)",
+      "head_sha": "34df71ec2aa49e98e7c17baf90f41789a6cb1176",
+      "head_branch": "main",
+      "path": ".github/workflows/controls-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37721429331",
+      "created_at": "2026-10-08T03:14:19Z",
+      "updated_at": "2026-10-08T03:16:46Z",
+      "run_attempt": 2,
+      "jobs": [
+        {
+          "id": 113130793896,
+          "name": "clock-downloads",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37721429331,
+          "steps": [
+            {
+              "name": "Install locked validation dependencies and official Chromium",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-10-08T03:14:32Z",
+              "completed_at": "2026-10-08T03:15:12Z"
+            },
+            {
+              "name": "Verify distinct C113 proof sources and isolated setup",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-10-08T03:15:12Z",
+              "completed_at": "2026-10-08T03:15:17Z"
+            },
+            {
+              "name": "Fresh C113 proof, synthetic clock UI and four actual saved files",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-10-08T03:15:17Z",
+              "completed_at": "2026-10-08T03:16:41Z"
+            },
+            {
+              "name": "Publish bounded controls scope summary",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-10-08T03:16:41Z",
+              "completed_at": "2026-10-08T03:16:41Z"
+            }
+          ]
+        }
+      ],
+      "result": "PASS",
+      "layer": "browser_assembled",
+      "source": "Independently checked public attempt-specific Actions run/job/step metadata and exact controls manifest.",
+      "counts": "No per-stage/file/restriction counts copied from earlier runs.",
+      "limitation": "Successful attempt at exact source; does not establish the cause or repair of prior failures, general reliability, physical-device/native-Excel behavior, live providers or deployment."
+    }
+  ]
+}
