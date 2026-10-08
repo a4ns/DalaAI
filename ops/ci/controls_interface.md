@@ -1,8 +1,8 @@
 # C113 isolated clock controls and download acceptance seam
 
-Source-ready binding: C113 `0daa6b5b6be6691b0894fd0b0f84d64262b19446` against
-frontend `1594a930de4b9f15d11dd35bbc59e5b4b0b1d964`. Actual C113 execution is
-pending for this reviewed deadline-correction product. Final C110/C112 acceptance remains separate evidence.
+Source-ready binding: C113 `87e69aaaab604250ee93dcb4dca34b68eca74599` against
+frontend `a880371589aa1dd117dde9e80936c687d146f919`. Actual C113 execution is
+pending for this reviewed combined UI product. Final C110/C112 acceptance remains separate evidence.
 
 A5 reserved `.github/workflows/controls-mobile-e2e.yml` and new `ops/ci/controls_*`
 paths. C owns `tests/e2e/c113_*`. The final B source bindings and actual C110/C112
@@ -108,3 +108,10 @@ frontend source race is not established as the cause of that actual failure.
 The current product/reference change requires a fresh C113 proof and gate; the
 single original body capture, request/UI diagnostics, byte-equality oracle and
 independent inspections are unchanged.
+
+The current combined UI product `a880371589aa1dd117dde9e80936c687d146f919` is pinned through
+source `87e69aaaab604250ee93dcb4dca34b68eca74599`. Earlier product results and
+original C113 capture failures remain historical evidence. A fresh suite-specific
+proof and actual gate are required; this reference update changes no journey,
+observer, capture oracle or acceptance predicate. Mounted synthetic viewport
+checks are a separate gate and do not establish new AI/API acceptance.

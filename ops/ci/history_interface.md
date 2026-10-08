@@ -1,7 +1,7 @@
 # C112 history/analytics Android CI seam (source preparation)
 
-Source-ready binding: C112 `0daa6b5b6be6691b0894fd0b0f84d64262b19446` against frontend
-`1594a930de4b9f15d11dd35bbc59e5b4b0b1d964`. Actual C112 execution is pending. Existing
+Source-ready binding: C112 `87e69aaaab604250ee93dcb4dca34b68eca74599` against frontend
+`a880371589aa1dd117dde9e80936c687d146f919`. Actual C112 execution is pending. Existing
 C110 remains an independent exact-one-journey gate; its prior green results do
 not establish this new history journey.
 
@@ -150,3 +150,10 @@ The current target is the reviewed deadline-correction product. Earlier faef
 history passes remain historical; this exact source requires a fresh C112 proof
 and actual gate. Source-reference maintenance does not change the read-only
 journey, observer, canonical period, counts or acceptance predicates.
+
+The current combined UI product `a880371589aa1dd117dde9e80936c687d146f919` is pinned through
+source `87e69aaaab604250ee93dcb4dca34b68eca74599`. Earlier product results and
+original C113 capture failures remain historical evidence. A fresh suite-specific
+proof and actual gate are required; this reference update changes no journey,
+observer, capture oracle or acceptance predicate. Mounted synthetic viewport
+checks are a separate gate and do not establish new AI/API acceptance.
