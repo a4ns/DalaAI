@@ -1,0 +1,136 @@
+{
+  "accepted": true,
+  "base_sha": "5368cdc73b7d602e26d2ee4aa8cc29ea1561b96d",
+  "product_sha": "d78b9c3b7cabbcbd05b01df77f2a7ec57739afe5",
+  "test_source_sha": "d78b9c3b7cabbcbd05b01df77f2a7ec57739afe5",
+  "case_counts": {
+    "healthy-poll-source": 12,
+    "healthy-poll-chromium": 7
+  },
+  "cases": [
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "healthy automatic poll retains the confirmed snapshot and an explicit executor action sends exactly once"
+    },
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "manual refresh joins an existing background promise but blocks commands synchronously"
+    },
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "cold or previously failed refresh never gains background eligibility"
+    },
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "healthy pages stage privately; a later page failure blocks and never publishes partial membership"
+    },
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "an observed higher version blocks immediately while its page remains unpublished"
+    },
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "same-version identity changes fail closed, while computed domain time alone is allowed"
+    },
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "offline invalidates immediately and a canceled late read cannot mint a new confirmation"
+    },
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "a delayed watchdog cannot let a late completed read renew the expired confirmation"
+    },
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "the whole-sweep bound does not restart for later pages"
+    },
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "epoch loss hides the snapshot and ignores an old successful background completion"
+    },
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "current scope loss is refused even before an identity notification or delayed page response"
+    },
+    {
+      "project": "healthy-poll-source",
+      "file": "node/healthy-order-poll.spec.ts",
+      "title": "local expiry blocks new commands and preserves an earlier unknown effect on explicit retry"
+    },
+    {
+      "project": "healthy-poll-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "healthy background poll permits one explicit master close POST before GET release"
+    },
+    {
+      "project": "healthy-poll-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "healthy background poll permits one explicit master rework POST before GET release"
+    },
+    {
+      "project": "healthy-poll-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "healthy background poll permits one explicit executor POST with the confirmed original version"
+    },
+    {
+      "project": "healthy-poll-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "failed background poll blocks the retained snapshot and sends no deferred command"
+    },
+    {
+      "project": "healthy-poll-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "known offline invalidation and release of an old GET cannot restore command eligibility"
+    },
+    {
+      "project": "healthy-poll-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "manual refresh joining a held automatic poll blocks now and does not replay a dropped gesture"
+    },
+    {
+      "project": "healthy-poll-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "synchronous logout latch refuses a raced new command while the old session still exists"
+    }
+  ],
+  "source_diff": [
+    "M\tfrontend/src/app/App.tsx",
+    "M\tfrontend/src/app/Workspace.tsx",
+    "M\tfrontend/src/app/executorController.ts",
+    "M\tfrontend/src/shared/api/client.ts",
+    "M\tfrontend/src/shared/api/orderStore.ts",
+    "A\tfrontend/tests/browser/poll-command-lock.spec.ts",
+    "A\tfrontend/tests/node/healthy-order-poll.spec.ts"
+  ],
+  "files": {
+    "frontend/src/app/App.tsx": "f915fa9cc289eb255223e3fb9aae998b5e0ded6c0bffa4764669a17aa704196d",
+    "frontend/src/app/Workspace.tsx": "2d506e398bb4ea342ed57a0edf25339cda8f9b540be9e59420801e0722b89138",
+    "frontend/src/app/executorController.ts": "9a35cd1c33211af0f2c05543e510d0db6c046c7e46022a180dbf7b38827a775e",
+    "frontend/src/shared/api/client.ts": "42f4cb988c6174ff92d266842572cd6ac50b7e4b273af17be1fc8aa502b8858d",
+    "frontend/src/shared/api/orderStore.ts": "d4aaf6b355b9fb9f5787c377657298904ef2d3426d6bb700f932a0b91fa12a6c",
+    "frontend/tests/browser/poll-command-lock.spec.ts": "5f8277a53b9667b628cc1bf6261ce65f552a3eca382dc2df3608634c674418c9",
+    "frontend/tests/node/healthy-order-poll.spec.ts": "aeba183670d815595b97954dec587052115d28cc3458a24d6d38239c43a745f3"
+  },
+  "product_dependencies": {
+    "frontend/package.json": "865b405c0bb5559b0992944fa22fbfb37f6523809ae5b7c0c72b63c2ef600ce4",
+    "frontend/package-lock.json": "35f3230f1beee0391af72fcd94fc6af1d858cebc8af5d6cdb320bfebe8c3c99f",
+    "frontend/playwright.config.ts": "88499eaca00b4c2c70a859961c74993dfc94f15eb6650c311e794c8238ac9dd6",
+    "frontend/tests/tsconfig.json": "2db8b39f18a794657995c68409ea2be62dc1c4400c9dd82c2f11a21ade1aa51c",
+    "frontend/tsconfig.app.json": "e05f401fb46d0b84646c234ff6e117be0df31823294b6b1913a14049cfeb58ff",
+    "frontend/vite.config.ts": "e8703fb10e4e3504d759ea9a12996d7a14b5cfb209e69cc9fc02b606ba373b1b",
+    "frontend/tests/support/synthetic.ts": "46ac671e2171e184a46805413b711d8b22931dee5a16ad877a76767f1fb97939",
+    "frontend/tests/support/source.ts": "8f7ed2d1185b64cde78beee056579f63ee4e3473b7179c986815f7d8146dcb82"
+  },
+  "author_archive_sha256": "a48e2fd84a296cc41a3ced4a62628d80ef613e09da297c317d7117ca3141ac5e"
+}
