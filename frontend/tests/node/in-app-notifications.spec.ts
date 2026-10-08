@@ -98,6 +98,15 @@ test('bounded stack consumes all discovered keys without a deferred backlog', as
   for (const notice of h.feed.getSnapshot()) h.feed.dismiss(notice.key);
   await h.confirm(items); expect(h.feed.getSnapshot()).toEqual([]); h.close();
 });
+test('a new burst retains the existing full stack and consumes excess keys without replay', async () => {
+  const h = await setup(); await h.confirm([]);
+  const existing = Array.from({ length: 3 }, (_, i) => order({ id: `10000000-0000-4000-8000-00000000002${i}`, number: `EXISTING-${i}` }));
+  await h.confirm(existing); const mounted = h.feed.getSnapshot(); expect(mounted).toHaveLength(MAX_VISIBLE_NOTICES);
+  const incoming = Array.from({ length: 4 }, (_, i) => order({ id: `10000000-0000-4000-8000-00000000003${i}`, number: `INCOMING-${i}` }));
+  await h.confirm([...existing, ...incoming]); expect(h.feed.getSnapshot()).toEqual(mounted);
+  for (const notice of mounted) h.feed.dismiss(notice.key);
+  await h.confirm([...existing, ...incoming]); expect(h.feed.getSnapshot()).toEqual([]); h.close();
+});
 test('access loss clears notices and history; recovery starts with a silent baseline', async () => {
   const h = await setup(); await h.confirm([]); await h.confirm([order()]); expect(h.feed.getSnapshot()).toHaveLength(1);
   h.read(async () => json({}, 403)); await h.store.refresh(); expect(h.feed.getSnapshot()).toEqual([]);

@@ -66,7 +66,8 @@ export class InAppNotificationFeed {
     }
     // A successful empty list is a baseline too. Failed/partial reads never reach here.
     this.#baseline = true;
-    if (discovered.length) this.#set([...this.#state, ...discovered].slice(-MAX_VISIBLE_NOTICES));
+    // Keep mounted notices (and their hover/focus) stable. Excess new keys are consumed, not queued.
+    if (discovered.length) this.#set([...this.#state, ...discovered].slice(0, MAX_VISIBLE_NOTICES));
   };
   /** Effect cleanup is safe under StrictMode replay and drops all session-local data. */
   attach = (): (() => void) => {

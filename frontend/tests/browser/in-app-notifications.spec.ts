@@ -84,6 +84,15 @@ test('three visible notices, safe mobile width, reduced motion and no delayed ba
   while (await close(page).count()) await close(page).first().click(); await h.poll(); await expect(notices(page)).toHaveCount(0);
 });
 
+test('new notification burst never evicts the keyboard-focused existing notice', async ({ page }) => {
+  const h = await mount(page); h.items([order()]); await h.poll(); await expect(notices(page)).toHaveCount(1);
+  const originalClose = page.getByRole('button', { name: 'Закрыть уведомление: Вам назначен наряд № SYNTHETIC-001.', exact: true });
+  await originalClose.focus(); await expect(originalClose).toBeFocused();
+  const incoming = Array.from({ length: 4 }, (_, i) => order({ id: `10000000-0000-4000-8000-00000000003${i}`, number: `INCOMING-${i}` }));
+  h.items([order(), ...incoming]); await h.poll(); await expect(notices(page)).toHaveCount(3);
+  await expect(originalClose).toBeFocused(); await expect(originalClose).toBeVisible();
+});
+
 test('master result notice preserves draft, focus, scroll and navigation, including the hidden workspace tab', async ({ page }) => {
   const h = await mount(page, 'master', [order({ status: 'in_progress' })]);
   const draft = page.getByRole('textbox', { name: /^Задача или неисправность/ }); await draft.fill('Синтетический незавершённый черновик'); await draft.focus();
