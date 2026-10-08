@@ -1,0 +1,69 @@
+name: Synthetic quiet-refresh geometry
+'on':
+  push:
+    branches: [validation/poll-geometry-20261008]
+permissions:
+  contents: read
+concurrency:
+  group: poll-geometry-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  quiet-refresh-geometry:
+    if: github.ref == 'refs/heads/validation/poll-geometry-20261008'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: f50dcd8e34bde095581ff3e97ece4e5b7b0f5ba0
+          path: .ci-poll-geometry
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.15'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Verify exact fixture and single-project matrix
+        run: |
+          python ops/ci/poll_geometry_tests.py
+          node --check ops/ci/poll_geometry_playwright.cjs
+          python ops/ci/poll_geometry_gate.py --source .ci-poll-geometry --check-inputs
+          printf 'PLAYWRIGHT_BROWSERS_PATH=%s/dalaai-geometry-chromium\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Install locked frontend and official Chromium
+        timeout-minutes: 10
+        run: |
+          npm ci --prefix .ci-poll-geometry/frontend
+          node .ci-poll-geometry/frontend/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Run exact 33-case quiet-refresh geometry matrix once
+        run: python ops/ci/poll_geometry_gate.py --source .ci-poll-geometry
+      - name: Record focused synthetic scope
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path('poll-geometry-summary.json')
+          r=json.loads(p.read_text()) if p.is_file() else {}
+          status=r.get('status','BLOCKED')
+          if status not in {'PASS_SYNTHETIC_QUIET_REFRESH_GEOMETRY_ONLY','FAIL','BLOCKED'}:status='BLOCKED'
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
+              out.write('Quiet-refresh geometry: '+status+'\n\n')
+              out.write('One Chromium project, eleven cases at each of three viewports. Synthetic resource-state transitions.\n')
+              out.write('No polling-store/network-timing, API/DB/provider, physical-device or original C acceptance claim.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: quiet-refresh-geometry-${{ github.sha }}-${{ github.run_attempt }}
+          path: poll-geometry-summary.json
+          if-no-files-found: ignore
+          retention-days: 7

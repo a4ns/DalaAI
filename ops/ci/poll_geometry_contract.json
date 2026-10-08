@@ -1,0 +1,38 @@
+{
+  "accepted": true,
+  "product_sha": "6fa27276f14ef31757cb0da5ee9d7acc15789111",
+  "test_source_sha": "f50dcd8e34bde095581ff3e97ece4e5b7b0f5ba0",
+  "preparation_base_sha": "adb93d07c9430f66d5565c7ca367f769f2b72da6",
+  "preparation_archive_sha256": "5b58d7f8dfbe90d4de7560a20608f731700a08bdb92ea677cb8ab15e6f2e5084",
+  "case_count": 33,
+  "cases_per_viewport": 11,
+  "viewports": [
+    [
+      320,
+      800
+    ],
+    [
+      390,
+      844
+    ],
+    [
+      768,
+      1024
+    ]
+  ],
+  "files": {
+    "frontend/tests/fixtures/quiet-refresh-geometry.html": "362aa656f8a8c61c810f75a3d38f4855fc435a7bac87944409a11455e5f499b1",
+    "frontend/tests/fixtures/quiet-refresh-geometry.tsx": "b02d506fd5dc94d20878d6f0e0cd15b71d1308399016c09f93d0622bd1d7e8fd",
+    "frontend/tests/browser/quiet-refresh-geometry.spec.ts": "d8e0ee2805991791dcb279fc28f476e2fddb535fc8b8360a1431a94c62820819"
+  },
+  "product_dependencies": {
+    "frontend/package.json": "865b405c0bb5559b0992944fa22fbfb37f6523809ae5b7c0c72b63c2ef600ce4",
+    "frontend/package-lock.json": "35f3230f1beee0391af72fcd94fc6af1d858cebc8af5d6cdb320bfebe8c3c99f",
+    "frontend/playwright.config.ts": "88499eaca00b4c2c70a859961c74993dfc94f15eb6650c311e794c8238ac9dd6",
+    "frontend/tests/tsconfig.json": "2db8b39f18a794657995c68409ea2be62dc1c4400c9dd82c2f11a21ade1aa51c",
+    "frontend/tsconfig.app.json": "e05f401fb46d0b84646c234ff6e117be0df31823294b6b1913a14049cfeb58ff",
+    "frontend/src/mobile/master/MasterScreen.tsx": "d4fa5b529cdfcc86dbe72915d2fefc8b664896933a736201a9da3272d5a4fbff",
+    "frontend/src/mobile/executor/ExecutorScreen.tsx": "dbe1377f2e448a24749e1c2679dcd11ba66d7c2482a8fa2a6b0d0051c4c9bd28",
+    "frontend/src/panel/PanelScreen.tsx": "42b41ecc070c39cb2d696931dbe0c2ab466547b764a1316c1b2d0814706d7753"
+  }
+}
