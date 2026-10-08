@@ -91,7 +91,7 @@ def verify_config(config, image):
     managed, edge = services['managed'], services['tls-edge']
     require(managed['image'] == image and services['prepare']['image'] == image, 'IMAGE_IDENTITY_MISMATCH')
     require(managed['build']['dockerfile'] == 'ops/managed/Dockerfile', 'WRONG_MANAGED_DOCKERFILE')
-    require('command' not in managed and 'entrypoint' not in managed, 'MANAGED_ENTRYPOINT_OVERRIDDEN')
+    require(managed.get('command') is None and managed.get('entrypoint') is None, 'MANAGED_ENTRYPOINT_OVERRIDDEN')
     require(not managed.get('ports') and config['networks']['backend'].get('internal') is True, 'MANAGED_NETWORK_BOUNDARY')
     require(set(managed['networks']) == {'backend'}, 'MANAGED_EGRESS_NOT_ISOLATED')
     ports = edge.get('ports', [])

@@ -49,9 +49,13 @@ class ManagedValidationTests(unittest.TestCase):
     def test_correct_config(self):m.verify_config(config(),'fixture:candidate')
 
     def test_runtime_command_cannot_be_substituted(self):
+        data=config();data['services']['managed'].update(command=None,entrypoint=None)
+        m.verify_config(data,'fixture:candidate')  # Compose canonical null means image default.
         for key in ('command','entrypoint'):
-            data=config();data['services']['managed'][key]=['fake']
-            with self.assertRaises(m.GateFailure):m.verify_config(data,'fixture:candidate')
+            for value in (['fake'], [], '', 'fake'):
+                data=config();data['services']['managed'][key]=value
+                with self.subTest(key=key,value=value),self.assertRaises(m.GateFailure):
+                    m.verify_config(data,'fixture:candidate')
 
     def test_network_and_owner_secrets_fail_closed(self):
         for mutate in (lambda d:d['services']['managed'].update(ports=[443]),

@@ -11,7 +11,7 @@ has been selected and nothing is deployed by publishing this package.
 
 ## Local/disposable start
 
-Requires Docker Compose and Python3. From the repository root:
+Requires Docker Compose and Python3.12. From the repository root:
 
 ```sh
 ./ops/demo/run.sh
