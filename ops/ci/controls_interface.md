@@ -1,7 +1,7 @@
 # C113 isolated clock controls and download acceptance seam
 
-Source-ready binding: C113 `13a655fdd0587cbcd38e05fefefdfb69131d5579` against
-frontend `f967d0acf3f04bda304b7fe47e1bf76ca8814634`. Actual C113 execution is
+Source-ready binding: C113 `16175cf561af217b6e200fff45ba1c066b23a7b4` against
+frontend `d78b9c3b7cabbcbd05b01df77f2a7ec57739afe5`. Actual C113 execution is
 pending for this reviewed combined UI product. Final C110/C112 acceptance remains separate evidence.
 
 A5 reserved `.github/workflows/controls-mobile-e2e.yml` and new `ops/ci/controls_*`
@@ -150,3 +150,9 @@ their unresolved cause are preserved. The accepted native-focus fixture uses
 the identical thirteen-dependency component closure. Its synthetic desktop
 results do not establish production App routing, backend authorization, physical
 device behavior or a repair to the original capture issue.
+
+The healthy-poll command candidate requires fresh independent privacy proofs
+and unchanged actual C gates after authorized publication. The focused mounted
+App gate uses synthetic HTTP and desktop production preview. Earlier 5368 C110
+and C112 passes, C113 capture failure and all prior evidence remain preserved.
+The command-eligibility change does not establish a capture reliability repair.

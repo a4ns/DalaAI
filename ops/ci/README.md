@@ -12,8 +12,8 @@ and report export remain separate gates. No deployment is performed.
 ## C-110 accepted source and build provenance
 
 `scenarios.json` accepts exact C source
-`13a655fdd0587cbcd38e05fefefdfb69131d5579` and final frontend
-`f967d0acf3f04bda304b7fe47e1bf76ca8814634`. C includes the bounded resume/Back
+`16175cf561af217b6e200fff45ba1c066b23a7b4` and final frontend
+`d78b9c3b7cabbcbd05b01df77f2a7ec57739afe5`. C includes the bounded resume/Back
 render waits and version-2 frontend/source-bound receipt. Missing or altered
 source still blocks before private execution. Do not lower counts or silently
 skip a missing input.
@@ -240,3 +240,9 @@ their unresolved cause are preserved. The accepted native-focus fixture uses
 the identical thirteen-dependency component closure. Its synthetic desktop
 results do not establish production App routing, backend authorization, physical
 device behavior or a repair to the original capture issue.
+
+The healthy-poll command candidate requires fresh independent privacy proofs
+and unchanged actual C gates after authorized publication. The focused mounted
+App gate uses synthetic HTTP and desktop production preview. Earlier 5368 C110
+and C112 passes, C113 capture failure and all prior evidence remain preserved.
+The command-eligibility change does not establish a capture reliability repair.
