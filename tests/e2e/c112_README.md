@@ -6,7 +6,7 @@ It never selects or changes C110's exact-one lifecycle test or existing gate.
 
 ## Frozen target and scenario
 
-- Frontend: `da83e9c417a7c6bf7e91b5100e8f2d7616d9f24e` (reviewed analytics-expiry privacy product, per
+- Frontend: `8e8087103821b6334ba8d5de0a40c91ee58276f9` (reviewed in-app notification product, per
   [C0092 binding maintenance](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6051803090))
 - Harness base: `4d38c71164a56b0eeefa9eb0430eb9100bcd7a3d`
 - Exactly one test: `C112 real history analytics and protected reports`

@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
-const FRONTEND_SHA = 'da83e9c417a7c6bf7e91b5100e8f2d7616d9f24e';
+const FRONTEND_SHA = '8e8087103821b6334ba8d5de0a40c91ee58276f9';
 const TITLE = 'C113 real protected downloads and demo clock';
 const PROJECT = 'c113-android-chromium';
 const HISTORY_SHA256 = '7d888cdd5bb6a9c01ca7c543fae9e393335d07210dab811aa754f12331d1d2e1';
