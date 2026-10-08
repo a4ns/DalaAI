@@ -12,8 +12,8 @@ and report export remain separate gates. No deployment is performed.
 ## C-110 accepted source and build provenance
 
 `scenarios.json` accepts exact C source
-`afeef803d01d7e056b7ad87e0cd4b1a437092db3` and final frontend
-`faef5d3d8b4c640fae013dbfa78074382e512e8f`. C includes the bounded resume/Back
+`0daa6b5b6be6691b0894fd0b0f84d64262b19446` and final frontend
+`1594a930de4b9f15d11dd35bbc59e5b4b0b1d964`. C includes the bounded resume/Back
 render waits and version-2 frontend/source-bound receipt. Missing or altered
 source still blocks before private execution. Do not lower counts or silently
 skip a missing input.
@@ -192,3 +192,9 @@ inside the existing 30-minute job limit. A stalled registry/browser/OS-package
 installation fails the gate; no dependency is skipped and no browser success is
 inferred. Diagnose that exact failed stage before a retry. This bound was added
 after the [ae62 dependency step](https://github.com/a4ns/DalaAI/actions/runs/37713704225/job/113105238783) stalled during Ubuntu mirror metadata retrieval in Playwright's OS dependency installer. A newer source head superseded that run before any browser scenario started.
+
+The reviewed deadline-correction product `1594a930de4b9f15d11dd35bbc59e5b4b0b1d964` is bound through
+source `0daa6b5b6be6691b0894fd0b0f84d64262b19446`. Prior faef C110/C112
+passes remain historical evidence. All three new-product suites require their own
+fresh source-bound preflight and actual execution; this reference maintenance
+changes no journey, observer, capture oracle or acceptance predicate.

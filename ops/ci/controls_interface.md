@@ -1,8 +1,8 @@
 # C113 isolated clock controls and download acceptance seam
 
-Source-ready binding: C1130d2ac5e95dcd99b11b144b7871152ed9c0033697 against
-frontendfaef5d3d8b4c640fae013dbfa78074382e512e8f. Actual C113 execution is
-pending for this diagnostic source. Final C110/C112 acceptance remains separate evidence.
+Source-ready binding: C113 `0daa6b5b6be6691b0894fd0b0f84d64262b19446` against
+frontend `1594a930de4b9f15d11dd35bbc59e5b4b0b1d964`. Actual C113 execution is
+pending for this reviewed deadline-correction product. Final C110/C112 acceptance remains separate evidence.
 
 A5 reserved `.github/workflows/controls-mobile-e2e.yml` and new `ops/ci/controls_*`
 paths. C owns `tests/e2e/c113_*`. The final B source bindings and actual C110/C112
@@ -100,3 +100,11 @@ Listeners are removed in finally. Visible readiness, request completion or a
 timeout cannot pass the gate: exact response/saved byte equality and all file
 inspections remain mandatory. The workflow and product remain unchanged, and
 the new integrated source must create its own fresh failure-output proof.
+
+Historical faef results remain preserved: both 34df71ec attempts passed, while
+final docs-only f2f88e9 failed at the original SHIFT_PDF body capture with UI READY,
+request FAILED and BODY_UNAVAILABLE, before Save or inspection. The reviewed
+frontend source race is not established as the cause of that actual failure.
+The current product/reference change requires a fresh C113 proof and gate; the
+single original body capture, request/UI diagnostics, byte-equality oracle and
+independent inspections are unchanged.

@@ -1,7 +1,7 @@
 # C112 history/analytics Android CI seam (source preparation)
 
-Source-ready binding: C112 `118b81580cc658150eeca62e1b994e44ff015c6d` against frontend
-`faef5d3d8b4c640fae013dbfa78074382e512e8f`. Actual C112 execution is pending. Existing
+Source-ready binding: C112 `0daa6b5b6be6691b0894fd0b0f84d64262b19446` against frontend
+`1594a930de4b9f15d11dd35bbc59e5b4b0b1d964`. Actual C112 execution is pending. Existing
 C110 remains an independent exact-one-journey gate; its prior green results do
 not establish this new history journey.
 
@@ -145,3 +145,8 @@ receipt remains FAIL at order selection after four completed steps; the next
 exact-HEAD proof and run must establish the remaining report/role/data checks.
 
 Historical B9a full acceptance at347119c47b9a0ec70cd30cbc8bce2a2774a439e0 remains attached to that exact source. Final Bfaef is now bound explicitly; fresh C112 proof and real journey are required. Its new clock/download controls remain dormant in this read-only gate and are not promoted by this binding.
+
+The current target is the reviewed deadline-correction product. Earlier faef
+history passes remain historical; this exact source requires a fresh C112 proof
+and actual gate. Source-reference maintenance does not change the read-only
+journey, observer, canonical period, counts or acceptance predicates.
