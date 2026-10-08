@@ -55,7 +55,7 @@ def child_environments(environment):
     require(parsed.scheme == 'https' and parsed.hostname and not parsed.username and not parsed.password,
             'MANAGED_EXACT_HTTPS_ORIGIN_REQUIRED')
     host = parsed.hostname
-    require(re.fullmatch(r'[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?', host) and '.' in host
+    require(re.fullmatch(r'[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?', host) and ('.' in host or (host == 'localhost' and env.get('DALA_MANAGED_TEST_LOCALHOST') == 'true'))
             and not any(not label or len(label) > 63 for label in host.split('.'))
             and origin == 'https://' + host, 'MANAGED_EXACT_HTTPS_ORIGIN_REQUIRED')
     require(re.fullmatch(r'[0-9]{4,5}', env.get('PORT', '')) is not None

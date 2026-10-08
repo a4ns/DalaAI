@@ -50,6 +50,17 @@ class ManagedTests(unittest.TestCase):
             e = config(); e['DALA_ALLOWED_ORIGIN'] = value
             with self.subTest(value=value), self.assertRaises(ValueError): s.child_environments(e)
 
+    def test_localhost_is_test_only_and_still_exact_https(self):
+        e = config() | {'DALA_ALLOWED_ORIGIN': 'https://localhost'}
+        with self.assertRaises(ValueError): s.child_environments(e)
+        api, worker, edge = s.child_environments(e | {'DALA_MANAGED_TEST_LOCALHOST': 'true'})
+        self.assertEqual(api['DALA_ALLOWED_ORIGIN'], 'https://localhost')
+        self.assertEqual(edge['DALA_PUBLIC_HOST'], 'localhost')
+        self.assertNotIn('DALA_MANAGED_TEST_LOCALHOST', api)
+        for origin in ('http://localhost', 'https://localhost:443', 'https://localhost:8443', 'https://localhost/'):
+            with self.subTest(origin=origin), self.assertRaises(ValueError):
+                s.child_environments(e | {'DALA_ALLOWED_ORIGIN': origin, 'DALA_MANAGED_TEST_LOCALHOST': 'true'})
+
     def test_owner_and_pin_rejected(self):
         for key in s.FORBIDDEN:
             e = config(); e[key] = 'fixture-do-not-propagate'

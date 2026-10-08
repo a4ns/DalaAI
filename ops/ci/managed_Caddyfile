@@ -1,0 +1,12 @@
+# Test-only Render TLS boundary; preserve actual request Host and Origin.
+{
+    admin off
+    auto_https off
+    log default {
+        output discard
+    }
+}
+https://localhost:443 {
+    tls /run/ci-tls/server.crt /run/ci-tls/server.key
+    reverse_proxy managed:10000
+}
