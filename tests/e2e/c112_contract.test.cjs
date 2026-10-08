@@ -28,10 +28,10 @@ function fixture() {
   return { report, evidence, expected };
 }
 test('actual public_manifest object is accepted without any private file', () => { const users=c.validateManifest(manifest); assert.equal(users.master.section_ids.length,4); assert.equal(users.executor.section_ids.length,1); assert.equal(manifest.history_orders,540); });
-test('only explicit exact reviewed 8081a298 is accepted; old and unknown source selections fail', () => {
-  assert.equal(c.FRONTEND_SHA, '8081a2984b2f27b909fa2b86cd9f10ffd01d1e11');
+test('only explicit exact reviewed 6fa27276 is accepted; old and unknown source selections fail', () => {
+  assert.equal(c.FRONTEND_SHA, '6fa27276f14ef31757cb0da5ee9d7acc15789111');
   assert.equal(c.selectedFrontendSha({ DALA_E2E_FRONTEND_SHA: c.FRONTEND_SHA }), c.FRONTEND_SHA);
-  for (const selected of [undefined, '', '8081a298', 'a880371589aa1dd117dde9e80936c687d146f919', 'a8803715', '1594a930de4b9f15d11dd35bbc59e5b4b0b1d964', '1594a930', 'faef5d3d', 'faef5d3d8b4c640fae013dbfa78074382e512e8f', OLD_FRONTEND_SHA, '3ef269bba80dbd6eafaff0d5e557da21f2d96244', 'f'.repeat(40), c.FRONTEND_SHA.toUpperCase()]) {
+  for (const selected of [undefined, '', '6fa27276', '8081a2984b2f27b909fa2b86cd9f10ffd01d1e11', '8081a298', 'a880371589aa1dd117dde9e80936c687d146f919', 'a8803715', '1594a930de4b9f15d11dd35bbc59e5b4b0b1d964', '1594a930', 'faef5d3d', 'faef5d3d8b4c640fae013dbfa78074382e512e8f', OLD_FRONTEND_SHA, '3ef269bba80dbd6eafaff0d5e557da21f2d96244', 'f'.repeat(40), c.FRONTEND_SHA.toUpperCase()]) {
     assert.throws(() => c.selectedFrontendSha({ DALA_E2E_FRONTEND_SHA: selected }), /REVIEWED_FRONTEND_REQUIRED/);
     let reads = 0;
     assert.throws(() => c.fixtureFromEnv({ DALA_C112_AUTHORIZED: 'operator-provisioned-synthetic-only', DALA_C112_WORKERS_DISABLED: 'ai,delivery,providers', DALA_E2E_FRONTEND_SHA: selected }, () => { reads++; }, () => ({})), /REVIEWED_FRONTEND_REQUIRED/);
