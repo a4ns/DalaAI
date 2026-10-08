@@ -3,6 +3,7 @@ import { MasterScreen } from '../mobile/master/MasterScreen';
 import { dueLocalToIso, resourceIsCurrent } from '../mobile/master/masterModel';
 import { emptyMasterCreateDraft } from '../mobile/master/types';
 import type { MasterCreateDraft, MasterReviewDraft, MasterReviewIntent } from '../mobile/master/types';
+import { ExecutorBeforePhotos } from '../mobile/executor/ExecutorBeforePhotos';
 import { ExecutorScreen } from '../mobile/executor/ExecutorScreen';
 import { ResultAnalysisDisclosure } from '../mobile/executor/ResultAnalysisDisclosure';
 import type { ExecutorDraft, ExecutorIntent } from '../mobile/executor/types';
@@ -196,6 +197,7 @@ export function Workspace({ client, orders, session, sessionKey, section, isAuth
       <ExecutorScreen resultAnalysisDisclosure={<ResultAnalysisDisclosure/>} sessionKey={sessionKey} operationScopeKey={executorView.scope} quarantinedIntentCount={quarantinedScopes.length}
         orders={mapResource(source, () => executorRows.map(order => executorOrder(order, dictState.snapshot)))}
         dictionaries={mapResource(dictState, executorDictionaries)} selectedOrderId={selected} drafts={visibleDrafts} photoBusy={selectedPhotosBusy}
+        renderBeforePhotos={order => <ExecutorBeforePhotos client={client} orders={orders} sessionKey={sessionKey} enabled={!authBusy && isAuthReady()} isAuthReady={isAuthReady} scope={{ orderId: order.id, sectionId: order.sectionId, assignmentRevision: order.assignmentRevision, photoIds: order.beforePhotoIds ?? [] }}/>}
         renderPhotoPicker={context => <PhotoStages store={photos} context={executor.photoContext({ id: context.orderId, section_id: context.sectionId, assignment_revision: context.assignmentRevision })} disabled={context.disabled} required={selectedOrder?.type === 'unplanned'} canEdit={() => executor.canEdit(context.orderId, context.assignmentRevision)}/>}
         mutation={executorView.mutation} pendingIntent={executorView.pendingIntent} onSelectOrder={setSelected}
         onDraftChange={(orderId, draft, revision) => executor.setDraft(orderId, revision, draft)} onIntent={act}

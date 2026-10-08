@@ -17,6 +17,8 @@ export interface ExecutorOrderViewModel {
   priority: 'normal' | 'high' | 'emergency';
   description: string;
   comment: string;
+  /** Attached IDs from the authorized order read; absent in older presentation fixtures. */
+  beforePhotoIds?: readonly string[];
   dueAt: string;
   isOverdue: boolean;
 }
@@ -96,6 +98,8 @@ export interface ExecutorScreenProps {
   /** Selected-order preparation/staging/unresolved upload blocks result submission only. */
   photoBusy?: boolean;
   photoBusyReason?: string;
+  /** Read-only photos attached by the master to this selected order. */
+  renderBeforePhotos?: (order: ExecutorOrderViewModel) => ReactNode;
   renderPhotoPicker?: (context: ExecutorPhotoContext) => ReactNode;
   /** Optional read-only disclosure for the selected authorized result; no mode is inferred here. */
   resultAnalysisDisclosure?: ReactNode;

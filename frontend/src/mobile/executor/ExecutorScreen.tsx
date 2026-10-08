@@ -254,6 +254,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
         <p className="executor-preserve-lines">{selected.description}</p>
         {selected.comment && <p className="executor-preserve-lines"><strong>Комментарий мастера: </strong>{selected.comment}</p>}
         <p>Срок: <time dateTime={selected.dueAt}>{formatExecutorTime(selected.dueAt)}</time>{selected.isOverdue && <strong className="executor-urgent"> · Просрочен</strong>}</p>
+        {props.renderBeforePhotos?.(selected)}
         {!fresh && !refreshingConfirmedSnapshot && <p className="executor-caption">Действия станут доступны после получения актуального полного списка.</p>}
         <div className="executor-actions" role="group" aria-label={`Действия по наряду ${selected.number}`}>
           {allowedActions(selected.status).filter((action) => action !== 'submit').map((action) => <button className={`executor-button${action === 'reject' || action === 'pause' || action === 'queue' ? ' executor-button--secondary' : ''}`} type="button" key={action} disabled={!canCommand} onClick={() => { if (action === 'reject' || action === 'pause') { setMode(action); setErrors({}); } else command(action); }}>{ACTION_LABELS[action]}</button>)}
