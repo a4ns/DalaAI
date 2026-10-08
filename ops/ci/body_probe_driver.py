@@ -9,7 +9,7 @@ from controls_profile import ControlsBlocked
 
 PRODUCT='064a7a3785a95d61d7150e7785ff17db892bc110'
 FRONTEND='1594a930de4b9f15d11dd35bbc59e5b4b0b1d964'
-PROBE='74f164e19c87a1569889b21e0e1f6be4c4bdd40d'
+PROBE='590b939b28a23c42da177a1a666072325e50de16'
 BRANCH='refs/heads/validation/body-capture-probe-20261008'
 PROBE_DIR='tests/e2e/body_capture_probe'
 

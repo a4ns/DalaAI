@@ -4,7 +4,7 @@ Branch only: `validation/body-capture-probe-20261008`. No main, pull-request or
 workflow-dispatch trigger. A5 publishes the reviewed assembly; this wiring makes
 no change to product064a7a37, frontend1594a930 or any existing C113 acceptance file.
 
-The immutable probe is 74f164e19c87a1569889b21e0e1f6be4c4bdd40d. The input
+The immutable probe is 590b939b28a23c42da177a1a666072325e50de16. The input
 manifest pins every probe file and all reused CI files. Full checkout history is
 required so the probe can compare product trees against064a7a37. Staged, working
 and non-ignored untracked source changes block execution. The installed Chromium
