@@ -1,0 +1,132 @@
+{
+  "accepted": true,
+  "base_sha": "348b82683b95e4bd20ce2ecbbf980d761e72ae3a",
+  "product_sha": "8e8087103821b6334ba8d5de0a40c91ee58276f9",
+  "test_source_sha": "8e8087103821b6334ba8d5de0a40c91ee58276f9",
+  "case_counts": {
+    "in-app-notice-chromium": 18
+  },
+  "cases": [
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/in-app-notifications.spec.ts",
+      "title": "silent initial snapshot; repeated polls, timestamp changes and reappearance do not repeat a notice"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/in-app-notifications.spec.ts",
+      "title": "eight-second passive lifetime pauses on hover and keyboard focus, then resumes remaining time"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/in-app-notifications.spec.ts",
+      "title": "three visible notices, safe mobile width, reduced motion and no delayed backlog"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/in-app-notifications.spec.ts",
+      "title": "new notification burst never evicts the keyboard-focused existing notice"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/in-app-notifications.spec.ts",
+      "title": "master result notice preserves draft, focus, scroll and navigation, including the hidden workspace tab"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/in-app-notifications.spec.ts",
+      "title": "own master inline action confirmation is not duplicated by a toast"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/in-app-notifications.spec.ts",
+      "title": "own executor inline action confirmation is not duplicated by a toast"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/in-app-notifications.spec.ts",
+      "title": "failed and partial initial reads remain silent; first recovered full snapshot is a baseline"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/in-app-notifications.spec.ts",
+      "title": "logout removes a visible toast and old session contents"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/in-app-notifications.spec.ts",
+      "title": "forbidden removes a visible toast and old session contents"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/in-app-notifications.spec.ts",
+      "title": "account removes a visible toast and old session contents"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "healthy background poll permits one explicit master close POST before GET release"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "healthy background poll permits one explicit master rework POST before GET release"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "healthy background poll permits one explicit executor POST with the confirmed original version"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "failed background poll blocks the retained snapshot and sends no deferred command"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "known offline invalidation and release of an old GET cannot restore command eligibility"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "manual refresh joining a held automatic poll blocks now and does not replay a dropped gesture"
+    },
+    {
+      "project": "in-app-notice-chromium",
+      "file": "browser/poll-command-lock.spec.ts",
+      "title": "synchronous logout latch refuses a raced new command while the old session still exists"
+    }
+  ],
+  "source_diff": [
+    "M\tfrontend/src/app/App.tsx",
+    "A\tfrontend/src/app/InAppNotifications.tsx",
+    "A\tfrontend/src/app/inAppNotifications.css",
+    "A\tfrontend/src/app/inAppNotifications.ts",
+    "A\tfrontend/tests/browser/in-app-notifications.spec.ts",
+    "A\tfrontend/tests/node/in-app-notifications.spec.ts"
+  ],
+  "files": {
+    "frontend/src/app/App.tsx": "eedd99c0d509fa261e923cbcd663816780f1ec4c6f75a19b575763a0b427c83f",
+    "frontend/src/app/InAppNotifications.tsx": "0f6002f7f4ab214413bc1ae6ac415333c7d8430ae2c3d021db014850369dfc68",
+    "frontend/src/app/inAppNotifications.css": "0e7abd5036579c334dddcbb36d627bdc64cc456e2c7a74a83a742045a4671880",
+    "frontend/src/app/inAppNotifications.ts": "065e8ef06c8856d5f888d2d97b8070a460d34b9211fb5a7992015f3a44918cf9",
+    "frontend/tests/browser/in-app-notifications.spec.ts": "19b5ee6870e9ff32bccb7faa73540f369e2292d272e8db69e0ea1cf5859abf13",
+    "frontend/tests/node/in-app-notifications.spec.ts": "98316b1b673809d6347e8c1a4357a602e01c3769dc0671d89cd0b4240389492b"
+  },
+  "product_dependencies": {
+    "frontend/package.json": "865b405c0bb5559b0992944fa22fbfb37f6523809ae5b7c0c72b63c2ef600ce4",
+    "frontend/package-lock.json": "35f3230f1beee0391af72fcd94fc6af1d858cebc8af5d6cdb320bfebe8c3c99f",
+    "frontend/playwright.config.ts": "88499eaca00b4c2c70a859961c74993dfc94f15eb6650c311e794c8238ac9dd6",
+    "frontend/tests/tsconfig.json": "2db8b39f18a794657995c68409ea2be62dc1c4400c9dd82c2f11a21ade1aa51c",
+    "frontend/tsconfig.app.json": "e05f401fb46d0b84646c234ff6e117be0df31823294b6b1913a14049cfeb58ff",
+    "frontend/vite.config.ts": "e8703fb10e4e3504d759ea9a12996d7a14b5cfb209e69cc9fc02b606ba373b1b",
+    "frontend/tests/support/synthetic.ts": "46ac671e2171e184a46805413b711d8b22931dee5a16ad877a76767f1fb97939",
+    "frontend/tests/support/source.ts": "8f7ed2d1185b64cde78beee056579f63ee4e3473b7179c986815f7d8146dcb82",
+    "frontend/tests/browser/poll-command-lock.spec.ts": "5f8277a53b9667b628cc1bf6261ce65f552a3eca382dc2df3608634c674418c9",
+    "frontend/src/shared/api/client.ts": "42f4cb988c6174ff92d266842572cd6ac50b7e4b273af17be1fc8aa502b8858d",
+    "frontend/src/shared/api/orderStore.ts": "d4aaf6b355b9fb9f5787c377657298904ef2d3426d6bb700f932a0b91fa12a6c",
+    "frontend/src/app/Workspace.tsx": "2d506e398bb4ea342ed57a0edf25339cda8f9b540be9e59420801e0722b89138",
+    "frontend/src/app/executorController.ts": "9a35cd1c33211af0f2c05543e510d0db6c046c7e46022a180dbf7b38827a775e"
+  }
+}
