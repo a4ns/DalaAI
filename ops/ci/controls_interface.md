@@ -1,7 +1,7 @@
 # C113 isolated clock controls and download acceptance seam
 
-Source-ready binding: C113 `09e78cd2f5190e31f5d3e3dd32531bc9e3c7b2cc` against
-frontend `bbe897514e58a4b8f8b6d4f580e5273e34cb5c75`. Actual C113 execution is
+Source-ready binding: C113 `13a655fdd0587cbcd38e05fefefdfb69131d5579` against
+frontend `f967d0acf3f04bda304b7fe47e1bf76ca8814634`. Actual C113 execution is
 pending for this reviewed combined UI product. Final C110/C112 acceptance remains separate evidence.
 
 A5 reserved `.github/workflows/controls-mobile-e2e.yml` and new `ops/ci/controls_*`
@@ -140,3 +140,13 @@ passes and C113 SHIFT_XLSX body-capture failure remain historical evidence.
 Before-photo mounted browser checks use synthetic intercepted HTTP and Android
 emulation; they do not establish stored-photo backend authorization, physical
 device behavior or a repair to the original C113 capture failure.
+
+The reviewed Panel reset-focus product
+`f967d0acf3f04bda304b7fe47e1bf76ca8814634` is bound to C source
+`13a655fdd0587cbcd38e05fefefdfb69131d5579`. Fresh independent privacy proofs
+and unchanged actual gates are required. The 038b C110/C112/C113 passes remain
+exact-head historical evidence; earlier intermittent C113 capture failures and
+their unresolved cause are preserved. The accepted native-focus fixture uses
+the identical thirteen-dependency component closure. Its synthetic desktop
+results do not establish production App routing, backend authorization, physical
+device behavior or a repair to the original capture issue.
