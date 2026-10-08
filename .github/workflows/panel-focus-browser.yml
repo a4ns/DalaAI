@@ -1,0 +1,69 @@
+name: Panel reset-focus synthetic native browser acceptance
+'on':
+  push:
+    branches: [validation/panel-focus-browser-20261008]
+permissions:
+  contents: read
+concurrency:
+  group: panel-focus-browser-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  panel-reset-focus:
+    if: github.ref == 'refs/heads/validation/panel-focus-browser-20261008'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 25edea72dce27e597ba2c54b6f3404d8f73dfdb8
+          path: .ci-panel-focus
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.15'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Verify exact fixture and single-project matrix
+        run: |
+          python ops/ci/panel_focus_tests.py
+          node --check ops/ci/panel_focus_playwright.cjs
+          python ops/ci/panel_focus_gate.py --source .ci-panel-focus --check-inputs
+          printf 'PLAYWRIGHT_BROWSERS_PATH=%s/dalaai-panel-focus-chromium\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Install locked frontend and official Chromium
+        timeout-minutes: 10
+        run: |
+          npm ci --prefix .ci-panel-focus/frontend
+          node .ci-panel-focus/frontend/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Run exact18-case Panel focus matrix once
+        run: python ops/ci/panel_focus_gate.py --source .ci-panel-focus
+      - name: Record focused synthetic scope
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path('panel-focus-browser-summary.json')
+          r=json.loads(p.read_text()) if p.is_file() else {}
+          status=r.get('status','BLOCKED')
+          if status not in {'PASS_SYNTHETIC_PANEL_FOCUS_ONLY','FAIL','BLOCKED'}:status='BLOCKED'
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
+              out.write('Panel reset-focus browser acceptance: '+status+'\n\n')
+              out.write('One Chromium project, six cases at each of three viewports. Synthetic props and native focus observation under React StrictMode.\n')
+              out.write('No App routing, API/DB/provider, physical-device, screen-reader or original C acceptance claim.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: panel-reset-focus-${{ github.sha }}-${{ github.run_attempt }}
+          path: panel-focus-browser-summary.json
+          if-no-files-found: ignore
+          retention-days: 7

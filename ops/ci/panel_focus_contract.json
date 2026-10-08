@@ -1,0 +1,42 @@
+{
+  "accepted": true,
+  "product_sha": "ff6784a399132e29958cfa615e733270627706c1",
+  "test_source_sha": "25edea72dce27e597ba2c54b6f3404d8f73dfdb8",
+  "case_count": 18,
+  "cases_per_viewport": 6,
+  "viewports": [
+    [
+      320,
+      800
+    ],
+    [
+      390,
+      844
+    ],
+    [
+      768,
+      1024
+    ]
+  ],
+  "files": {
+    "frontend/tests/browser/b-panel-reset-focus-acceptance.spec.ts": "1548095b7d268ccaa4d330c26dc3f25b061e2050e27b26b7013bba084c3bcba3",
+    "frontend/tests/fixtures/panel-reset-focus.html": "12f6183917c7612bd82bea60dbe036ef436eef2b390dd012d7962caad22166f6",
+    "frontend/tests/fixtures/panel-reset-focus.tsx": "b7ebec76829e226879c05b12b1e8db704373fca883f9e7d2b8e371281018d039"
+  },
+  "product_dependencies": {
+    "frontend/src/panel/PanelScreen.tsx": "ab8381763751a520b87572262fa948a9a95fda38a78483289fd745472a558100",
+    "frontend/src/panel/model.ts": "65afe534c8628118d003422a91c69b8961266bc267d54685909b82252550557e",
+    "frontend/src/panel/ru.ts": "949d50895b7b58e6714e3ce1f63aaf1899ae0338da5333896aef94aa75aa844c",
+    "frontend/src/panel/types.ts": "67d5af56333065f5e74fb76b014ee43558313ebc06e9b6cace16d45c576e6bdd",
+    "frontend/src/panel/panel.css": "ad97c5a4cbfd7bd26fb0edc479c735ed0087d91a208acd2d842a2dae3499d8a4",
+    "frontend/src/shared/ui/types.ts": "60189baebc1fc448503482e570874823a63f8b87dbedbb3a434d865290bd2f52",
+    "frontend/src/shared/styles.css": "e71d824322a5203abc75175ce3b1cb385ac211701473329bceacad89285c5bf4",
+    "frontend/package.json": "865b405c0bb5559b0992944fa22fbfb37f6523809ae5b7c0c72b63c2ef600ce4",
+    "frontend/package-lock.json": "35f3230f1beee0391af72fcd94fc6af1d858cebc8af5d6cdb320bfebe8c3c99f",
+    "frontend/vite.config.ts": "e8703fb10e4e3504d759ea9a12996d7a14b5cfb209e69cc9fc02b606ba373b1b",
+    "frontend/playwright.config.ts": "88499eaca00b4c2c70a859961c74993dfc94f15eb6650c311e794c8238ac9dd6",
+    "frontend/tests/tsconfig.json": "2db8b39f18a794657995c68409ea2be62dc1c4400c9dd82c2f11a21ade1aa51c",
+    "frontend/tsconfig.app.json": "e05f401fb46d0b84646c234ff6e117be0df31823294b6b1913a14049cfeb58ff"
+  },
+  "author_archive_sha256": "8f3c92c8fe0cab76e81fcdfc0df5ce76079981145088d6c75ac7ce041934b969"
+}
