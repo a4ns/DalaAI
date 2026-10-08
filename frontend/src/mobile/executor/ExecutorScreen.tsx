@@ -35,7 +35,8 @@ function PhotoPickerSlot({ render, context }: { render: NonNullable<ExecutorScre
   return render(context);
 }
 
-type FormState = { scopeKey: string; orderId: string | null; mode: 'result' | 'pause' | 'reject'; errors: DraftErrors };
+type FormState = { scopeKey: string; orderId: string | null; mode: 'result' | 'pause' | 'reject'; errors: DraftErrors;
+  materialRemoval?: { assignmentRevision: number; rowIds: string[] } };
 type LocalFeedback = { scopeKey: string; value: MutationState | null; parentStatus: MutationState['status']; parentError: string | null };
 
 /** Controlled feature: snapshots and drafts live in the shell, never in storage here. */
@@ -75,6 +76,24 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   const orders = props.orders.snapshot ?? [];
   const selected = orders.find((order) => order.id === props.selectedOrderId) ?? null;
   const draft = selected ? props.drafts[selected.id] ?? emptyExecutorDraft() : emptyExecutorDraft();
+  if (form.materialRemoval) {
+    const removal = form.materialRemoval;
+    if (form.scopeKey !== scopeKey || form.orderId !== selected?.id || removal.assignmentRevision !== selected?.assignmentRevision) {
+      setForm({ ...form, materialRemoval: undefined });
+    } else {
+      // A void draft callback can decline or defer an edit. Only controlled removal confirms it.
+      const removed = removal.rowIds.filter((rowId) => !draft.materials.some((row) => row.rowId === rowId));
+      if (removed.length > 0) {
+        const nextErrors = { ...form.errors };
+        for (const rowId of removed) {
+          delete nextErrors[`material:${rowId}`];
+          delete nextErrors[`quantity:${rowId}`];
+        }
+        const rowIds = removal.rowIds.filter((rowId) => !removed.includes(rowId));
+        setForm({ ...form, errors: nextErrors, materialRemoval: rowIds.length ? { ...removal, rowIds } : undefined });
+      }
+    }
+  }
   const pending = mutation.status === 'pending';
   const unresolved = mutation.status === 'unknown_result' || mutation.status === 'conflict';
   const frozen = pending || unresolved;
@@ -127,7 +146,8 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   }
   function setErrors(value: DraftErrors) {
     if (!acceptsEventFromScope()) return;
-    setForm((previous) => ({ scopeKey, orderId: props.selectedOrderId, mode: previous.scopeKey === scopeKey && previous.orderId === props.selectedOrderId ? previous.mode : 'result', errors: value }));
+    setForm((previous) => ({ scopeKey, orderId: props.selectedOrderId, mode: previous.scopeKey === scopeKey && previous.orderId === props.selectedOrderId ? previous.mode : 'result', errors: value,
+      materialRemoval: previous.scopeKey === scopeKey && previous.orderId === props.selectedOrderId ? previous.materialRemoval : undefined }));
   }
   function setLocalMutation(value: MutationState) {
     if (!acceptsEventFromScope()) return;
@@ -140,8 +160,9 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   }
 
   const patchDraft = (patch: Partial<ExecutorDraft>) => {
-    if (!selected || !mounted.current || (scopedOperations && committedScope.current !== scopeKey) || draftLocked.current || inFlight.current) return;
+    if (!selected || !mounted.current || (scopedOperations && committedScope.current !== scopeKey) || draftLocked.current || inFlight.current) return false;
     props.onDraftChange(selected.id, { ...(latestDrafts.current[selected.id] ?? emptyExecutorDraft()), ...patch }, selected.assignmentRevision);
+    return true;
   };
 
   function selectOrder(orderId: string) {
@@ -211,6 +232,16 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
     rows.current += 1;
     patchDraft({ materials: [...draft.materials, { rowId: `${id}-${rows.current}`, materialId: '', quantity: '' }] });
   }
+  function removeMaterial(rowId: string) {
+    const materials = selected ? latestDrafts.current[selected.id]?.materials : undefined;
+    if (!selected || !materials?.some((row) => row.rowId === rowId) ||
+      !patchDraft({ materials: materials.filter((row) => row.rowId !== rowId) }) || !acceptsEventFromScope()) return;
+    setForm((previous) => {
+      if (previous.scopeKey !== scopeKey || previous.orderId !== props.selectedOrderId) return previous;
+      const rowIds = previous.materialRemoval?.assignmentRevision === selected.assignmentRevision ? previous.materialRemoval.rowIds : [];
+      return { ...previous, materialRemoval: { assignmentRevision: selected.assignmentRevision, rowIds: [...new Set([...rowIds, rowId])] } };
+    });
+  }
 
   const fieldError = (key: string) => errors[key] ? <span className="executor-field-error" id={`${id}-${key.replace(':', '-')}-error`}>{errors[key]}</span> : null;
   const describedBy = (key: string) => errors[key] ? `${id}-${key.replace(':', '-')}-error` : undefined;
@@ -261,7 +292,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
         </div>
         {(mode === 'reject' && selected.status === 'issued' || mode === 'pause' && selected.status === 'in_progress') && <form className="executor-form" onSubmit={(event) => { event.preventDefault(); command(mode === 'reject' ? 'reject' : 'pause'); }}>
           <h3>{mode === 'reject' ? 'Причина отклонения' : 'Причина паузы'}</h3>
-          <label htmlFor={`${id}-reason`}>Причина обязательна</label><textarea id={`${id}-reason`} value={draft.reason} maxLength={2000} disabled={frozen} onChange={(event) => patchDraft({ reason: event.target.value })} aria-invalid={Boolean(errors.reason)} aria-describedby={describedBy('reason')} rows={3} />{fieldError('reason')}
+          <label htmlFor={`${id}-reason`}>Причина обязательна</label><textarea id={`${id}-reason`} value={draft.reason} maxLength={2000} disabled={frozen} onChange={(event) => patchDraft({ reason: event.target.value })} aria-invalid={Boolean(errors.reason)} aria-describedby={describedBy('reason')} rows={3} /><span className="executor-field-error" id={`${id}-reason-error`} role="alert" aria-atomic="true">{errors.reason}</span>
           <div className="executor-actions"><button className="executor-button" type="submit" disabled={!canCommand}>{mode === 'reject' ? 'Отклонить с причиной' : 'Поставить на паузу'}</button><button className="executor-button executor-button--secondary" type="button" disabled={frozen} onClick={() => { setMode('result'); setErrors({}); }}>Вернуться без отправки</button></div>
         </form>}
         {((selected.status === 'in_progress' && mode === 'result') || ['done', 'ai_review', 'rework', 'closed'].includes(selected.status)) && props.resultAnalysisDisclosure}
@@ -276,7 +307,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
               const quantityKey = `quantity:${row.rowId}`;
               const material = props.dictionaries.snapshot?.materials.find((item) => item.id === row.materialId);
               const rowPrefix = `${id}-row-${row.rowId}`;
-              return <div className="executor-material" key={row.rowId}><label htmlFor={`${rowPrefix}-material`}>Материал {index + 1}</label><select id={`${rowPrefix}-material`} value={row.materialId} disabled={!dictionariesFresh} onChange={(event) => patchDraft({ materials: draft.materials.map((item) => item.rowId === row.rowId ? { ...item, materialId: event.target.value } : item) })} aria-invalid={Boolean(errors[materialKey])} aria-describedby={describedBy(materialKey)}><option value="">Выберите материал</option>{props.dictionaries.snapshot?.materials.map((option) => <option key={option.id} value={option.id}>{option.code} · {option.label} ({option.unit})</option>)}</select>{fieldError(materialKey)}<label htmlFor={`${rowPrefix}-quantity`}>Количество{material ? `, ${material.unit}` : ''}</label><input id={`${rowPrefix}-quantity`} inputMode="decimal" type="text" value={row.quantity} onChange={(event) => patchDraft({ materials: draft.materials.map((item) => item.rowId === row.rowId ? { ...item, quantity: event.target.value } : item) })} aria-invalid={Boolean(errors[quantityKey])} aria-describedby={describedBy(quantityKey)} placeholder="Например, 1,5" />{fieldError(quantityKey)}<button className="executor-button executor-button--secondary" type="button" aria-label={`Убрать материал ${index + 1}`} onClick={() => patchDraft({ materials: draft.materials.filter((item) => item.rowId !== row.rowId) })}>Убрать материал</button></div>;
+              return <div className="executor-material" key={row.rowId}><label htmlFor={`${rowPrefix}-material`}>Материал {index + 1}</label><select id={`${rowPrefix}-material`} value={row.materialId} disabled={!dictionariesFresh} onChange={(event) => patchDraft({ materials: draft.materials.map((item) => item.rowId === row.rowId ? { ...item, materialId: event.target.value } : item) })} aria-invalid={Boolean(errors[materialKey])} aria-describedby={describedBy(materialKey)}><option value="">Выберите материал</option>{props.dictionaries.snapshot?.materials.map((option) => <option key={option.id} value={option.id}>{option.code} · {option.label} ({option.unit})</option>)}</select>{fieldError(materialKey)}<label htmlFor={`${rowPrefix}-quantity`}>Количество{material ? `, ${material.unit}` : ''}</label><input id={`${rowPrefix}-quantity`} inputMode="decimal" type="text" value={row.quantity} onChange={(event) => patchDraft({ materials: draft.materials.map((item) => item.rowId === row.rowId ? { ...item, quantity: event.target.value } : item) })} aria-invalid={Boolean(errors[quantityKey])} aria-describedby={describedBy(quantityKey)} placeholder="Например, 1,5" />{fieldError(quantityKey)}<button className="executor-button executor-button--secondary" type="button" aria-label={`Убрать материал ${index + 1}`} onClick={() => removeMaterial(row.rowId)}>Убрать материал</button></div>;
             })}
             <button className="executor-button executor-button--secondary" type="button" disabled={!dictionariesFresh || draft.materials.length >= 40 || props.dictionaries.snapshot?.materials.length === 0} onClick={addMaterial}>Добавить материал</button>{fieldError('materials')}
           </fieldset>
