@@ -1,7 +1,7 @@
 # C112 history/analytics Android CI seam (source preparation)
 
-Source-ready binding: C112 `87e69aaaab604250ee93dcb4dca34b68eca74599` against frontend
-`a880371589aa1dd117dde9e80936c687d146f919`. Actual C112 execution is pending. Existing
+Source-ready binding: C112 `beee17544119794009cf96c3cb3a69838bc2a738` against frontend
+`8081a2984b2f27b909fa2b86cd9f10ffd01d1e11`. Actual C112 execution is pending. Existing
 C110 remains an independent exact-one-journey gate; its prior green results do
 not establish this new history journey.
 
@@ -157,3 +157,10 @@ original C113 capture failures remain historical evidence. A fresh suite-specifi
 proof and actual gate are required; this reference update changes no journey,
 observer, capture oracle or acceptance predicate. Mounted synthetic viewport
 checks are a separate gate and do not establish new AI/API acceptance.
+
+The current JSON-read compatibility product `8081a2984b2f27b909fa2b86cd9f10ffd01d1e11` is bound to
+source `beee17544119794009cf96c3cb3a69838bc2a738`. The d48 C112 JSON-read and
+C113 clock-prelude failures remain preserved; this source correction is not proof
+of their cause. Fresh independent privacy proofs and unchanged actual gates must
+establish this candidate's results. The a880 synthetic viewport PASS remains
+historical, and the separate public JSON experiment does not substitute for C acceptance.
