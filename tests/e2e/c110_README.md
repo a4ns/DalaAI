@@ -4,7 +4,7 @@ Current final product target: **browser/API/DB rerun NOT_RUN** in C0's environme
 Source/parser tests are separate evidence. This is an executable Playwright
 journey, not a completed runtime result. No successful business response is
 mocked. For the next C110 manual-core gate, the final frontend is pinned
-**only** to `da83e9c417a7c6bf7e91b5100e8f2d7616d9f24e`, per
+**only** to `c219957c0ea8abe8c1c3291c66117074de380946`, per
 [C0092 binding maintenance](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6051803090).
 
 A5 builds/binds that exact candidate and records its exact backend source SHA.
@@ -51,7 +51,7 @@ Required inputs:
 | `DALA_E2E_FIXTURE_FILE` | Public fixture object from A0-0036, without dry-run wrapper |
 | `DALA_E2E_MASTER_PIN_FILE` | Operator-private file for the synthetic master |
 | `DALA_E2E_EXECUTOR_PIN_FILE` | Operator-private file for the synthetic executor |
-| `DALA_E2E_FRONTEND_SHA` | Exactly `da83e9c417a7c6bf7e91b5100e8f2d7616d9f24e`, required for preflight, core and evidence gate |
+| `DALA_E2E_FRONTEND_SHA` | Exactly `c219957c0ea8abe8c1c3291c66117074de380946`, required for preflight, core and evidence gate |
 | `DALA_E2E_BACKEND_SHA` | Exact 40-hex source SHA used to build the running backend |
 | `DALA_C110_RUN_ID` | Unique non-secret lowercase identifier, 8–64 chars, digits/hyphens allowed |
 | `DALA_C110_PREFLIGHT_RECEIPT` | New absolute public receipt path written by the mandatory executable preflight below |
