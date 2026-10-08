@@ -1,0 +1,77 @@
+{
+  "schema_version": "1",
+  "mode": "rules_baseline",
+  "model": null,
+  "model_status": "disabled_for_purpose",
+  "advisory_only": true,
+  "synthetic": true,
+  "section_id": "00000000-0000-0000-0000-000000000004",
+  "work_code_id": null,
+  "as_of": "2026-10-08T01:00:00+00:00",
+  "domain_as_of": "2026-10-08T01:00:00+00:00",
+  "expires_at": "2026-10-08T01:00:30+00:00",
+  "eligible_count": 1,
+  "returned_count": 1,
+  "candidates": [
+    {
+      "executor_id": "00000000-0000-0000-0000-000000000002",
+      "employee_code": "E-1",
+      "rank": 1,
+      "on_shift": true,
+      "workload": {
+        "outstanding_count": 0,
+        "active_count": 0,
+        "queued_count": 0,
+        "awaiting_review_count": 0,
+        "overdue_count": 0,
+        "norm_minutes_total": 0,
+        "status_counts": {
+          "accepted": 0,
+          "ai_review": 0,
+          "done": 0,
+          "in_progress": 0,
+          "issued": 0,
+          "paused": 0,
+          "queued": 0,
+          "rework": 0
+        },
+        "scope": "current_master_authorized_sections",
+        "evidence": [],
+        "evidence_truncated": false
+      },
+      "history": {
+        "status": "no_observations",
+        "window_start": "2026-07-10T01:00:00+00:00",
+        "window_end": "2026-10-08T01:00:00+00:00",
+        "closed_count": 0,
+        "matching_work_code_count": null,
+        "human_score_mean": null,
+        "human_score_count": 0,
+        "on_time_rate": null,
+        "on_time_count": 0,
+        "latest_closed_at": null,
+        "evidence": [],
+        "evidence_truncated": false
+      },
+      "reason_codes": [
+        "ACTIVE_ON_SHIFT",
+        "SELECTED_SECTION_MEMBER",
+        "NO_VISIBLE_OUTSTANDING_ORDERS",
+        "NO_CLOSED_HISTORY",
+        "HUMAN_SCORE_UNKNOWN",
+        "WORK_CODE_NOT_SELECTED"
+      ]
+    }
+  ],
+  "limitations": [
+    "DETERMINISTIC_RULES_NOT_AI",
+    "QUALIFICATIONS_UNVERIFIED",
+    "WORKLOAD_VISIBLE_SCOPE_ONLY",
+    "WORKLOAD_NORM_NOT_REMAINING",
+    "SNAPSHOT_NOT_RESERVATION",
+    "HISTORICAL_OBSERVATIONS_NOT_SKILL",
+    "SYNTHETIC_DATA",
+    "ONLY_ONE_ELIGIBLE_EXECUTOR"
+  ],
+  "ranking_policy": "outstanding_then_active_then_observed_work_code_v1"
+}

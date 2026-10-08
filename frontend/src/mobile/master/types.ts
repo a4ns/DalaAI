@@ -104,6 +104,8 @@ export interface MasterScreenProps {
   beforePhotosBusy?: boolean;
   renderBeforePhotos?: (props: MasterPhotoControlProps) => ReactNode;
   renderAfterPhotos?: (order: MasterOrderVM) => ReactNode;
+  /** Optional explicit advice; this slot only edits the draft, never issues an order. */
+  renderAssigneeRecommendations?: (context: { draft: MasterCreateDraft; disabled: boolean }) => ReactNode;
 }
 export const emptyMasterCreateDraft = (): MasterCreateDraft => ({
   type: 'unplanned', description: '', sectionId: '', equipmentId: '', executorId: '',

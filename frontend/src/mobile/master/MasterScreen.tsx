@@ -66,6 +66,7 @@ export function MasterScreen(props: MasterScreenProps) {
   const [reviewValidation, setReviewValidation] = useState<Record<string, string[]>>({});
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState('');
+  const [lastReviewConfirmation, setLastReviewConfirmation] = useState('');
   const mounted = useRef(true);
   useLayoutEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const latestProps = useRef(props);
@@ -131,13 +132,17 @@ export function MasterScreen(props: MasterScreenProps) {
     } else if (!props.onRetryReview) return;
     const capturedOrder = retry ? state.order || order : order;
     const capturedSubmissionId = retry ? state.submissionId : order.submission?.id;
+    setLastReviewConfirmation('');
     reviewInFlight.current.add(order.id);
     applyReviewState(order.id, { phase: 'pending', message: '', submissionId: capturedSubmissionId, order: capturedOrder });
     let result: MutationOutcome;
     try {
       result = normalizeOutcome(await (retry ? props.onRetryReview!(order.id) : props.onReview({ orderId: order.id, expectedVersion: order.version, submissionId: order.submission!.id, decision, reason: draft.reason.trim(), finalScore: draft.finalScore.trim() ? Number(draft.finalScore) : null })));
     } catch { result = unknown(); }
-    if (mounted.current) applyReviewState(order.id, { phase: result.kind, message: result.message || '', conflictStamp: latestProps.current.orders.lastConfirmedAt, submissionId: capturedSubmissionId, order: capturedOrder });
+    if (mounted.current) {
+      applyReviewState(order.id, { phase: result.kind, message: result.message || '', conflictStamp: latestProps.current.orders.lastConfirmedAt, submissionId: capturedSubmissionId, order: capturedOrder });
+      if (result.kind === 'confirmed') setLastReviewConfirmation(`Решение мастера по наряду № ${capturedOrder.number} подтверждено сервером.`);
+    }
     reviewInFlight.current.delete(order.id);
   }
   const draft = props.createDraft;
@@ -167,6 +172,7 @@ export function MasterScreen(props: MasterScreenProps) {
           </div>
           <Field id={inputId('brigadeId')} label="Назначение бригаде" error={createErrors.brigadeId} hint="У бригады обязательно должен быть один ответственный исполнитель."><select {...a11y('brigadeId')} value={draft.brigadeId} onChange={event => { props.onCreateDraftChange({ ...draft, brigadeId: event.target.value, executorId: '' }); setCreateErrors({}); }}><option value="">Индивидуальный исполнитель</option>{dictionaries?.brigades.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></Field>
           <Field id={inputId('executorId')} label="Ответственный исполнитель *" error={createErrors.executorId}><select {...a11y('executorId')} required value={draft.executorId} onChange={event => updateDraft('executorId', event.target.value)}><option value="">Выберите исполнителя</option>{dictionaries?.executors.filter(item => item.sectionIds.includes(draft.sectionId) && (!draft.brigadeId || item.brigadeId === draft.brigadeId)).map(item => <option key={item.id} value={item.id} disabled={!item.onShift}>{item.label} · {executorLoad(item)}</option>)}</select></Field>
+          {props.renderAssigneeRecommendations?.({ draft, disabled: createLocked || !createReady })}
           <div className="master-two-columns">
             <Field id={inputId('dueLocal')} label="Срок выполнения (UTC+5) *" error={createErrors.dueLocal}><input {...a11y('dueLocal')} type="datetime-local" required value={draft.dueLocal} onChange={event => updateDraft('dueLocal', event.target.value)} /></Field>
             <Field id={inputId('normMinutes')} label="Норма времени, минут *" error={createErrors.normMinutes}><input {...a11y('normMinutes')} type="number" inputMode="numeric" required min={1} max={525600} step={1} value={draft.normMinutes} onChange={event => updateDraft('normMinutes', event.target.value)} /></Field>
@@ -184,6 +190,7 @@ export function MasterScreen(props: MasterScreenProps) {
     </section>
     <section className="master-review-list" aria-labelledby={`${prefix}-review-title`}>
       <h2 id={`${prefix}-review-title`}>Результаты на проверке</h2>
+      {lastReviewConfirmation && <div className="master-notice master-notice--success" role="status"><p>{lastReviewConfirmation}</p><button type="button" onClick={() => setLastReviewConfirmation('')}>Скрыть подтверждение</button></div>}
       <ResourceNotice resource={props.orders} noun="Наряды" />
       {props.online && resourceIsCurrent(props.orders) && reviews.length === 0 && <p className="master-notice">Сейчас нет результатов на проверке.</p>}
       {reviews.map(order => {
@@ -212,7 +219,7 @@ export function MasterScreen(props: MasterScreenProps) {
           </fieldset>
           {!!reviewValidation[order.id]?.length && <ul className="master-error" role="alert">{reviewValidation[order.id].map((error, index) => <li key={index}>{error}</li>)}</ul>}
           <div className="master-actions"><button className="master-primary" type="button" disabled={!ordersReady || frozen || !validTarget || blockers.length > 0} onClick={() => void review(order, 'close')}>Принять и закрыть</button><button type="button" disabled={!ordersReady || frozen || !validTarget} onClick={() => void review(order, 'rework')}>Вернуть на доработку</button></div>
-          <OperationNotice state={state} confirmedText="Решение мастера подтверждено сервером." online={props.online} retry={props.onRetryReview ? () => void review(order, 'close', true) : undefined} canResolve={freshAfter(props.orders, state)} resolve={() => applyReviewState(order.id, idle())} />
+          {state.phase !== 'confirmed' && <OperationNotice state={state} confirmedText="Решение мастера подтверждено сервером." online={props.online} retry={props.onRetryReview ? () => void review(order, 'close', true) : undefined} canResolve={freshAfter(props.orders, state)} resolve={() => applyReviewState(order.id, idle())} />}
         </article>;
       })}
     </section>

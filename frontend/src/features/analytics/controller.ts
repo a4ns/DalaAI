@@ -33,6 +33,10 @@ export class AnalyticsController {
     try{const facts=await this.#client.getShiftAnalytics(captured,this.#abort.signal);if(!this.#current()||run!==this.#run)return;this.#set({...this.#state,facts:{status:'ready',data:facts,error:null}});}
     catch(error){if(!this.#current()||run!==this.#run||error instanceof SessionChangedError)return;this.#set({...this.#state,facts:{status:'error',data:null,error:analyticsError(error)},report:empty()});}
   }
+  sourceAccessLost(error: ApiError, facts: AnalyticsFacts): void {
+    if (!this.#current() || this.#state.facts.data !== facts || ![401, 403, 404].includes(error.status)) return;
+    this.#invalidate(); this.#set({ ...initial(), period: this.#state.period, facts: { status: 'error', data: null, error: analyticsError(error) } });
+  }
   reportAccessLost(error:ApiError,report:ShiftReport|OrderReport):void {
     if(!this.#current()||this.#state.report.data!==report||![401,403,404].includes(error.status))return;
     this.#invalidate();this.#set({...this.#state,facts:empty(),report:{status:'error',data:null,error:analyticsError(error)}});

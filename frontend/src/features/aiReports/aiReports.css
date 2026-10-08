@@ -1,0 +1,6 @@
+.ai-reports { min-width: 0; overflow-wrap: anywhere; }
+.ai-reports-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.ai-reports-actions button { min-height: 44px; }
+.ai-reports-text { white-space: pre-wrap; }
+.ai-reports-fact { border-inline-start: 3px solid currentColor; padding-inline-start: .75rem; margin-block: 1rem; }
+.ai-reports summary { cursor: pointer; min-height: 32px; }

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { MasterScreen } from '../mobile/master/MasterScreen';
-import { dueLocalToIso } from '../mobile/master/masterModel';
+import { dueLocalToIso, resourceIsCurrent } from '../mobile/master/masterModel';
 import { emptyMasterCreateDraft } from '../mobile/master/types';
 import type { MasterCreateDraft, MasterReviewDraft, MasterReviewIntent } from '../mobile/master/types';
 import { ExecutorScreen } from '../mobile/executor/ExecutorScreen';
@@ -12,8 +12,9 @@ import { ApiError, SessionChangedError, safeErrorMessage } from '../shared/api/c
 import type { ApiClient, PreparedMutation } from '../shared/api/client';
 import { readAllOrderEvents } from '../shared/api/orderStore';
 import type { OrderStore } from '../shared/api/orderStore';
-import type { CommandResult, Order, Session, Submission } from '../shared/api/wire';
-import type { MutationOutcome, MutationState } from '../shared/ui/types';
+import type { CommandResult, Dictionaries, Order, Session, Submission } from '../shared/api/wire';
+import { initialResource } from '../shared/ui/types';
+import type { MutationOutcome, MutationState, ResourceState } from '../shared/ui/types';
 import { useConnectivity } from '../pwa/useConnectivity';
 import { executorDictionaries, executorOrder, mapResource, masterDictionaries, masterOrder, panelEmployees, panelEvent, panelOrder } from './adapters';
 import { useResource } from './useResource';
@@ -24,12 +25,21 @@ import { PhotoStages } from './PhotoStages';
 import { ProtectedPhoto } from './ProtectedPhoto';
 import { ExecutorController } from './executorController';
 import { AnalyticsScreen } from '../features/analytics/AnalyticsScreen';
+import { AssigneeRecommendations } from '../features/assigneeRecommendations/AssigneeRecommendations';
+import { assigneeContextKey, eligibleExecutor } from '../features/assigneeRecommendations/controller';
+import type { AssigneeContext } from '../features/assigneeRecommendations/controller';
+import { sameId } from '../features/aiReports/validation';
 
+function recommendationContext(draft: MasterCreateDraft, generation: number, dicts: ResourceState<Dictionaries>): AssigneeContext | null {
+  if (!resourceIsCurrent(dicts) || !dicts.lastConfirmedAt || !dicts.snapshot?.sections.some(section => sameId(section.id, draft.sectionId))) return null;
+  return { sectionId: draft.sectionId, workCodeId: null, brigadeId: draft.brigadeId, dictionaryKey: dicts.lastConfirmedAt,
+    draftKey: JSON.stringify([generation, draft.sectionId, draft.equipmentId, draft.type, draft.brigadeId, draft.description, draft.priority, draft.dueLocal, draft.normMinutes, draft.comment]) };
+}
 const submissionKey = (order: Order): string => `${order.id}:${order.version}:${order.assignment_revision}:${order.current_submission_id ?? 'none'}`;
 type Pending = { token: PreparedMutation<CommandResult>; status: MutationState['status']; epoch: number; unresolved: boolean };
 export function Workspace({ client, orders, session, sessionKey, section, isAuthReady = () => true, authBusy = false }: { client: ApiClient; orders: OrderStore; session: Session; sessionKey: string; section: string; isAuthReady?: () => boolean; authBusy?: boolean }) {
   const source = useSyncExternalStore(orders.subscribe, orders.getSnapshot);
-  const { state: dictState, refresh: refreshDicts } = useResource(client, () => client.getDictionaries());
+  const { state: dictState, refresh: refreshDicts, setState: setDictState } = useResource(client, () => client.getDictionaries());
   const [createDraft, setCreateDraft] = useState(emptyMasterCreateDraft);
   const [draftGeneration, setDraftGeneration] = useState(0);
   const [photos] = useState(() => new PhotoStore(client));
@@ -52,6 +62,10 @@ export function Workspace({ client, orders, session, sessionKey, section, isAuth
   const mounted = useRef(true);
   const connectivity = useConnectivity();
   const online = connectivity !== 'offline';
+  const adviceDictionaryAllowed = useRef(false);
+  const adviceSnapshot = useRef({ draft: createDraft, generation: draftGeneration, dicts: dictState, online, authBusy });
+  useLayoutEffect(() => { adviceDictionaryAllowed.current = resourceIsCurrent(dictState); }, [dictState]);
+  useLayoutEffect(() => { adviceSnapshot.current = { draft: createDraft, generation: draftGeneration, dicts: dictState, online, authBusy }; }, [createDraft, draftGeneration, dictState, online, authBusy]);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => { void refreshDicts(); }, [refreshDicts]);
   const rows = source.snapshot ?? [];
@@ -72,7 +86,7 @@ export function Workspace({ client, orders, session, sessionKey, section, isAuth
     return loaded;
   });
   useEffect(() => { if (session.principal.role === 'master') void refreshSubmissions(); }, [reviewFingerprint, session.principal.role, refreshSubmissions]);
-  const refresh = useCallback(async () => { try { const epoch = client.epoch; await client.getMe(); if (epoch !== client.epoch) return; setNotice(null); await Promise.all([orders.refresh(), refreshDicts()]); if (session.principal.role === 'master') await refreshSubmissions(); } catch (error) { if (mounted.current && !(error instanceof SessionChangedError)) setNotice(safeErrorMessage(error)); } }, [client, orders, refreshDicts, refreshSubmissions, session.principal.role]);
+  const refresh = useCallback(async () => { adviceDictionaryAllowed.current = false; try { const epoch = client.epoch; await client.getMe(); if (epoch !== client.epoch) return; setNotice(null); await Promise.all([orders.refresh(), refreshDicts()]); if (session.principal.role === 'master') await refreshSubmissions(); } catch (error) { if (mounted.current && !(error instanceof SessionChangedError)) setNotice(safeErrorMessage(error)); } }, [client, orders, refreshDicts, refreshSubmissions, session.principal.role]);
   const { state: historyState, refresh: refreshHistory } = useResource<PanelHistory>(client, async () => {
     if (!selected) throw new ApiError('Выберите наряд.');
     const orderId = selected; const epoch = client.epoch;
@@ -100,7 +114,7 @@ export function Workspace({ client, orders, session, sessionKey, section, isAuth
       const result = await client.execute(entry.token);
       if (!mounted.current || entry.epoch !== client.epoch) return { kind: 'rejected', message: 'Сессия изменилась.' };
       orders.record(result.order, entry.epoch); entry.status = 'confirmed'; entry.unresolved = false;
-      if (key === 'create') { setCreateDraft(emptyMasterCreateDraft()); setDraftGeneration(value => value + 1); }
+      if (key === 'create') { const empty = emptyMasterCreateDraft(); adviceSnapshot.current = { ...adviceSnapshot.current, draft: empty, generation: adviceSnapshot.current.generation + 1 }; setCreateDraft(empty); setDraftGeneration(value => value + 1); }
       void refresh();
       return { kind: 'confirmed' };
     } catch (error) {
@@ -149,18 +163,35 @@ export function Workspace({ client, orders, session, sessionKey, section, isAuth
   function changeCreateDraft(next: MasterCreateDraft) {
     const intent = pending.current.get('create');
     if (intent?.status === 'pending' || intent?.unresolved) return;
+    let nextGeneration = draftGeneration;
     if (next.sectionId !== createDraft.sectionId) {
       if (photos.blocked(beforeContext)) { setNotice('Сначала завершите подготовку или загрузку фото текущего участка.'); return; }
       if (photos.get(beforeContext).files.length) setNotice('Фото относятся к прежнему участку. Для нового участка выберите фото заново.');
-      setDraftGeneration(value => value + 1);
+      nextGeneration += 1; setDraftGeneration(value => value + 1);
     }
-    setCreateDraft({ ...next, beforePhotoIds: [] });
+    const accepted = { ...next, beforePhotoIds: [] };
+    adviceSnapshot.current = { ...adviceSnapshot.current, draft: accepted, generation: nextGeneration };
+    setCreateDraft(accepted);
+  }
+  const adviceContext = recommendationContext(createDraft, draftGeneration, dictState);
+  const adviceKey = assigneeContextKey(adviceContext);
+  function adviceIsCurrent(expected: string): boolean {
+    const current = adviceSnapshot.current; const intent = pending.current.get('create');
+    return mounted.current && isAuthReady() && !current.authBusy && current.online && adviceDictionaryAllowed.current && intent?.status !== 'pending' && !intent?.unresolved
+      && expected !== '' && assigneeContextKey(recommendationContext(current.draft, current.generation, current.dicts)) === expected;
+  }
+  function chooseRecommendedExecutor(id: string) {
+    if (!adviceIsCurrent(adviceKey)) return;
+    const current = adviceSnapshot.current; const context = recommendationContext(current.draft, current.generation, current.dicts);
+    if (!context || !current.dicts.snapshot) return;
+    const candidate = masterDictionaries(current.dicts.snapshot).executors.find(row => sameId(row.id, id) && eligibleExecutor(row, context));
+    if (candidate) changeCreateDraft({ ...current.draft, executorId: candidate.id });
   }
   if (!session.principal.active) return <section className="card" role="alert"><h3>Учётная запись неактивна</h3><p>Производственные действия недоступны.</p></section>;
   if (access === 'forbidden') return <section className="card" role="alert"><h3>Доступ к нарядам ограничен</h3><p>Прежние данные скрыты. Проверьте текущую сессию.</p><button type="button" onClick={() => void refresh()}>Проверить доступ</button></section>;
   return <>
     {notice && <p className="error" role="alert">{notice}</p>}
-    {session.principal.role === 'master' && <div hidden={section !== 'Наряды'}><MasterScreen dictionaries={mapResource(dictState, masterDictionaries)} orders={masterRows} createDraft={{ ...createDraft, beforePhotoIds: photos.confirmedIds(beforeContext) }} onCreateDraftChange={changeCreateDraft} beforePhotosBusy={photos.blocked(beforeContext)} renderBeforePhotos={context => <PhotoStages store={photos} context={beforeContext} disabled={context.disabled} canEdit={() => { const intent = pending.current.get('create'); return intent?.status !== 'pending' && !intent?.unresolved; }}/>} renderAfterPhotos={order => { const wire = rows.find(item => item.id === order.id); const result = wire ? submissionState.snapshot?.[submissionKey(wire)] : null; return result?.payload.after_photo_ids.map((photoId, index) => <ProtectedPhoto key={photoId} client={client} photoId={photoId} index={index}/>); }} reviewDrafts={reviewDrafts} onReviewDraftChange={(orderId, draft) => { const intent = pending.current.get(`review:${orderId}`); if (intent?.status === 'pending' || intent?.unresolved) return; setReviewDrafts(previous => ({ ...previous, [orderId]: draft })); }} online={online} domainNow={domainNow} onCreate={create} onReview={review} onRetryCreate={() => execute('create', null)} onRetryReview={orderId => execute(`review:${orderId}`, null)} onReload={refresh}/></div>}
+    {session.principal.role === 'master' && <div hidden={section !== 'Наряды'}><MasterScreen dictionaries={mapResource(dictState, masterDictionaries)} orders={masterRows} createDraft={{ ...createDraft, beforePhotoIds: photos.confirmedIds(beforeContext) }} onCreateDraftChange={changeCreateDraft} renderAssigneeRecommendations={context => <AssigneeRecommendations client={client} context={adviceContext} executors={dictState.snapshot ? masterDictionaries(dictState.snapshot).executors : []} request={(query,signal)=>client.getAssigneeRecommendations(query,signal)} isAuthReady={isAuthReady} isDraftCurrent={()=>adviceIsCurrent(adviceKey)} disabled={context.disabled || authBusy || !online || !resourceIsCurrent(dictState)} onChoose={chooseRecommendedExecutor} onAccessLost={()=>{ adviceDictionaryAllowed.current=false; setDictState(initialResource<Dictionaries>()); setNotice('Доступ к рекомендациям не подтверждён. Справочники скрыты; обновите данные для повторной проверки доступа.'); }}/>} beforePhotosBusy={photos.blocked(beforeContext)} renderBeforePhotos={context => <PhotoStages store={photos} context={beforeContext} disabled={context.disabled} canEdit={() => { const intent = pending.current.get('create'); return intent?.status !== 'pending' && !intent?.unresolved; }}/>} renderAfterPhotos={order => { const wire = rows.find(item => item.id === order.id); const result = wire ? submissionState.snapshot?.[submissionKey(wire)] : null; return result?.payload.after_photo_ids.map((photoId, index) => <ProtectedPhoto key={photoId} client={client} photoId={photoId} index={index}/>); }} reviewDrafts={reviewDrafts} onReviewDraftChange={(orderId, draft) => { const intent = pending.current.get(`review:${orderId}`); if (intent?.status === 'pending' || intent?.unresolved) return; setReviewDrafts(previous => ({ ...previous, [orderId]: draft })); }} online={online} domainNow={domainNow} onCreate={create} onReview={review} onRetryCreate={() => execute('create', null)} onRetryReview={orderId => execute(`review:${orderId}`, null)} onReload={refresh}/></div>}
     {session.principal.role === 'executor' && <>
       <ExecutorScreen resultAnalysisDisclosure={<ResultAnalysisDisclosure/>} sessionKey={sessionKey} operationScopeKey={executorView.scope} quarantinedIntentCount={quarantinedScopes.length}
         orders={mapResource(source, () => executorRows.map(order => executorOrder(order, dictState.snapshot)))}

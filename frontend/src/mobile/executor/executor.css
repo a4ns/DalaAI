@@ -27,7 +27,8 @@
 .executor-notice { padding: 14px 16px; border: 1px solid #d4bd7b; border-left: 4px solid #9b6500; border-radius: 8px; background: #fff7e4; color: #60420c; }
 .executor-notice--error { border-color: #e4c1bb; border-left-color: #a52520; background: #fff2ef; color: #85231d; }
 .executor-notice button { margin-top: 10px; margin-right: 8px; }
-.executor-operation { margin: 12px 0; }
+.executor-operation { margin: 12px 0; scroll-margin-block-start: 20px; }
+.executor-operation > [role="status"]:empty { margin: 0; }
 .executor-filters { display: flex; gap: 8px; margin: 18px 0; }
 .executor-filters button { min-height: 48px; min-width: 100px; padding: 10px 18px; border: 1px solid #a7bcc6; border-radius: 999px; color: #233f51; background: white; font-weight: 650; }
 .executor-filters button[aria-pressed="true"] { color: #fff; background: #233f51; border-color: #233f51; }

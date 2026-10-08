@@ -1,0 +1,4 @@
+.assignee-recommendations { min-width: 0; overflow-wrap: anywhere; border: 1px solid currentColor; border-radius: .6rem; padding: .85rem; margin-block: .75rem; }
+.assignee-recommendations-candidate { border-block-start: 1px solid currentColor; padding-block: .6rem; }
+.assignee-recommendations button { min-height: 44px; max-width: 100%; white-space: normal; }
+.assignee-recommendations summary { cursor: pointer; min-height: 32px; }

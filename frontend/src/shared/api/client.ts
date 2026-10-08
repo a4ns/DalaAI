@@ -8,6 +8,10 @@ import { readReportFile, REPORT_FILE_MIME } from './reportFiles';
 import type { ReportFile, ReportFileFormat, ReportFileKind } from './reportFiles';
 import { isDemoClockChange, isDemoClockControl, isDemoClockSnapshot } from './demoClockProtocol';
 import type { DemoClockChange, DemoClockControl, DemoClockSnapshot } from './demoClockProtocol';
+import { decodeAiReport, isAiReport, validAiReportRequest } from '../../features/aiReports/protocol';
+import type { AiReport, AiReportRequest } from '../../features/aiReports/protocol';
+import { decodeAssigneeRecommendations, isAssigneeRecommendations } from '../../features/assigneeRecommendations/protocol';
+import type { AssigneeRecommendationRequest, AssigneeRecommendations } from '../../features/assigneeRecommendations/protocol';
 export interface PreparedDemoClock { readonly intent:Readonly<DemoClockControl> }
 type ClockPrepared={epoch:number;body:string;snapshot:DemoClockSnapshot;intent:Readonly<DemoClockControl>;promise?:Promise<DemoClockSnapshot>};
 type ApiProblem = Omit<Problem, 'code'> & { code: Problem['code'] | 'SUBSCRIPTION_CONFLICT' | 'PUSH_DISABLED' | 'REPORT_LIMIT_EXCEEDED' };
@@ -68,6 +72,32 @@ function retryDelay(value: string | null): number | null {
   if (Number.isFinite(seconds) && seconds >= 0) return seconds;
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) ? Math.max(0, Math.ceil((timestamp - Date.now()) / 1000)) : null;
+}
+/** Bound successful JSON while streaming; a header is only an early refusal hint. */
+async function readBoundedJson(response: Response, maximum: number, signal: AbortSignal, assertCurrent: () => void): Promise<unknown> {
+  const declared = response.headers.get('Content-Length');
+  if (declared && /^\d+$/.test(declared) && Number(declared) > maximum) { void response.body?.cancel().catch(() => undefined); throw new Error('Response too large'); }
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('Response body missing');
+  const decoder = new TextDecoder('utf-8', { fatal: true }); let received = 0; let content = ''; let complete = false;
+  const cancel = () => { void reader.cancel().catch(() => undefined); };
+  signal.addEventListener('abort', cancel, { once: true });
+  try {
+    while (true) {
+      assertCurrent(); signal.throwIfAborted();
+      const chunk = await reader.read();
+      assertCurrent(); signal.throwIfAborted();
+      if (chunk.done) { complete = true; break; }
+      received += chunk.value.byteLength;
+      if (received > maximum) throw new Error('Response too large');
+      content += decoder.decode(chunk.value, { stream: true });
+    }
+    return JSON.parse(content + decoder.decode()) as unknown;
+  } finally {
+    signal.removeEventListener('abort', cancel);
+    if (!complete) void reader.cancel().catch(() => undefined);
+    reader.releaseLock();
+  }
 }
 function authorityKey(session: Session): string {
   const principal = session.principal;
@@ -154,9 +184,9 @@ export class ApiClient {
       }
       let data: unknown;
       try {
-        if (options.maxBytes) { const text = await response.text(); if (new TextEncoder().encode(text).length > options.maxBytes) throw new Error('Response too large'); data = JSON.parse(text); }
+        if (options.maxBytes) data = await readBoundedJson(response, options.maxBytes, controller.signal, () => this.#assertEpoch(epoch));
         else data = await response.json();
-      } catch { throw new ApiError('Сервер вернул неподдерживаемый ответ.', response.status, null, Boolean(options.mutation)); }
+      } catch (error) { if (error instanceof SessionChangedError) throw error; throw new ApiError('Сервер вернул неподдерживаемый ответ.', response.status, null, Boolean(options.mutation)); }
       this.#assertEpoch(epoch);
       if (options.validate ? !options.validate(data) : !options.schema || !isWire<T>(options.schema, data)) throw new ApiError('Ответ сервера не соответствует согласованному контракту.', response.status, null, Boolean(options.mutation));
       return data as T;
@@ -217,6 +247,34 @@ export class ApiClient {
     const suffix=kind==='shift'?'shift':`orders/${id(kind.orderId).toLowerCase()}`;
     const filename=`naryadai-${kind==='shift'?'shift':`order-${kind.orderId.toLowerCase()}`}.${format}`;
     return this.#request(`/reports/${suffix}.${format}?${query}`,{signal,analytics:true,reportFile:{format,filename}});
+  }
+  #assertAssistanceSession(): void {
+    if (!this.#session?.principal.active || !(Date.parse(this.#session.expires_at) > Date.now())) throw new ApiError('Сессия завершена. Войдите снова.', 401);
+    if (this.#session.principal.role !== 'master' || !this.#session.principal.section_ids.length) throw new ApiError('Подсказки доступны мастеру с разрешённым участком.', 403);
+  }
+  async createAiSummary(input: Readonly<AiReportRequest>, signal?: AbortSignal): Promise<AiReport> {
+    this.#assertAssistanceSession();
+    if (!validAiReportRequest(input)) throw new ApiError('Проверьте период и вид сводки.', 422);
+    const epoch = this.#epoch;
+    const request = Object.freeze({ operation_id: input.operation_id, start: input.start, end: input.end, report_kind: input.report_kind });
+    const value = await this.#request<AiReport>('/reports/ai-summary', { method: 'POST', contentType: 'application/json', body: JSON.stringify(request), epoch, signal, mutation: true, analytics: true, maxBytes: 1024 * 1024, validate: isAiReport });
+    this.#assertEpoch(epoch); this.#assertAssistanceSession();
+    try { return decodeAiReport(value, request); }
+    catch { throw new ApiError('Ответ сводки не соответствует исходному запросу.', 200, null, true); }
+  }
+  async getAssigneeRecommendations(input: Readonly<AssigneeRecommendationRequest>, signal?: AbortSignal): Promise<AssigneeRecommendations> {
+    this.#assertAssistanceSession();
+    const validId = (value: unknown): value is string => typeof value === 'string' && /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(value);
+    if (!validId(input.section_id) || (input.work_code_id !== null && !validId(input.work_code_id)) || !Number.isSafeInteger(input.limit) || input.limit < 1 || input.limit > 5) throw new ApiError('Проверьте участок и параметры рекомендаций.', 422);
+    const request = Object.freeze({ section_id: input.section_id, work_code_id: input.work_code_id, limit: input.limit });
+    if (!this.#session!.principal.section_ids.some(section => sameUuid(section, request.section_id))) throw new ApiError('Нет доступа к выбранному участку.', 403);
+    const epoch = this.#epoch; const query = new URLSearchParams({ section_id: request.section_id, limit: String(request.limit) });
+    if (request.work_code_id !== null) query.set('work_code_id', request.work_code_id);
+    const value = await this.#request<AssigneeRecommendations>(`/recommendations/assignees?${query}`, { epoch, signal, maxBytes: 512 * 1024, validate: isAssigneeRecommendations });
+    this.#assertEpoch(epoch); this.#assertAssistanceSession();
+    if (!this.#session!.principal.section_ids.some(section => sameUuid(section, request.section_id))) throw new ApiError('Доступ к выбранному участку изменился.', 403);
+    try { return decodeAssigneeRecommendations(value, request); }
+    catch { throw new ApiError('Рекомендации устарели или относятся к другому участку.', 200); }
   }
   #assertClockSession():void {
     if(!this.#session?.principal.active||!(Date.parse(this.#session.expires_at)>Date.now()))throw new ApiError('Сессия завершена. Войдите снова.',401);

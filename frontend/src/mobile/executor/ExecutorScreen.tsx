@@ -58,6 +58,8 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   const draftLocked = useRef(false);
   const detailHeading = useRef<HTMLHeadingElement | null>(null);
   const requestedDetailFocus = useRef<string | null>(null);
+  const operationFeedbackRegion = useRef<HTMLDivElement | null>(null);
+  const requestedOperationScroll = useRef<{ scopeKey: string; selectedOrderId: string | null; assignmentRevision: number | null; intentOrderId: string | null } | null>(null);
   const latestDrafts = useRef(props.drafts);
   const latestOrders = useRef(props.orders.snapshot);
   const rows = useRef(0);
@@ -96,6 +98,14 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
     detailHeading.current?.focus({ preventScroll: true });
     detailHeading.current?.scrollIntoView({ block: 'start', inline: 'nearest' });
   }, [props.selectedOrderId]);
+  useEffect(() => {
+    // Consume only a deliberate command/retry request. Polls and late outcomes never request scrolling.
+    const request = requestedOperationScroll.current;
+    requestedOperationScroll.current = null;
+    if (!request || request.scopeKey !== scopeKey || request.selectedOrderId !== props.selectedOrderId ||
+      request.assignmentRevision !== (selected?.assignmentRevision ?? null) || request.intentOrderId !== (activeIntent?.orderId ?? null)) return;
+    operationFeedbackRegion.current?.scrollIntoView({ block: 'start', inline: 'nearest' });
+  }, [localFeedback, localIntent, props.selectedOrderId, selected?.assignmentRevision, scopeKey, activeIntent?.orderId]);
   function acceptsEventFromScope(): boolean {
     return mounted.current && (!scopedOperations || committedScope.current === scopeKey);
   }
@@ -144,6 +154,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
     draftLocked.current = true;
     setConflictRefresh(null);
     const attemptScope = scopeKey;
+    requestedOperationScroll.current = { scopeKey: attemptScope, selectedOrderId: props.selectedOrderId, assignmentRevision: selected?.assignmentRevision ?? null, intentOrderId: intent?.orderId ?? activeIntent?.orderId ?? null };
     if (intent) setLocalIntent({ scopeKey: attemptScope, intent: { orderId: intent.orderId, expectedVersion: intent.expectedVersion, action: intent.action } });
     setLocalMutation({ status: 'pending', error: null });
     try {
@@ -193,6 +204,15 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
   const describedBy = (key: string) => errors[key] ? `${id}-${key.replace(':', '-')}-error` : undefined;
   const hasConfirmedRefresh = mutation.status === 'conflict' && conflictRefresh !== null && conflictRefresh.scopeKey === scopeKey && fresh && props.orders.lastConfirmedAt !== null && props.orders.lastConfirmedAt !== conflictRefresh.lastConfirmedAt;
 
+  // Keep one announcement beside its order; a different or absent selection uses the global location.
+  const operationBelongsToSelected = selected !== null && (!activeIntent || activeIntent.orderId === selected.id);
+  const operationFeedback = (!scopedOperations || selected !== null) && <div ref={operationFeedbackRegion} className="executor-operation">
+    <p role="status" aria-live="polite" aria-atomic="true">{pending ? 'Отправляем действие. Дождитесь ответа; повторное нажатие заблокировано.' : mutation.status === 'confirmed' ? <>Действие подтверждено сервером.{awaitingSnapshot ? ' Обновляемый статус ещё не получен. Нажмите «Обновить».' : ''}</> : null}</p>
+    {mutation.status === 'unknown_result' && <div className="executor-notice" role="alert"><strong>Результат не подтверждён</strong><p>{mutation.error} Черновик сохранён в этом сеансе и заморожен. Повтор отправит исходное действие с тем же идентификатором; новое действие не создаётся.</p><button className="executor-button" type="button" disabled={props.orders.loadStatus === 'offline'} onClick={() => void perform()}>Повторить исходное действие</button></div>}
+    {mutation.status === 'conflict' && <div className="executor-notice" role="alert"><strong>Наряд изменился</strong><p>{mutation.error || 'Сервер отклонил действие из-за конфликта.'} Черновик сохранён. Обновите наряды, проверьте текущий статус и явно подтвердите работу с новой версией.</p><button className="executor-button executor-button--secondary" type="button" disabled={props.orders.loadStatus === 'loading'} onClick={refreshOrders}>Загрузить актуальное состояние</button><button className="executor-button" type="button" disabled={!hasConfirmedRefresh} onClick={() => { if (!hasConfirmedRefresh || (scopedOperations && committedScope.current !== scopeKey)) return; props.onResolveConflict(); setLocalMutation({ status: 'idle', error: null }); setConflictRefresh(null); setLocalIntent(null); setErrors({}); }}>Состояние проверено, продолжить</button></div>}
+    {mutation.status === 'failed' && <p className="executor-notice executor-notice--error" role="alert">{mutation.error || 'Действие отклонено.'} Черновик сохранён. Исправьте причину перед новой отправкой.</p>}
+  </div>;
+
   return <section className="executor-screen" aria-labelledby={`${id}-title`}>
     <header className="executor-header">
       <div><p className="executor-eyebrow">Исполнитель · НарядAI</p><h1 id={`${id}-title`}>Мои наряды</h1><p>{fresh ? `Активных: ${activeCount}` : 'Список требует подтверждения'}</p></div>
@@ -201,13 +221,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
     <ResourceNotice resource={props.orders} name="Наряды" />
     {props.orders.lastConfirmedAt && <p className="executor-caption">Последнее подтверждение: {formatExecutorTime(props.orders.lastConfirmedAt)}</p>}
     {(props.quarantinedIntentCount ?? 0) > 0 && <p className="executor-notice" role="status">Есть действие с неподтверждённым результатом для наряда с изменившимся доступом. Исходная попытка сохранена отдельно. Можно работать с другими доступными нарядами.</p>}
-    {(!scopedOperations || selected !== null) && <div className="executor-operation" aria-live="polite" aria-atomic="true">
-      {pending && <p role="status">Отправляем действие. Дождитесь ответа; повторное нажатие заблокировано.</p>}
-      {mutation.status === 'confirmed' && <p role="status">Действие подтверждено сервером.{awaitingSnapshot ? ' Обновляемый статус ещё не получен. Нажмите «Обновить».' : ''}</p>}
-      {mutation.status === 'unknown_result' && <div className="executor-notice" role="alert"><strong>Результат не подтверждён</strong><p>{mutation.error} Черновик сохранён в этом сеансе и заморожен. Повтор отправит исходное действие с тем же идентификатором; новое действие не создаётся.</p><button className="executor-button" type="button" disabled={props.orders.loadStatus === 'offline'} onClick={() => void perform()}>Повторить исходное действие</button></div>}
-      {mutation.status === 'conflict' && <div className="executor-notice" role="alert"><strong>Наряд изменился</strong><p>{mutation.error || 'Сервер отклонил действие из-за конфликта.'} Черновик сохранён. Обновите наряды, проверьте текущий статус и явно подтвердите работу с новой версией.</p><button className="executor-button executor-button--secondary" type="button" disabled={props.orders.loadStatus === 'loading'} onClick={refreshOrders}>Загрузить актуальное состояние</button><button className="executor-button" type="button" disabled={!hasConfirmedRefresh} onClick={() => { if (!hasConfirmedRefresh || (scopedOperations && committedScope.current !== scopeKey)) return; props.onResolveConflict(); setLocalMutation({ status: 'idle', error: null }); setConflictRefresh(null); setLocalIntent(null); setErrors({}); }}>Состояние проверено, продолжить</button></div>}
-      {mutation.status === 'failed' && <p className="executor-notice executor-notice--error" role="alert">{mutation.error || 'Действие отклонено.'} Черновик сохранён. Исправьте причину перед новой отправкой.</p>}
-    </div>}
+    {!operationBelongsToSelected && operationFeedback}
     {orders.length > 0 && <div className="executor-filters" role="group" aria-label="Какие наряды показать"><button type="button" aria-pressed={filter === 'active'} onClick={() => changeFilter('active')}>Активные</button><button type="button" aria-pressed={filter === 'all'} onClick={() => changeFilter('all')}>Все</button></div>}
     {isConfirmedEmpty(props.orders) && <div className="executor-empty"><h2>Назначенных нарядов нет</h2><p>Список получен с сервера. Обновите его, когда мастер выдаст новый наряд.</p></div>}
     {orders.length > 0 && visibleOrders.length === 0 && <p>В полученном списке нет активных нарядов. Выберите «Все», чтобы увидеть остальные.</p>}
@@ -224,6 +238,7 @@ function ExecutorScreenContent(props: ExecutorScreenProps) {
       </nav>
       {selected ? <article className="executor-detail" aria-labelledby={`${id}-order-title`}>
         <header><p className="executor-eyebrow">{selected.sectionLabel} · Версия {selected.version}</p><h2 ref={detailHeading} tabIndex={-1} className="executor-detail-title" id={`${id}-order-title`}>Наряд {selected.number}</h2><p className="executor-detail-equipment">{selected.equipmentLabel}</p><p><span className="executor-status">{STATUS_LABELS[selected.status]}</span> · {selected.type === 'unplanned' ? 'Внеплановая работа' : 'Плановая работа'}</p></header>
+        {operationBelongsToSelected && operationFeedback}
         <p className="executor-preserve-lines">{selected.description}</p>
         {selected.comment && <p className="executor-preserve-lines"><strong>Комментарий мастера: </strong>{selected.comment}</p>}
         <p>Срок: <time dateTime={selected.dueAt}>{formatExecutorTime(selected.dueAt)}</time>{selected.isOverdue && <strong className="executor-urgent"> · Просрочен</strong>}</p>

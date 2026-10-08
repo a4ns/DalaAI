@@ -42,6 +42,9 @@ function PhotoPickerSelection({ contextKey, phase, value, onChange, onBusyChange
   const id = useId();
   const camera = useRef<HTMLInputElement>(null);
   const files = useRef<HTMLInputElement>(null);
+  const chooseFiles = useRef<HTMLButtonElement>(null);
+  const selectionStatus = useRef<HTMLParagraphElement>(null);
+  const deleteFocus = useRef<{ id: string; button: HTMLButtonElement } | null>(null);
   const active = useRef<PhotoPreparationActivity | null>(null);
   const mounted = useRef(false);
   const current = useRef({ contextKey, phase, value, onChange, onBusyChange, disabled });
@@ -53,6 +56,18 @@ function PhotoPickerSelection({ contextKey, phase, value, onChange, onBusyChange
   const limit = Math.max(1, Math.min(PHOTO_LIMITS.maxPhotos, Number.isFinite(maxPhotos) ? Math.floor(maxPhotos) : PHOTO_LIMITS.maxPhotos));
   const locked = disabled || busy;
   const full = value.length >= limit;
+
+  useLayoutEffect(() => {
+    const request = deleteFocus.current;
+    // Only the commit immediately following an explicit removal may restore focus.
+    // A delayed parent update, polling or a later unlock must never steal it.
+    deleteFocus.current = null;
+    if (!request || locked || value.some(photo => photo.id === request.id)) return;
+    const { button } = request;
+    const document = button.ownerDocument;
+    if (document.activeElement !== button && (button.isConnected || document.activeElement !== document.body)) return;
+    (full ? selectionStatus.current : chooseFiles.current)?.focus({ preventScroll: true });
+  });
 
   useLayoutEffect(() => {
     mounted.current = true;
@@ -71,18 +86,20 @@ function PhotoPickerSelection({ contextKey, phase, value, onChange, onBusyChange
     if (batch.length === 0) { setErrors(issues); return; }
     const controller = beginPhotoPreparation(initial.onBusyChange);
     active.current = controller;
-    setBusy(true); setErrors([]); setStatus('Подготавливаем фото на устройстве…');
+    setBusy(true); setErrors([]); setStatus('');
     const prepared: PreparedPhoto[] = [];
+    let canceled = false;
     try {
       for (const file of batch) {
         try { prepared.push(await preparePhoto(file, controller.signal)); }
         catch (error) {
-          if (controller.signal.aborted) return;
+          if (controller.signal.aborted) { canceled = true; return; }
           issues.push(`${file.name || 'Фото'}: ${photoErrorMessage(error)}`);
         }
       }
       const latest = current.current;
-      if (!mounted.current || controller.signal.aborted || latest.contextKey !== initial.contextKey || latest.phase !== initial.phase || latest.disabled) return;
+      canceled = controller.signal.aborted || latest.disabled;
+      if (!mounted.current || canceled || latest.contextKey !== initial.contextKey || latest.phase !== initial.phase) return;
       // An external reset/removal during preparation must not restore stale selections.
       const unchanged = latest.value.length === initial.value.length && latest.value.every((photo, i) => photo === initial.value[i]);
       if (!unchanged) { setStatus('Выбор изменился. Добавьте фото ещё раз.'); return; }
@@ -93,7 +110,10 @@ function PhotoPickerSelection({ contextKey, phase, value, onChange, onBusyChange
       if (active.current === controller) {
         active.current = null;
         controller.finish();
-        if (mounted.current) setBusy(false);
+        if (mounted.current) {
+          setBusy(false);
+          if (canceled) setStatus('Подготовка отменена. Новые фото не добавлены.');
+        }
       }
     }
   };
@@ -105,18 +125,23 @@ function PhotoPickerSelection({ contextKey, phase, value, onChange, onBusyChange
     <p id={`${id}-network`} className="photo-picker__network" role="status">{connectivityMessage(connectivity)}</p>
     <div className="photo-picker__actions">
       <button type="button" disabled={locked || full} onClick={() => camera.current?.click()}>Сделать фото</button>
-      <button type="button" disabled={locked || full} onClick={() => files.current?.click()}>Выбрать из файлов</button>
+      <button ref={chooseFiles} type="button" disabled={locked || full} onClick={() => files.current?.click()}>Выбрать из файлов</button>
     </div>
     <input ref={camera} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" hidden disabled={locked || full} aria-label="Снять фото камерой" onChange={event => { void select(event); }} />
     <input ref={files} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden disabled={locked || full} aria-label="Выбрать фотографии" onChange={event => { void select(event); }} />
     <p className="photo-picker__help">Если камера не открылась или доступ запрещён, выберите готовый файл. Разрешение камеры зависит от устройства и браузера.</p>
-    <p role="status" className="photo-picker__status">{busy ? 'Проверяем и сжимаем фото…' : status || `Выбрано: ${value.length} из ${limit}.`}</p>
+    <p ref={selectionStatus} tabIndex={-1} role="status" className="photo-picker__status">{busy ? 'Проверяем и сжимаем фото…' : status || `Выбрано: ${value.length} из ${limit}.`}</p>
     {full && <p className="photo-picker__help">Достигнут лимит. Удалите фото, чтобы выбрать другое.</p>}
     {errors.length > 0 && <div className="photo-picker__errors" role="alert"><p>Не все фото удалось добавить:</p><ul>{errors.map((error, index) => <li key={`${index}-${error}`}>{error}</li>)}</ul></div>}
     {value.length > 0 && <ul className="photo-picker__list">{value.map((photo, index) => <li className="photo-picker__item" key={photo.id}>
       <Preview photo={photo} />
       <div className="photo-picker__details"><strong>Фото {index + 1}</strong><span className="photo-picker__filename">{photo.originalName}</span><span>{photo.width} × {photo.height} · {formatPhotoBytes(photo.file.size)}</span><span>Подготовлено на устройстве</span></div>
-      <button type="button" disabled={locked} aria-label={`Удалить фото ${index + 1}: ${photo.originalName}`} onClick={() => { onChange(value.filter(item => item.id !== photo.id)); setErrors([]); setStatus('Фото удалено из локального выбора.'); }}>Удалить</button>
+      <button type="button" disabled={locked} aria-label={`Удалить фото ${index + 1}: ${photo.originalName}`} onClick={event => {
+        if (locked) return;
+        const button = event.currentTarget;
+        deleteFocus.current = button.ownerDocument.activeElement === button ? { id: photo.id, button } : null;
+        onChange(value.filter(item => item.id !== photo.id)); setErrors([]); setStatus('Фото удалено из локального выбора.');
+      }}>Удалить</button>
     </li>)}</ul>}
   </fieldset>;
 }

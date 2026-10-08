@@ -1,0 +1,126 @@
+{
+  "schema_version": "ai-report-summary/1",
+  "operation_id": "023fab8f-4029-5d28-887f-863e38fe0259",
+  "report_kind": "shift",
+  "mode": "deterministic_fallback",
+  "label": "Фактическая сводка по правилам: ИИ-анализ не выполнен",
+  "summary": "Синтетические данные. Решений мастера о доработке за период: 1. Ожидают проверки на доменное время снимка: 1. Активных просроченных нарядов на доменное время снимка: 1. Выдано нарядов за период: 6. Нарядов закрыто решением мастера за период: 4.",
+  "highlights": [
+    {
+      "fact_id": "m_rework_decisions",
+      "text": "Решений мастера о доработке за период: 1.",
+      "source_table": "reviews",
+      "source_ids": [
+        "abeeceb7-8e00-5827-ac9a-d67db32be861"
+      ],
+      "equipment_id": null
+    },
+    {
+      "fact_id": "m_awaiting_review",
+      "text": "Ожидают проверки на доменное время снимка: 1.",
+      "source_table": "orders",
+      "source_ids": [
+        "4d2c41ee-5097-5092-8b7d-272c9e42aa06"
+      ],
+      "equipment_id": null
+    },
+    {
+      "fact_id": "m_overdue_active",
+      "text": "Активных просроченных нарядов на доменное время снимка: 1.",
+      "source_table": "orders",
+      "source_ids": [
+        "e6cad19b-5123-5838-8251-de501e42440d"
+      ],
+      "equipment_id": null
+    },
+    {
+      "fact_id": "m_issued_orders",
+      "text": "Выдано нарядов за период: 6.",
+      "source_table": "orders",
+      "source_ids": [
+        "4d2c41ee-5097-5092-8b7d-272c9e42aa06",
+        "7e3ad902-4ef1-5800-8a69-699dca4817df",
+        "b39ed8f4-e508-541c-9f6c-90f01827fbba",
+        "bdd142db-bbf3-579e-8695-193b701d9560",
+        "e6cad19b-5123-5838-8251-de501e42440d",
+        "fa2eae2f-e6ec-5209-8f5b-886914965e51"
+      ],
+      "equipment_id": null
+    },
+    {
+      "fact_id": "m_closed_orders",
+      "text": "Нарядов закрыто решением мастера за период: 4.",
+      "source_table": "orders",
+      "source_ids": [
+        "6dbd8258-bc17-5b4c-aea3-3e8da3277356",
+        "7e3ad902-4ef1-5800-8a69-699dca4817df",
+        "bdd142db-bbf3-579e-8695-193b701d9560",
+        "ebca9ccf-efa2-5d5a-b2fd-56e1d422d5ff"
+      ],
+      "equipment_id": null
+    }
+  ],
+  "recommendations": [
+    {
+      "code": "review_rework",
+      "text": "Рекомендуется разобрать причины возвратов на доработку; сам факт возврата не устанавливает вину исполнителя.",
+      "fact_ids": [
+        "m_rework_decisions"
+      ]
+    },
+    {
+      "code": "review_pending",
+      "text": "Мастеру рекомендуется рассмотреть ожидающие проверки результаты и принять решение по доказательствам.",
+      "fact_ids": [
+        "m_awaiting_review"
+      ]
+    },
+    {
+      "code": "review_overdue",
+      "text": "Мастеру рекомендуется проверить причины просрочки и согласовать следующий шаг с исполнителями.",
+      "fact_ids": [
+        "m_overdue_active"
+      ]
+    }
+  ],
+  "provenance": {
+    "synthetic": true,
+    "source_ref": "synthetic-unit:v1",
+    "scope_description": "Один вымышленный участок",
+    "domain_as_of": "2026-09-03T00:00:00Z",
+    "captured_at_real": "2026-08-01T00:00:00Z",
+    "coverage": "consistent_snapshot",
+    "history_complete": true
+  },
+  "period": {
+    "start": "2026-09-02T00:00:00Z",
+    "end": "2026-09-03T00:00:00Z",
+    "display_timezone": "Asia/Almaty"
+  },
+  "limitations": [
+    "Показаны только факты разрешённой области источника; это не итог по предприятию.",
+    "Оценка ИИ — рекомендация. Производственное решение принимает мастер.",
+    "Фото представлены только идентификаторами; изображения и исправность не проверялись этим отчётом.",
+    "История попыток и решений не является полным журналом событий наряда.",
+    "Материалы указаны по заявлениям исполнителей, а не как подтверждённые складские списания.",
+    "ИИ выбирает факты и рекомендации из ограниченного набора; русский текст и числа формирует сервер по проверенным фактам.",
+    "Рекомендации носят справочный характер. Решения о работах, безопасности и сотрудниках принимает человек.",
+    "Частота внеплановых нарядов и совпадение шифра работ не доказывают причину, повторную поломку или качество ремонта.",
+    "Простой, аномалии материалов, прогноз отказов и причинные связи не рассчитываются при отсутствии поддерживаемых исходных данных.",
+    "Показатели ожидания проверки и просрочки относятся к доменному времени снимка, остальные показатели — к указанному периоду."
+  ],
+  "unavailable_reasons": [
+    "composite_rating:unsupported_inputs",
+    "downtime:unsupported_inputs",
+    "repeat_fault_7d:unsupported_inputs",
+    "brigade_rating:unsupported_history",
+    "order_event_log:not_supplied",
+    "ai_job_state:not_supplied"
+  ],
+  "fallback_reason": "provider_not_configured",
+  "model": null,
+  "generated_at_real": "2026-10-08T03:00:00Z",
+  "advisory": true,
+  "reserved_upper_bound_microusd": 0,
+  "actual_billed_cost": null
+}

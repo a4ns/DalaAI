@@ -205,7 +205,7 @@ export function PanelScreen({ orders, employees, selectedOrderId, history, onSel
 
       <aside className="panel-unavailable" aria-labelledby={`${id}-limits-title`}>
         <h2 id={`${id}-limits-title`}>Отчёты и аналитика</h2>
-        <p>Отчёт смены, экспорт, рейтинг и аналитика пока недоступны в подключённом API.</p>
+        <p>Отчёты, экспорт и аналитика доступны мастеру в разделе «Аналитика и отчёты». Доступ проверяется отдельно. Сводная оценка исполнителей не рассчитывается при недостатке данных.</p>
       </aside>
     </section>
   );
