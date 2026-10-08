@@ -43,6 +43,7 @@ jobs:
           node --check ops/ci/history_transport_probe.cjs
           python ops/ci/history_runner.py --check-inputs
       - name: Install locked C dependencies and official Chromium
+        timeout-minutes: 10
         run: |
           npm ci --prefix tests/e2e --ignore-scripts
           python -m pip install -r backend/requirements.lock

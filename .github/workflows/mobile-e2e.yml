@@ -43,6 +43,7 @@ jobs:
           node --check ops/ci/safe-reporter.cjs
           python ops/ci/run_mobile.py --check-inputs
       - name: Install C-110 exact dependencies and official Chromium
+        timeout-minutes: 10
         run: |
           npm ci --prefix tests/e2e --ignore-scripts
           python -m pip install -r backend/requirements.lock

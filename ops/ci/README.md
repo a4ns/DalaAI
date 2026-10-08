@@ -186,3 +186,9 @@ replacement delta moves only the separate synthetic job to the accepted Pixel 9
 pair. It does not edit B product/harness source or the C-110 tests.
 
 Historical B9a C110 and C112 both passed on exact main347119c47b9a0ec70cd30cbc8bce2a2774a439e0. The final Bfaef target needs fresh separate C-owned proofs and real runs; neither historical acceptance nor the separate153+13 final-B synthetic job substitutes for them. C113 clock/download acceptance remains a separate scenario. The early PyYAML setup from ae62 is preserved before broad CI discovery.
+
+C110 and C112 official dependency installation each has a 10-minute step cap,
+inside the existing 30-minute job limit. A stalled registry/browser/OS-package
+installation fails the gate; no dependency is skipped and no browser success is
+inferred. Diagnose that exact failed stage before a retry. This bound was added
+after the [ae62 dependency step](https://github.com/a4ns/DalaAI/actions/runs/37713704225/job/113105238783) stalled during Ubuntu mirror metadata retrieval in Playwright's OS dependency installer. A newer source head superseded that run before any browser scenario started.
