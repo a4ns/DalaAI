@@ -5,6 +5,7 @@ const root = process.env.DALA_C113_PLAYWRIGHT_PACKAGE || path.dirname(require.re
 const { test, expect } = createRequire(path.join(root, 'package.json'))(root);
 const { PRIVATE_ACTION_TIMEOUT_MS, privateLoginBoundary, privateOperationBoundary } = require('./c113_private_boundary.cjs');
 const { validateEffectiveRunner } = require('./c113_contract.cjs');
+const downloads = require('./c113_downloads.cjs');
 const { PREFLIGHT_TITLE } = require('./c113_preflight_proof.cjs');
 test(PREFLIGHT_TITLE, async ({ page }, testInfo) => {
   validateEffectiveRunner(testInfo.config, testInfo.project, path.join(__dirname, 'c113_preflight.config.cjs'),
@@ -36,6 +37,12 @@ test(PREFLIGHT_TITLE, async ({ page }, testInfo) => {
     catch (error) { expect(error.message).toBe('C113 BLOCKED: operation failed; private details suppressed'); protectedFailures++; }
   }
   expect(protectedFailures).toBe(6);
+  const diagnostic=downloads.createDownloadDiagnostic();
+  downloads.downloadCheckpoint(diagnostic,sentinels[0],sentinels[1]);
+  downloads.downloadResponse(diagnostic,sentinels[2]);
+  downloads.downloadTransport(diagnostic,{'content-encoding':sentinels[0],'content-length':sentinels[1]});
+  diagnostic.inspector=downloads.inspectorFailure({stdout:JSON.stringify({status:'BLOCKED',code:'C113_DOWNLOAD_INSPECTION_FAILED',stage:sentinels[3]})});
+  await testInfo.attach('c113_safe_download_diagnostic',{body:Buffer.from(JSON.stringify(diagnostic)),contentType:'application/json'});
   // Intentionally unexpected failure: wrapper must require exit 1 and 1 failure.
   // It is not a core test, expected-failure annotation or successful journey.
   throw new Error('C113_DUMMY_FAILURE_EXPECTED');

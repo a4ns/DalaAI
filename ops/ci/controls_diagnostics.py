@@ -32,12 +32,25 @@ SIGNATURES={
 }
 
 
+DOWNLOAD_ENUMS={key:set(value) for key,value in {"target":["NOT_STARTED","SHIFT_PDF","SHIFT_XLSX","ORDER_PDF","ORDER_XLSX","UNCLASSIFIED"],"substep":["NOT_STARTED","OPEN_SHIFT_REPORT","WAIT_SHIFT_REPORT_UI","OPEN_ORDER_REPORT","WAIT_ORDER_REPORT_UI","PREPARE_EXPECTATION","WAIT_PREPARE_RESPONSE","CHECK_PROTECTED_HEADERS","CHECK_EXPORT_MIME","CHECK_EXPORT_DISPOSITION","CHECK_EXPORT_CSP","CHECK_CONTENT_LENGTH","READ_RESPONSE_BYTES","CHECK_RESPONSE_SIZE","WAIT_SAVE_CONTROL","CHECK_NO_EARLY_SAVE","WAIT_SAVE_DOWNLOAD","CHECK_SUGGESTED_FILENAME","WAIT_DOWNLOAD_COMPLETION","SAVE_FILE","CHECK_SAVED_FILE","COMPARE_SAVED_BYTES","WRITE_EXPECTED_VALUES","RUN_INSPECTOR","PARSE_INSPECTOR_RESULT","CHECK_INSPECTOR_BINDING","RECORD_DOWNLOAD","DONE","UNCLASSIFIED"],"inspector":["NOT_RUN","START","READ_EXPECTED_FILE","PARSE_EXPECTED_JSON","READ_SAVED_FILE","EXPECTED_CONTRACT","FILE_BOUND","PDF_XREF","PDF_OBJECTS","PDF_CATALOG_PAGES","PDF_PAGE_SHAPE","PDF_FONT_RESOURCES","PDF_STREAM","PDF_FONT_MAP","PDF_OPERATORS","PDF_VISIBLE_STYLE","PDF_TEXT_DECODE","PDF_CONTENT","XLSX_ARCHIVE","XLSX_ENTRY","XLSX_XML","XLSX_RELATIONSHIPS","XLSX_CELLS","XLSX_CONTENT","RESULT","PASS","PROCESS_FAILED","UNCLASSIFIED"],"response":["NOT_OBSERVED","HTTP_OTHER_OR_UNAVAILABLE","HTTP_OK","HTTP_BAD_REQUEST","HTTP_UNAUTHENTICATED","HTTP_FORBIDDEN","HTTP_NOT_FOUND","HTTP_CONFLICT","HTTP_TOO_LARGE","HTTP_VALIDATION","HTTP_RATE_LIMITED","HTTP_SERVER_ERROR","HTTP_GATEWAY_ERROR","HTTP_UNAVAILABLE","HTTP_GATEWAY_TIMEOUT"],"encoding":["NOT_OBSERVED","IDENTITY","GZIP","ZSTD","BROTLI","OTHER"],"content_length":["NOT_OBSERVED","ABSENT","INVALID","ZERO","TOO_LARGE","POSITIVE_WITHIN_LIMIT"]} .items()}
+
+
+def download_projection(value):
+    if not isinstance(value,dict): return None
+    fallbacks={'target':'UNCLASSIFIED','substep':'UNCLASSIFIED','inspector':'UNCLASSIFIED',
+               'response':'HTTP_OTHER_OR_UNAVAILABLE','encoding':'OTHER','content_length':'INVALID'}
+    return {key:value[key] if isinstance(value.get(key),str) and value[key] in allowed else fallbacks[key]
+            for key,allowed in DOWNLOAD_ENUMS.items()}
+
+
 def failure_projection(report, evidence):
     output={'scope':'diagnostic_only_no_controls_pass','completed_steps':0,'failed_step':None,
             'clock_observations':0,'downloads':0,'restrictions':0,'report':'unavailable','error_classes':[],'source_locations':[]}
     try:
         if evidence.is_file() and not evidence.is_symlink() and evidence.stat().st_size<=4*1024*1024:
             body=json.loads(evidence.read_text())
+            phase=download_projection(body.get("download_diagnostic"))
+            if phase is not None: output["download_phase"]=phase
             for index,row in enumerate(body.get('steps',[])[:len(STEPS)]):
                 if row.get('name')!=STEPS[index]: break
                 if row.get('result')=='PASS': output['completed_steps']+=1
@@ -81,3 +94,16 @@ def failure_projection(report, evidence):
         output['source_locations']=[{'file':name,'line':line} for name,line in sorted(locations)[:12]]
     except Exception: output['report']='projection_incomplete'
     return output
+
+
+def file_presence(artifact_dir):
+    """Eight fixed names inside this invocation's owned artifact folder; no reads."""
+    result={}
+    for kind in ('shift','order'):
+        for format in ('pdf','xlsx'):
+            for label,name in [('saved',f'saved-{kind}.{format}'),('expected',f'expected-{kind}-{format}.json')]:
+                file=artifact_dir/name
+                try: present=not file.is_symlink() and file.is_file()
+                except OSError: present=False
+                result[f'{kind}_{format}_{label}']=bool(present)
+    return result

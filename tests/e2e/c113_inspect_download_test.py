@@ -3,7 +3,9 @@ from copy import deepcopy
 from dataclasses import replace
 from datetime import datetime, timezone
 from decimal import Decimal
-from io import BytesIO
+from io import BytesIO, StringIO
+from contextlib import redirect_stdout
+import json
 import importlib.util
 from pathlib import Path
 import re
@@ -123,6 +125,17 @@ class InspectionContracts(unittest.TestCase):
         self.assertTrue(m.inspect(fake(),'pdf',expected())['content_valid'])
         for data in (fake(invisible=True),fake(orphan=True),fake(white=True),fake(zero=True),fake(offpage=True),fake(cropped=True),fake(rotated=True),fake(transparent=True)):
             with self.assertRaises(Exception):m.inspect(data,'pdf',expected())
+
+    def test_failure_diagnostic_is_fixed_and_does_not_echo_private_input(self):
+        private='DUMMY_PRIVATE_SENTINEL'
+        m.checkpoint(private)
+        self.assertEqual(m._stage,'UNCLASSIFIED')
+        output=StringIO()
+        with patch.object(sys,'argv',['inspector',private,'pdf',private]), patch.object(m,'bounded_file',side_effect=ValueError(private)), redirect_stdout(output):
+            self.assertEqual(m.main(),2)
+        row=json.loads(output.getvalue())
+        self.assertEqual(row,{'status':'BLOCKED','code':'C113_DOWNLOAD_INSPECTION_FAILED','stage':'READ_EXPECTED_FILE'})
+        self.assertNotIn(private,output.getvalue())
 
     def test_inspector_has_no_external_process_dependency_or_private_environment(self):
         source=Path(m.__file__).read_text()

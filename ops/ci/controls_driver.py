@@ -7,7 +7,7 @@ import shutil
 import subprocess
 
 from controls_profile import ControlsBlocked
-from controls_diagnostics import failure_projection
+from controls_diagnostics import failure_projection, file_presence
 
 TITLE='C113 real protected downloads and demo clock'
 STEPS=('fresh history database corroborated','separate authenticated mobile sessions',
@@ -91,6 +91,7 @@ def execute_controls(root,env,private,cli,summary):
         except Exception: pass
         if runner_code or gate.returncode or receipt.get('status')!='PASS':
             summary['controls_diagnostic']=failure_projection(report,evidence)
+            summary['controls_diagnostic']['file_presence']=file_presence(folder)
             raise ControlsBlocked('C113_REAL_CONTROLS_OR_EVIDENCE_GATE_FAILED')
         if evidence.is_symlink() or evidence.stat().st_size>4*1024*1024:
             raise ControlsBlocked('C113_BOUNDED_EVIDENCE_REQUIRED')

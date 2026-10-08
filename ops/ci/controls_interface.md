@@ -1,6 +1,6 @@
 # C113 isolated clock controls and download acceptance seam
 
-Source-ready binding: C11380e59f8a802d4e6bf78e6f7e08355d394ea782db against
+Source-ready binding: C113e92f80bac8011fef917dfa0685470475e67ea151 against
 frontendfaef5d3d8b4c640fae013dbfa78074382e512e8f. Actual C113 execution is
 pending. The final C110/C112 acceptance on77ea58 remains separate evidence.
 
@@ -84,3 +84,5 @@ the owned artifact tree. The public JSON summary distinguishes actual Chromium
 file saving under Android emulation from physical devices or native viewer apps.
 The separate executor observer receives no owner input; the file inspector
 receives no observer/PIN environment. Cleanup failure fails the workflow.
+
+The first43cd9ca runtime result remains FAIL after four stages/six clock observations. The accepted diagnostic source adds fixed report/download/transport/inspector phases without changing predicates. CI projects only those fixed categories plus eight fixed saved/expected-file presence booleans before cleanup; no paths, headers, sizes, contents or raw errors are published. A fresh proof/run on this source is required.

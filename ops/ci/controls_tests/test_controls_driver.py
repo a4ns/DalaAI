@@ -10,7 +10,7 @@ from controls_profile import ControlsBlocked,HISTORY_VERSION,HISTORY_DIGEST
 from controls_driver import secrecy_preflight,execute_controls
 from controls_runner import clock_instance
 from controls_observer_python import command_for
-from controls_diagnostics import failure_projection,STEPS
+from controls_diagnostics import failure_projection, file_presence, download_projection,STEPS
 
 MASTER='8d27067c-4e86-50a2-87c4-f1012f53a2bb'; EXECUTOR='37baa480-be02-54bc-837c-6c0b2a00ec12'
 INSTANCE='a22d4edf-340d-4a81-a84a-670cc95910e6'
@@ -86,6 +86,29 @@ class ControlsDriver(unittest.TestCase):
             result=failure_projection(Path(d)/'none',p)
             self.assertEqual((result['completed_steps'],result['failed_step'],result['clock_observations'],result['downloads'],result['restrictions']),(1,2,6,4,6))
             self.assertNotIn('CANARY',json.dumps(result))
+    def test_file_presence_has_only_eight_fixed_booleans(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d);(p/'saved-shift.pdf').write_bytes(b'CANARY');(p/'expected-shift-pdf.json').write_text('CANARY')
+            (p/'private-secret').write_text('CANARY')
+            result=file_presence(p)
+            self.assertEqual(len(result),8);self.assertTrue(result['shift_pdf_saved']);self.assertTrue(result['shift_pdf_expected'])
+            self.assertTrue(all(type(v) is bool for v in result.values()))
+            self.assertNotIn('CANARY',json.dumps(result));self.assertNotIn(d,json.dumps(result));self.assertNotIn('private-secret',json.dumps(result))
+    def test_file_presence_does_not_follow_links(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d);(p/'target').write_text('CANARY');(p/'saved-order.xlsx').symlink_to(p/'target')
+            self.assertFalse(file_presence(p)['order_xlsx_saved'])
+    def test_c_download_phase_retains_only_fixed_categories(self):
+        row={'target':'SHIFT_PDF','substep':'RUN_INSPECTOR','response':'HTTP_OK','encoding':'IDENTITY',
+             'content_length':'POSITIVE_WITHIN_LIMIT','inspector':'PDF_CONTENT'}
+        self.assertEqual(download_projection(row),row)
+    def test_c_download_phase_drops_raw_or_malformed_values(self):
+        row={'target':'CANARY','substep':{'secret':'CANARY'},'response':200,'encoding':'secret-CANARY',
+             'content_length':12345,'inspector':'CANARY','raw_header':'CANARY'}
+        result=download_projection(row)
+        self.assertEqual(set(result),{'target','substep','response','encoding','content_length','inspector'})
+        self.assertNotIn('CANARY',json.dumps(result));self.assertNotIn('12345',json.dumps(result))
+        self.assertEqual(result['content_length'],'INVALID')
     def test_fixed_error_locations_only(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'r.json';p.write_text(json.dumps({'errors':[{'message':'CANARY','location':{'file':'c113_download_clock.spec.cjs','line':141}}]}))

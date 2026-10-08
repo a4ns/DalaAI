@@ -17,3 +17,13 @@
 
 The final exact source commit and source-check totals are supplied in the handoff.
 No credential files or runtime artifacts are included in this source package.
+
+## A0-0085 diagnosis-only delta
+
+First A-owned runtime on main `43cd9ca` / run `37716832135` established four
+passing stages, including six clock observations and historical selection.
+The shift-export stage failed before a completed download row was recorded;
+this does not locate the failure or prove that no bytes arrived. Added fixed
+bounded download/transport/inspector-stage diagnosis without relaxing the gate,
+file validation, network counts or privacy requirements. Runtime rerun and a
+new exact-source secrecy receipt remain A-owned; no local runtime executed.
