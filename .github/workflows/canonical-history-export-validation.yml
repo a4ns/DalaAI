@@ -1,0 +1,73 @@
+name: Canonical history exports (isolated six-test reproduction)
+'on':
+  push:
+    branches: [validation/canonical-history-exports-20261008]
+permissions:
+  contents: read
+concurrency:
+  group: canonical-history-export-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline-canonical-exports:
+    if: github.ref == 'refs/heads/validation/canonical-history-exports-20261008'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 743474bcb60212c98c0d2b28776164467d5f67bf
+          path: .ci-canonical-source
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 038bcb06351b187301614d9f18cef49fa27b96df
+          path: .ci-canonical-current
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.15'
+      - name: Check immutable source, unchanged core and private-output safety
+        run: |
+          python ops/ci/canonical_history_export_tests.py
+          python ops/ci/canonical_history_export_gate.py --source .ci-canonical-source --current .ci-canonical-current --check-inputs
+      - name: Install official fonts and the existing locked export closure
+        timeout-minutes: 10
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y fonts-dejavu-core
+          test -r /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+          test -r /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
+          python -m venv "$RUNNER_TEMP/dalaai-canonical-python"
+          "$RUNNER_TEMP/dalaai-canonical-python/bin/python" -m pip install --disable-pip-version-check --no-deps -r ops/ci/canonical_history_export_requirements.lock
+          "$RUNNER_TEMP/dalaai-canonical-python/bin/python" -m pip check
+      - name: Execute the six unchanged tests once with their real renderer bounds
+        timeout-minutes: 3
+        run: python ops/ci/canonical_history_export_gate.py --source .ci-canonical-source --current .ci-canonical-current --python "$RUNNER_TEMP/dalaai-canonical-python/bin/python"
+      - name: Record bounded offline scope
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path('canonical-history-export-summary.json')
+          value=json.loads(p.read_text()) if p.is_file() else {}
+          status=value.get('status','BLOCKED')
+          if status not in {'PASS','FAIL','BLOCKED'}:status='BLOCKED'
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
+              out.write('Canonical history export reproduction: '+status+'\n\n')
+              out.write('Six unchanged offline tests, real six-second renderer, existing caps and exact locked export dependencies.\n')
+              out.write('No API/DB/provider, browser capture, real photo, physical-device or deployment acceptance. A timeout remains failure.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: canonical-history-export-${{ github.sha }}-${{ github.run_attempt }}
+          path: canonical-history-export-summary.json
+          if-no-files-found: ignore
+          retention-days: 7
