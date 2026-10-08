@@ -1,0 +1,79 @@
+name: Instrumented body capture diagnostic only
+'on':
+  push:
+    branches: [validation/body-capture-probe-20261008]
+permissions:
+  contents: read
+concurrency:
+  group: body-capture-probe-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  diagnostic-only:
+    if: github.ref == 'refs/heads/validation/body-capture-probe-20261008'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 1594a930de4b9f15d11dd35bbc59e5b4b0b1d964
+          path: .ci-body-probe-frontend-reference
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.15'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Set explicit installed Chromium locator
+        run: printf 'PLAYWRIGHT_BROWSERS_PATH=%s/dalaai-body-probe-playwright\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Install locked validation dependencies and official Chromium
+        timeout-minutes: 10
+        run: |
+          python -m pip install -r backend/requirements.lock -r backend/requirements-dev.lock
+          python -m pip check
+          npm ci --prefix tests/e2e --ignore-scripts
+          node tests/e2e/node_modules/@playwright/test/cli.js install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libnss3-tools
+          docker compose version
+      - name: Verify immutable probe and isolated wiring
+        run: |
+          python -m unittest discover -s ops/ci/tests -v
+          python -m unittest discover -s ops/ci/controls_tests -v
+          python ops/ci/body_probe_tests.py
+          python ops/ci/body_probe_runner.py --check-inputs
+          node --test tests/e2e/body_capture_probe/*.test.cjs
+      - name: Fresh independent privacy proof and instrumented body diagnostic
+        run: python ops/ci/body_probe_runner.py
+      - name: Record diagnostic scope
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path('body-probe-summary.json')
+          result=json.loads(p.read_text()) if p.is_file() else {}
+          status=result.get('status','BLOCKED')
+          if status not in {'DIAGNOSTIC_COMPLETE','INCONCLUSIVE','BLOCKED'}: status='BLOCKED'
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
+              out.write('INSTRUMENTED_DIAGNOSTIC_ONLY: '+status+'\n\n')
+              out.write('C113 acceptance remains NOT_ESTABLISHED. Original failed run 37726366034 is preserved.\n')
+              out.write('Extra promise observers and byte copying change timing; no uninstrumented reliability claim follows.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: instrumented-body-diagnostic-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            body-probe-summary.json
+            body-probe-evidence.json
+          if-no-files-found: ignore
+          retention-days: 7
