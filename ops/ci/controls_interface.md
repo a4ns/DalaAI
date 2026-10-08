@@ -1,7 +1,7 @@
 # C113 isolated clock controls and download acceptance seam
 
-Source-ready binding: C113 `16175cf561af217b6e200fff45ba1c066b23a7b4` against
-frontend `d78b9c3b7cabbcbd05b01df77f2a7ec57739afe5`. Actual C113 execution is
+Source-ready binding: C113 `6c6627c4280b3f5275a939759c90e6e8a6b34bc6` against
+frontend `da83e9c417a7c6bf7e91b5100e8f2d7616d9f24e`. Actual C113 execution is
 pending for this reviewed combined UI product. Final C110/C112 acceptance remains separate evidence.
 
 A5 reserved `.github/workflows/controls-mobile-e2e.yml` and new `ops/ci/controls_*`
@@ -156,3 +156,9 @@ and unchanged actual C gates after authorized publication. The focused mounted
 App gate uses synthetic HTTP and desktop production preview. Earlier 5368 C110
 and C112 passes, C113 capture failure and all prior evidence remain preserved.
 The command-eligibility change does not establish a capture reliability repair.
+
+The analytics-expiry privacy correction requires fresh source-bound proofs and
+unchanged actual C gates for its exact product. The fourteen focused source
+cases and independent real-timer checks remain separate from browser evidence.
+Earlier 7985 C110/C112/C113 passes and historical intermittent capture failures
+retain their exact-head scope; this correction makes no capture-repair claim.
