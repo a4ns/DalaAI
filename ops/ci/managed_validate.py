@@ -25,6 +25,7 @@ import urllib.request
 from uuid import uuid4
 
 from fixtures import prepare_private, prepare_tls, write_private
+from managed_observe import STAGES as OBSERVER_STAGES, ERROR_TYPES as OBSERVER_ERRORS
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
@@ -49,7 +50,7 @@ def clean_environment():
     return result
 
 
-def command(argv, *, env, timeout=300, code='COMMAND_FAILED', output=False):
+def command(argv, *, env, timeout=300, code='COMMAND_FAILED', output=False, failure_json=False):
     # Spool privately instead of retaining unbounded build logs or printing them.
     with tempfile.TemporaryFile() as capture:
         try:
@@ -57,13 +58,20 @@ def command(argv, *, env, timeout=300, code='COMMAND_FAILED', output=False):
                                     stderr=capture, timeout=timeout, check=False)
         except subprocess.TimeoutExpired:
             raise GateFailure(code + '_TIMEOUT') from None
-        require(result.returncode == 0, code)
+        require(result.returncode == 0 or (failure_json and output and result.returncode == 1), code)
         if not output:
             return None
         size = capture.tell()
         require(size <= 2_000_000, 'BOUNDED_COMMAND_OUTPUT_EXCEEDED')
         capture.seek(0)
-        return capture.read().decode('utf-8')
+        text = capture.read().decode('utf-8')
+        if result.returncode != 0:
+            try:
+                diagnostic = json.loads(text)
+            except Exception:
+                raise GateFailure('OBSERVER_DIAGNOSTIC_INVALID') from None
+            require(type(diagnostic) is dict and diagnostic.get('status') == 'FAIL', code)
+        return text
 
 
 def compose_command(project, private):
@@ -212,6 +220,22 @@ def validate_snapshot(data):
     return data
 
 
+def observe(argv, *, env, report, code):
+    raw = command(argv, env=env, output=True, failure_json=True, code=code)
+    try:
+        data = json.loads(raw)
+    except Exception:
+        raise GateFailure('OBSERVER_DIAGNOSTIC_INVALID') from None
+    if data.get('status') == 'FAIL':
+        require(set(data) == {'status','code','stage','error_type'}
+                and data['code'] == 'MANAGED_OBSERVER_FAILED'
+                and data['stage'] in OBSERVER_STAGES and data['error_type'] in OBSERVER_ERRORS,
+                'OBSERVER_DIAGNOSTIC_INVALID')
+        report['observer_failure'] = {key: data[key] for key in ('stage','error_type')}
+        raise GateFailure(code)
+    return validate_snapshot(data)
+
+
 def run(report):
     for tool in ('docker', 'openssl', 'certutil'):
         if not shutil.which(tool):
@@ -278,11 +302,10 @@ def run(report):
             report['smoke'] = validate_smoke(json.loads(smoke_file.read_text()), report['source_sha'])
             report['stage'] = 'actual_image_processes_and_persistence'
             probe = compose + ['exec', '-T', '--user', '0:0', 'managed', 'python', '/ci/managed_observe.py']
-            before = validate_snapshot(json.loads(command(probe + ['--initialize-budget'], env=env, output=True,
-                                                           code='INITIAL_OBSERVER_FAILED')))
+            before = observe(probe + ['--initialize-budget'], env=env, report=report, code='INITIAL_OBSERVER_FAILED')
             command(compose + ['restart', '--timeout', '90', 'managed'], env=env, timeout=150, code='RESTART_FAILED')
             wait_ready(private / 'tls/root.crt')
-            after = validate_snapshot(json.loads(command(probe, env=env, output=True, code='RESTART_OBSERVER_FAILED')))
+            after = observe(probe, env=env, report=report, code='RESTART_OBSERVER_FAILED')
             require(before == after, 'PERSISTED_STATE_CHANGED_ON_RESTART')
             report.update(persistence='PASS_DB_PHOTO_OFFLINE_BUDGET_RESERVATION',
                           process_boundary=after['processes'], counts=after['counts'],

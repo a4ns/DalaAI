@@ -121,6 +121,32 @@ class ManagedValidationTests(unittest.TestCase):
         self.assertEqual(m.readiness_error(HTTPError('https://localhost',503,'secret fixture',None,None)),'HTTP_STATUS_503')
         self.assertNotIn('secret',m.readiness_error(RuntimeError('secret fixture')))
 
+    def test_observer_failure_is_bounded_and_never_passes(self):
+        report={}
+        failure={'status':'FAIL','code':'MANAGED_OBSERVER_FAILED','stage':'process_api_environment','error_type':'PermissionError'}
+        with patch.object(m,'command',return_value=json.dumps(failure)),self.assertRaises(m.GateFailure):
+            m.observe(['fixture'],env={},report=report,code='INITIAL_OBSERVER_FAILED')
+        self.assertEqual(report['observer_failure'],{'stage':'process_api_environment','error_type':'PermissionError'})
+        failure['secret']='do-not-print'
+        with patch.object(m,'command',return_value=json.dumps(failure)),self.assertRaises(m.GateFailure):
+            m.observe(['fixture'],env={},report={},code='INITIAL_OBSERVER_FAILED')
+
+    def test_nonzero_probe_cannot_return_a_passing_snapshot(self):
+        from types import SimpleNamespace
+        def failed_run(*args,**kwargs):
+            kwargs['stdout'].write(json.dumps(snapshot()).encode())
+            return SimpleNamespace(returncode=1)
+        with patch.object(m.subprocess,'run',side_effect=failed_run),self.assertRaises(m.GateFailure):
+            m.command(['fixture'],env={},output=True,failure_json=True,code='OBSERVER_FAILED')
+
+    def test_observer_exception_text_never_reported(self):
+        import managed_observe as observer
+        with patch.object(observer,'STAGE','photo_read'):
+            result=observer.failure_report(PermissionError('do-not-print-secret'))
+        self.assertEqual(result['error_type'],'PermissionError')
+        self.assertNotIn('do-not-print',json.dumps(result))
+        self.assertEqual(set(result),{'status','code','stage','error_type'})
+
     def test_blueprint_default_has_no_test_localhost_gate(self):
         source=(HERE.parent/'managed/render.yaml.example').read_text()
         self.assertNotIn('DALA_MANAGED_TEST_LOCALHOST',source)
