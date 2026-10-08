@@ -1,0 +1,68 @@
+name: Final B source and synthetic Android rendering
+'on':
+  push:
+    branches: [validation/final-ui-20261008]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: final-ui-synthetic-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  final-b-fixtures:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: faef5d3d8b4c640fae013dbfa78074382e512e8f
+          path: .ci-final-b
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12.15'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Verify synthetic-only gate and exact final B source
+        run: |
+          python -m unittest discover -s ops/ci/final_ui_tests -v
+          python ops/ci/final_ui_synthetic.py --source .ci-final-b --check-inputs
+          printf 'PLAYWRIGHT_BROWSERS_PATH=%s/dalaai-final-b-browser\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Install locked frontend and matching official Chromium
+        run: |
+          npm ci --prefix .ci-final-b/frontend
+          node .ci-final-b/frontend/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Exact B checks, 153 source cases and 13 synthetic Android cases
+        run: python ops/ci/final_ui_synthetic.py --source .ci-final-b --report final-b-synthetic-summary.json
+      - name: Publish limited evidence scope
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path('final-b-synthetic-summary.json')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as out:
+              if p.is_file():
+                  r=json.loads(p.read_text())
+                  out.write('Final B fixture gate: '+r['status']+'\n\n')
+                  out.write('Source: '+r['source_sha']+'\n\n')
+                  out.write('Stage: '+r['stage']+'\n\n')
+              else: out.write('Final B fixture gate: BLOCKED before executable gate\n\n')
+              out.write('Clock controls: source fixtures/static rendering only. Downloads: synthetic bytes/injected save ports only.\n')
+              out.write('Browser: existing 13 fixture cases with Pixel9 Android emulation. No real API/DB, physical device, push, native save or live clock mutation proof.\n')
+              out.write('C110/C112 are not invoked or repinned by this workflow.\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: final-b-synthetic-${{ github.sha }}
+          path: final-b-synthetic-summary.json
+          if-no-files-found: ignore
+          retention-days: 7
