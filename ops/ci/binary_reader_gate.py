@@ -177,7 +177,9 @@ def source_only_probes(source,env):
 
 
 def execute(source,browser,env):
-    with tempfile.TemporaryDirectory(prefix='dalaai-binary-private-') as private:
+    # Chromium adds its own directory and SingletonSocket below the producer's
+    # browser TMPDIR. Keep this fresh 0700 parent short enough for Linux sun_path.
+    with tempfile.TemporaryDirectory(prefix='db-',dir='/tmp') as private:
         child_env=dict(env,TMPDIR=private)
         child=subprocess.Popen(['node',str(ROOT/'ops/ci/binary_reader_sources/dalaai-public-binary-reader-probe.cjs'),str(source/'frontend'),str(browser)],cwd=private,env=child_env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True)
         try:stdout,_=child.communicate(timeout=180)

@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import unittest
 from unittest.mock import patch
-from binary_reader_gate import SOURCES,READER_SHA,CANDIDATE_SHA,PAYLOADS,LIMIT,PAIRS,projection,environment,dummy_safety_check
+from binary_reader_gate import SOURCES,READER_SHA,CANDIDATE_SHA,PAYLOADS,LIMIT,PAIRS,projection,environment,dummy_safety_check,execute
 
 
 def example():
@@ -76,6 +76,24 @@ class Comparison(unittest.TestCase):
     def test_all_author_sources_are_byte_identical(self):
         import hashlib
         for name,digest in SOURCES.items():self.assertEqual(hashlib.sha256((Path(__file__).parent/'binary_reader_sources'/name).read_bytes()).hexdigest(),digest)
+    def test_owned_short_temp_layout_keeps_socket_budget_and_cleans_up(self):
+        seen=[]
+        class Child:
+            returncode=0
+            def __init__(self,argv,**kwargs):
+                private=Path(kwargs['env']['TMPDIR']);seen.append(private)
+                current=private.stat()
+                assert private.parent==Path('/tmp') and private.name.startswith('db-')
+                assert current.st_uid==os.getuid() and current.st_mode&0o777==0o700
+                socket=private/'dala-public-binary-browser-XXXXXX'/'.org.chromium.Chromium.XXXXXX'/'SingletonSocket'
+                assert len(os.fsencode(socket))<108
+                assert kwargs['cwd']==str(private) and kwargs['start_new_session'] is True
+            def communicate(self,timeout):
+                assert timeout==180
+                return json.dumps(example()).encode(),b'CANARY_STDERR'
+        with patch('binary_reader_gate.subprocess.Popen',Child):
+            result=execute(Path('/source'),Path('/official/chromium'),{'PATH':'/usr/bin:/bin','TMPDIR':'/untrusted/long/location'})
+        self.assertEqual(result['status'],'COMPARISON_COMPLETE');self.assertFalse(seen[0].exists());self.assertNotIn('CANARY',json.dumps(result))
 
 
 if __name__=='__main__':unittest.main()
