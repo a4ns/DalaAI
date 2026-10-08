@@ -48,6 +48,21 @@ class ManagedValidationTests(unittest.TestCase):
 
     def test_correct_config(self):m.verify_config(config(),'fixture:candidate')
 
+    def test_normalized_config_can_omit_inactive_services(self):
+        data=config()
+        for name in ('api','worker','web','photo-directory','budget-directory'):
+            data['services'].pop(name)
+        m.verify_config(data,'fixture:candidate')
+        data['services']['unexpected']={}
+        with self.assertRaises(m.GateFailure):m.verify_config(data,'fixture:candidate')
+
+    def test_config_shape_never_emits_secret_values(self):
+        data=config();data['services']['managed']['environment']['SECRET_CANARY']='do-not-print-fixture'
+        result=json.dumps(m.config_shape(data))
+        self.assertNotIn('do-not-print-fixture',result)
+        self.assertNotIn('SECRET_CANARY',result)
+        self.assertIn('command_is_default',result)
+
     def test_runtime_command_cannot_be_substituted(self):
         data=config();data['services']['managed'].update(command=None,entrypoint=None)
         m.verify_config(data,'fixture:candidate')  # Compose canonical null means image default.

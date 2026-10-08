@@ -102,8 +102,22 @@ def verify_config(config, image):
             and env['DALA_MODEL_FORCE_OFF'] == 'true', 'CAPABILITY_OR_PROVIDER_FLAGS_MISMATCH')
     require(not env.get('OPENAI_API_KEY') and not env.get('OPENAI_API_KEY_FILE'), 'PROVIDER_KEY_MUST_BE_ABSENT')
     require(not any('OWNER' in key or 'PIN' in key for key in env), 'OWNER_OR_PIN_IN_RUNTIME')
-    for name in ('api', 'worker', 'web', 'photo-directory', 'budget-directory'):
+    inactive = {'api', 'worker', 'web', 'photo-directory', 'budget-directory'}
+    require(set(services) <= inactive | {'db', 'prepare', 'managed', 'tls-edge'}, 'UNEXPECTED_COMPOSE_SERVICE')
+    # Normalized Compose may omit disabled-profile services altogether.
+    for name in inactive & set(services):
         require(services[name].get('profiles') == ['normal-demo-not-run'], 'NORMAL_COMPOSE_RUNTIME_NOT_DISABLED')
+
+
+def config_shape(config):
+    """Fixed-key structure only. Never emit commands, paths or environment values."""
+    services = config.get('services', {})
+    names = ('db', 'prepare', 'managed', 'tls-edge', 'api', 'worker', 'web', 'photo-directory', 'budget-directory')
+    managed = services.get('managed', {})
+    return {'included': {name: name in services for name in names},
+            'unexpected_service_count': len(set(services) - set(names)),
+            'command_is_default': managed.get('command') is None,
+            'entrypoint_is_default': managed.get('entrypoint') is None}
 
 
 def opener(ca):
@@ -209,6 +223,7 @@ def run(report):
             report['stage'] = 'compose_configuration'
             config = json.loads(command(compose + ['config', '--format', 'json'], env=env, output=True,
                                         code='COMPOSE_CONFIG_INVALID'))
+            report['config_shape'] = config_shape(config)
             verify_config(config, image)
             report['stage'] = 'actual_managed_image_build'
             command(compose + ['build', 'managed'], env=env, timeout=900, code='MANAGED_IMAGE_BUILD_FAILED')
@@ -279,8 +294,9 @@ def main():
         run(report)
     except GateFailure as error:
         report['blocker'] = str(error)
-    except Exception:
+    except Exception as error:
         report['blocker'] = 'UNEXPECTED_GATE_ERROR'
+        report['exception_type'] = type(error).__name__
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     print(json.dumps(report, sort_keys=True))
     return 0 if report['status'] == 'PASS' else 2 if report['status'] == 'NOT_RUN' else 1
