@@ -6,8 +6,8 @@ It never selects or changes C110's exact-one lifecycle test or existing gate.
 
 ## Frozen target and scenario
 
-- Frontend: `faef5d3d8b4c640fae013dbfa78074382e512e8f` (final B UI, per
-  [A0-0076](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050279185))
+- Frontend: `1594a930de4b9f15d11dd35bbc59e5b4b0b1d964` (reviewed deadline correction, per
+  [C0092 binding maintenance](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6051803090))
 - Harness base: `4d38c71164a56b0eeefa9eb0430eb9100bcd7a3d`
 - Exactly one test: `C112 real history analytics and protected reports`
 - Exactly one project: `c112-android-chromium`; Playwright `1.63.0`, Chromium,
