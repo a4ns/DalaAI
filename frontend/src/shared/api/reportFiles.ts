@@ -15,8 +15,12 @@ export async function readReportFile(response:Response,format:ReportFileFormat,f
   catch(error){await reader.cancel().catch(()=>undefined);throw error;}
   finally{reader.releaseLock();}
   if(size===0)throw new Error('Empty report');
-  const blob=new Blob(chunks,{type:mime});const head=new Uint8Array(await blob.slice(0,5).arrayBuffer());assertCurrent();
+  // The network body is complete. Inspect its owned bytes without another async
+  // Blob read that could leave the request deadline active after EOF.
+  const head=new Uint8Array(Math.min(size,5));let copied=0;
+  for(const chunk of chunks){const prefix=chunk.subarray(0,head.length-copied);head.set(prefix,copied);copied+=prefix.length;if(copied===head.length)break;}
+  assertCurrent();
   const valid=format==='pdf'?head.length===5&&head[0]===37&&head[1]===80&&head[2]===68&&head[3]===70&&head[4]===45:head.length>=4&&head[0]===80&&head[1]===75&&head[2]===3&&head[3]===4;
   if(!valid)throw new Error('Invalid report signature');
-  return {blob,filename};
+  return {blob:new Blob(chunks,{type:mime}),filename};
 }

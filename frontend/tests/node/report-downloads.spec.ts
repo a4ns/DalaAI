@@ -42,6 +42,119 @@ async function prepared(send: (url: string) => Promise<Response> = async () => f
   return { client, fake, download, denied, detach, changeContext: () => { current = false; } };
 }
 
+/** Control only the client's existing 15-second timer; leave runner timers alone. */
+function requestDeadline() {
+  const originalSet = globalThis.setTimeout; const originalClear = globalThis.clearTimeout;
+  const handle = {} as ReturnType<typeof setTimeout>; let callback: (() => void) | null = null; let scheduled = 0;
+  globalThis.setTimeout = ((run: () => void, ms?: number, ...args: unknown[]) => {
+    if (ms !== 15000) return originalSet(run, ms, ...args);
+    scheduled++; callback = run; return handle;
+  }) as typeof setTimeout;
+  globalThis.clearTimeout = ((timer: ReturnType<typeof setTimeout>) => {
+    if (timer === handle) callback = null; else originalClear(timer);
+  }) as typeof clearTimeout;
+  return {
+    active: () => callback !== null, scheduled: () => scheduled,
+    fire() { const run = callback; callback = null; run?.(); },
+    restore() { globalThis.setTimeout = originalSet; globalThis.clearTimeout = originalClear; },
+  };
+}
+const nextTurn = () => new Promise<void>(resolve => setImmediate(resolve));
+
+test('completed binary streams do not retain the network deadline for an asynchronous Blob signature read', async () => {
+  for (const format of ['pdf', 'xlsx'] as const) {
+    let signal!: AbortSignal; let captured!: Blob; let headReads = 0;
+    const client = await signedClient(async (_url, init) => { signal = init!.signal!; return fileResponse(format); });
+    const fake = fakePort(); const create = fake.port.createUrl;
+    fake.port.createUrl = blob => { captured = blob; return create(blob); };
+    const download = new ReportDownloadController(client, shiftFixture as ShiftReport, () => true, () => undefined, fake.port);
+    const detach = download.attach(); const deadline = requestDeadline(); const delayedHead = deferred<void>();
+    const originalBuffer = Blob.prototype.arrayBuffer;
+    Blob.prototype.arrayBuffer = async function () { headReads++; await delayedHead.promise; return originalBuffer.call(this); };
+    let pending: Promise<void> | undefined;
+    try {
+      pending = download.prepare(format);
+      // The complete in-memory stream drains this turn, while the old Blob read stays gated.
+      await nextTurn(); const activeAtEof = deadline.active(); deadline.fire();
+      delayedHead.resolve(); await pending;
+      expect({ status: download.getSnapshot().status, aborted: signal.aborted, activeAtEof, headReads, scheduled: deadline.scheduled() })
+        .toEqual({ status: 'ready', aborted: false, activeAtEof: false, headReads: 0, scheduled: 1 });
+      expect(new Uint8Array(await originalBuffer.call(captured))).toEqual(format === 'pdf' ? pdf : xlsx);
+      expect(fake.saved).toEqual([]);
+    } finally {
+      delayedHead.resolve(); await pending; Blob.prototype.arrayBuffer = originalBuffer; deadline.restore(); detach();
+    }
+  }
+});
+
+test('binary deadline remains active until EOF and rejects a stalled response with no ready handoff', async () => {
+  let signal!: AbortSignal;
+  const client = await signedClient(async (_url, init) => {
+    signal = init!.signal!;
+    const stream = new ReadableStream<Uint8Array>({ start(controller) {
+      controller.enqueue(pdf);
+      signal.addEventListener('abort', () => controller.error(signal.reason), { once: true });
+    } });
+    return new Response(stream, { headers: fileResponse().headers });
+  });
+  const fake = fakePort(); const download = new ReportDownloadController(client, shiftFixture as ShiftReport, () => true, () => undefined, fake.port);
+  const detach = download.attach(); const deadline = requestDeadline();
+  try {
+    const pending = download.prepare('pdf'); await nextTurn();
+    expect(download.getSnapshot().status).toBe('loading'); expect(deadline.active()).toBe(true); expect(signal.aborted).toBe(false);
+    deadline.fire(); await pending; download.save();
+    expect(signal.aborted).toBe(true); expect(deadline.scheduled()).toBe(1); expect(deadline.active()).toBe(false);
+    expect(download.getSnapshot().status).toBe('error'); expect(fake.created).toEqual([]); expect(fake.saved).toEqual([]);
+  } finally { deadline.restore(); detach(); }
+});
+
+test('cancelled or timed-out binary reads reject even if a late stream still supplies a complete file', async () => {
+  for (const cause of ['caller', 'deadline'] as const) {
+    let signal!: AbortSignal; let finish!: () => void;
+    const client = await signedClient(async (_url, init) => {
+      signal = init!.signal!;
+      const stream = new ReadableStream<Uint8Array>({ start(controller) { finish = () => { controller.enqueue(pdf); controller.close(); }; } });
+      return new Response(stream, { headers: fileResponse().headers });
+    });
+    const caller = new AbortController(); const deadline = requestDeadline();
+    try {
+      const pending = client.getReportFile('shift', 'pdf', period, caller.signal).then(file => ({ file }), error => ({ error }));
+      await nextTurn(); if (cause === 'caller') caller.abort(); else deadline.fire();
+      expect(signal.aborted).toBe(true); finish();
+      expect(await pending).toMatchObject({ error: { name: 'ApiError' } });
+      expect(deadline.active()).toBe(false);
+    } finally { deadline.restore(); }
+  }
+});
+
+test('binary signatures span copied chunks and keep the exact original PDF or XLSX bytes', async () => {
+  for (const format of ['pdf', 'xlsx'] as const) {
+    const bytes = format === 'pdf' ? pdf : xlsx;
+    const client = await signedClient(async () => {
+      const stream = new ReadableStream<Uint8Array>({ start(controller) {
+        controller.enqueue(new Uint8Array());
+        for (const byte of bytes) controller.enqueue(new Uint8Array([255, byte, 255]).subarray(1, 2));
+        controller.close();
+      } });
+      return new Response(stream, { headers: fileResponse(format).headers });
+    });
+    const file = await client.getReportFile('shift', format, period);
+    expect(file.blob.type).toBe(REPORT_FILE_MIME[format]); expect(new Uint8Array(await file.blob.arrayBuffer())).toEqual(bytes);
+    const signatureSize = format === 'pdf' ? 5 : 4;
+    for (let size = 1; size < signatureSize; size++) {
+      const short = await signedClient(async () => fileResponse(format, `naryadai-shift.${format}`, bytes.slice(0, size)));
+      await expect(short.getReportFile('shift', format, period)).rejects.toThrow();
+    }
+    for (let index = 0; index < signatureSize; index++) {
+      const corrupt = bytes.slice(); corrupt[index] ^= 1;
+      const invalid = await signedClient(async () => fileResponse(format, `naryadai-shift.${format}`, corrupt));
+      await expect(invalid.getReportFile('shift', format, period)).rejects.toThrow();
+    }
+    const minimal = await signedClient(async () => fileResponse(format, `naryadai-shift.${format}`, bytes.slice(0, signatureSize)));
+    expect((await minimal.getReportFile('shift', format, period)).blob.size).toBe(signatureSize);
+  }
+});
+
 test('binary routes use fixed suffixes, only start/end and canonical ASCII filenames through same-origin GET', async () => {
   const calls: { url: URL; init: RequestInit }[] = []; const orderId = 'ABCDEFAB-CDEF-4ABC-8DEF-ABCDEFABCDEF';
   const client = await signedClient(async (url, init) => {
