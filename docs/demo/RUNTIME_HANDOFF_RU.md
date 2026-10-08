@@ -1,11 +1,16 @@
 # НарядAI демонстрация проверенных runtime этапов
 
-Срез **2026-10-08 02:01 UTC (07:01 UTC+5)** для владельца демонстрации.
+Срез **2026-10-08 03:17 UTC (08:17 UTC+5)** для владельца демонстрации.
 Проверены ручной UI/API/PostgreSQL цикл в Android-эмуляции, серверные
 history/rules/export/clock gates и отдельный packaged-image/restart gate.
 Final B `faef5d` на runtime `77ea58ff` теперь имеет собственные **C110/C112
 PASS**, восемь зелёных main workflow и отдельный managed PASS того же SHA.
-Новые download/demo-clock UI actions ещё ждут отдельного C113. Прежний
+Новый C113 на `34df71ec` имеет **два отдельно проверенных PASS attempts**;
+все десять workflow этого SHA зелёные на момент проверки.
+Предыдущий `e548c948` сохраняет **PASS, затем FAIL на повторе того же SHA**;
+причина не установлена, гарантии надёжности нет.
+Прежний `43cd9ca` с частичным clock UI и полным FAIL остаётся необъяснённым.
+Прежний
 `2471afde` с locator timeout сохранён как исторический FAIL. Это
 **не подтверждение всех device/provider/release gates**.
 
@@ -44,7 +49,79 @@ C110 — 6 этапов / 11 команд / 13 событий; C112 — 7 эта
 observations / 3 executor denials, 540/568/444 и неизменные business rows.
 Оба с fresh proof, trusted TLS, zero skips и cleanup. Это атрибуция нового
 run, а не перенос чисел из прежнего SHA; runtime artifacts не открывались.
-Download/save и реальные действия UI demo-clock остаются отдельным C113.
+Download/save и полная приёмка UI demo-clock остаются отдельным C113.
+
+### C113: два новых PASS attempts, прежние сбои не объявлены исправленными
+
+`34df71ec2aa49e98e7c17baf90f41789a6cb1176`, тот же frontend `faef5d`, C113
+`0d2ac5e95dcd99b11b144b7871152ed9c0033697`:
+[run 37721429331, attempt 1](https://github.com/a4ns/DalaAI/actions/runs/37721429331/job/113129722640)
+и [свежий attempt 2](https://github.com/a4ns/DalaAI/actions/runs/37721429331/job/113130793896)
+завершились success; у обоих source/setup и fresh-proof/actual clock/four-files
+acceptance step прошли. Attempt 2 завершён в 03:16:46 UTC и проверен через
+отдельный endpoint попытки, не подменяющий первый результат. Все десять
+workflow exact SHA на этом срезе завершились успешно.
+Source pins проверены в [controls manifest](https://github.com/a4ns/DalaAI/blob/34df71ec2aa49e98e7c17baf90f41789a6cb1176/ops/ci/controls_contract.json).
+Числа отдельных действий из прежнего run на этот не перенесены.
+
+[Новая диагностика](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6051298502)
+коррелирует exact request completion с фиксированным состоянием клиента,
+сохраняя byte/hash/content predicates; C0 сообщил 76 Node + 13 Python source
+checks. **Это два успешных attempts, не доказанная причина или починка прежних
+сбоев.** История PASS/FAIL ниже и ограничение надёжности остаются видимыми.
+
+### Предыдущий C113: actual PASS и неуспешный повтор того же SHA
+
+`e548c9482277f0b19e82f9959be6d25df92b5e97`, frontend `faef5d`, C113
+`e92f80bac8011fef917dfa0685470475e67ea151`:
+[run 37718867179, attempt 1](https://github.com/a4ns/DalaAI/actions/runs/37718867179/job/113121626731)
+завершился success, включая fresh-proof/clock/four-files step. По
+[bounded-отчёту A0](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6051088147):
+8 этапов, 6 clock observations, ровно 3 master UI mutations (version 0→3),
+4 browser-saved/content-inspected PDF/XLSX, 6 executor denials, неизменные
+business rows, zero skips, fresh proof, normal TLS и cleanup.
+
+Это actual Android-emulated UI/API/БД и файлы Chromium. Физический телефон,
+native Excel, hosted deployment и live providers этим не проверены.
+Изменение было diagnostics-only с прежними acceptance predicates.
+Все девять остальных workflow `e548c948` завершились успешно, однако
+отдельный свежий повтор того же SHA
+[attempt 2, job 113123763239](https://github.com/a4ns/DalaAI/actions/runs/37718867179/job/113123763239)
+завершился **FAIL**. По [bounded-отчёту A0](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6051171178):
+`SHIFT_PDF → READ_RESPONSE_BYTES`, HTTP 200, identity encoding, bounded
+Content-Length и protected MIME/disposition/CSP checks прошли; Playwright
+`response.body()` не завершился успешно. До Save и inspector выполнение не
+дошло, сохранённого файла нет; cleanup прошёл.
+
+Это нерешённый intermittent capture/transfer boundary. Сбой инструмента
+браузерной проверки и реальное прерывание ответа пока не различены.
+**Первый PASS действителен только для своего attempt; он не отменяет FAIL
+повтора и не доказывает надёжный экспорт.** Причина прежнего `43cd9ca`
+failure также не установлена. Не убирать byte/hash/content checks ради PASS.
+
+### Предыдущий C113: partial clock UI, полный FAIL сохранён
+
+На `43cd9ca5823b02eb27e59e3af252f894dcefa2f6`, том же final B `faef5d`,
+с harness `80e59f8a802d4e6bf78e6f7e08355d394ea782db`
+[run 37716832135](https://github.com/a4ns/DalaAI/actions/runs/37716832135/job/113115120902)
+завершился failure. Остальные девять workflow этого SHA — success;
+это не скрывает непройденный C113 и не меняет стабильный baseline `77ea58ff`.
+
+По [bounded-отчёту A0](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050913081),
+пройдены 4 этапа, включая 6 проверенных clock observations и выбор истории;
+completed download rows = 0, выполненные C113 restrictions = 0. Fresh proof,
+TLS, inspector import, service inventory и cleanup прошли. Этап 5 упал.
+[Уточнение границы](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050919978):
+этот этап сначала открывает/проверяет shift JSON report, затем вызывает
+Prepare/Save/inspection PDF/XLSX. Поэтому wrapper location не доказывает
+даже вход в download helper, а отсутствие completed row не доказывает,
+что bytes не пришли. Внутренняя причина этим run не установлена.
+
+Это partial actual Android-emulated clock UI evidence, **не PASS четырёх
+сохранённых файлов или полного clock/download сценария**. Защищённые
+server exports и C112 restrictions сохраняют свои отдельные доказательства.
+Новый [v3 snapshot](../evidence/run/runtime-20261008-v3.json) дополняет,
+а не переписывает [стабильный v2](../evidence/run/runtime-20261008-v2.json).
 
 ### Предыдущая полная аналитика B9a
 
@@ -105,7 +182,7 @@ test-ledger reservation, cleanup прошёл. «Файл фото» здесь 
 нативную камеру или доказательство реального ремонта. Это disposable CI,
 не hosted deployment и не проверка физического телефона/live provider.
 
-### Что ещё ожидает runtime-подтверждения
+### Граница source, synthetic и runtime evidence
 
 - Final B `faef5d3d8b4c640fae013dbfa78074382e512e8f` —
   [source handoff](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6049790608):
@@ -120,7 +197,12 @@ test-ledger reservation, cleanup прошёл. «Файл фото» здесь 
   должен проверить существующие download/time controls. Его
   [source handoff](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050602139)
   `80e59f8a802d4e6bf78e6f7e08355d394ea782db` имеет сообщённые C0 70 Node +
-  12 Python source checks. Actual runtime пока NOT_RUN; handoff не даёт PASS.
+  12 Python source checks. Его actual run `43cd9ca` завершился частичным
+  результатом и полным FAIL, подробно выше. Отдельный diagnosis-only
+  [handoff `e92f80ba`](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050952523)
+  имеет 71 Node + 13 Python source checks; на `e548c948` actual attempt 1
+  PASS, attempt 2 FAIL. После следующей диагностики `0d2ac5e9` новый
+  `34df71ec` attempts 1 и 2 PASS; root cause прежних сбоев остаётся неустановленным.
 
 Новые [метаданные, source bindings и границы](../evidence/run/runtime-20261008-v2.json)
 сохранены отдельно от исторического JSON. Ни один старый failure не переписан.
@@ -191,7 +273,13 @@ GitHub artifact expires `2026-10-14T22:43:55Z`.
    другой собранный кандидат требует своей проверки.
 5. **2:25–3:00.** Назвать ограничения: эмуляция, synthetic PNG и история;
    rules fallback не оценивает смысл ремонта моделью. Server PDF/XLSX
-   проверены отдельно, native save ещё нет. Физические телефоны, live model
+   проверены отдельно; Chromium save/inspection имеют новый PASS и историю
+   неуспешного повтора. Live-экспорт добавлять только после успешной
+   операторской проверки текущего экземпляра, раскрывая этот риск.
+   Если проверка не прошла, убрать live-экспорт и показать явно названное
+   exact CI или offline synthetic evidence; не обещать сохранённые файлы
+   и не скрывать failure.
+   Физические телефоны, live model
    и доставка требуют своих gates.
 
 Для расширенного показа сохранить весь подтверждённый порядок:
@@ -269,8 +357,8 @@ AI score человеческой оценкой, историческую по�
   и отдельный managed image; финальный B имеет собственную приёмку
 - [ ] Оператор использует именно проверенный `77ea58ff/faef5d` либо
   следующий кандидат с собственными C110/C112; старые PASS не перенесены
-- [ ] Native PDF/XLSX save/open и реальные UI clock controls проверены отдельно;
-  серверные экспорты/clock и source tests не заменяют эти действия
+- [ ] Оператор повторил экспорт на своём exact instance; новый `34df71ec`
+  PASS не выдан за объяснение/починку прежних `e548c948` PASS/FAIL
 - [ ] Timed rehearsal и видео имеют реальные артефакты либо явно NOT_RUN
 - [ ] Физический Android, камера, upload SLA, phone push и реальная модель
   предъявлены только со своими evidence; ручной core не даёт им PASS

@@ -10,8 +10,12 @@
 [срез 8 октября v2](runtime-20261008-v2.json) содержит публичные CI-метаданные
 и явно атрибутированные bounded-отчёты. Final `77ea58ff/faef5d` имеет свежие
 C110/C112 PASS; прежние `347119c4/B9a` PASS и `2471afde` FAIL сохранены.
-C113 downloads/clock остаётся отдельным gate. Это не локальный повтор
-runtime со стороны C-106.
+C113 downloads/clock остаётся отдельным gate.
+[V3 snapshot](runtime-20261008-v3.json) сохраняет первый `43cd9ca` FAIL и
+`e548c948` attempt 1 PASS и attempt 2 FAIL перед Save/inspection, а также
+новые `34df71ec` attempts 1 и 2 PASS. Причины прежних сбоев не установлены;
+зелёные attempts не являются доказательством общей надёжности или repair.
+V2 сохранён без изменений. Это не локальный повтор runtime со стороны C-106.
 Сценарий показа: [runtime handoff](../../demo/RUNTIME_HANDOFF_RU.md).
 
 ## Статусы и уровни
