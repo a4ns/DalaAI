@@ -115,13 +115,20 @@ def read_demo_policy(path):
     return strict_json(raw,cap=1_048_576)
 
 INTERACTIVE_SCHEMA='authorized-demo-processing-1'
+INTERACTIVE_PURPOSE='closure_text_and_before_after_images'
+INTERACTIVE_REPORTS_PURPOSE='closure_text_before_after_images_and_grounded_reports'
 PROCESSING_DISCLOSURE=(
     'Текст результата и выбранные фото демонстрационного наряда отправляются в OpenAI '
     'для проверки соответствия и сравнения до/после. Синтетичность содержимого загрузок '
     'не подтверждена автоматически. Модель рекомендует; решение принимает мастер.')
+REPORTS_PROCESSING_DISCLOSURE=(PROCESSING_DISCLOSURE+
+    ' По отдельному запросу мастера в OpenAI также передаются доступные ему факты '
+    'демонстрационного отчёта для краткой сводки. Сводка модели не изменяет наряды '
+    'и не подтверждает качество или безопасность работ.')
 
 
-def build_interactive_demo_policy(*,project_id,instance_id,expires_at=DEFAULT_DEMO_POLICY_EXPIRES_AT,settings=None):
+def build_interactive_demo_policy(*,project_id,instance_id,expires_at=DEFAULT_DEMO_POLICY_EXPIRES_AT,settings=None,
+                                  include_grounded_reports=False):
     """Human/operator setup within owner's approved interactive demo scope.
 
     No per-order/content approval is required after this explicit bounded policy.
@@ -129,6 +136,8 @@ def build_interactive_demo_policy(*,project_id,instance_id,expires_at=DEFAULT_DE
     authorization and establish this is the named isolated demo, not production.
     """
     from .model_adapter import DemoProjectContext
+    if type(include_grounded_reports) is not bool:
+        raise InputValidationError('DEMO_POLICY_PURPOSE_INVALID')
     project=DemoProjectContext(project_id,instance_id)
     if not isinstance(expires_at,datetime) or expires_at.tzinfo is None or expires_at.utcoffset() is None:
         raise InputValidationError('DEMO_POLICY_EXPIRY_REQUIRED')
@@ -137,9 +146,10 @@ def build_interactive_demo_policy(*,project_id,instance_id,expires_at=DEFAULT_DE
         'project_id':project.project_id,'instance_id':project.instance_id,
         'settings_fingerprint':settings.fingerprint,
         'expires_at':expires_at.astimezone(timezone.utc).isoformat().replace('+00:00','Z'),
-        'purpose':'closure_text_and_before_after_images','authenticated_submissions_only':True,
+        'purpose':INTERACTIVE_REPORTS_PURPOSE if include_grounded_reports else INTERACTIVE_PURPOSE,
+        'authenticated_submissions_only':True,
         'image_egress':True,'source_provenance':'authenticated_demo_submission_content_unverified',
-        'processing_disclosure':PROCESSING_DISCLOSURE,
+        'processing_disclosure':REPORTS_PROCESSING_DISCLOSURE if include_grounded_reports else PROCESSING_DISCLOSURE,
         'total_microusd':budget.total_microusd,'period_microusd':budget.period_microusd,
         'night_ends_at':NIGHT_ENDS_AT.isoformat().replace('+00:00','Z')}
 
@@ -154,10 +164,11 @@ def load_interactive_demo_policy(policy,*,settings,ledger,project_context,runtim
             or runtime_mode!='demo' or type(project_context) is not DemoProjectContext
             or policy['project_id']!=project_context.project_id or policy['instance_id']!=project_context.instance_id
             or policy['approval_id']!=ledger.policy.approval_id or policy['settings_fingerprint']!=settings.fingerprint
-            or policy['purpose']!='closure_text_and_before_after_images'
+            or policy['purpose'] not in (INTERACTIVE_PURPOSE,INTERACTIVE_REPORTS_PURPOSE)
             or policy['authenticated_submissions_only'] is not True or policy['image_egress'] is not True
             or policy['source_provenance']!='authenticated_demo_submission_content_unverified'
-            or policy['processing_disclosure']!=PROCESSING_DISCLOSURE
+            or policy['processing_disclosure']!=(REPORTS_PROCESSING_DISCLOSURE
+                if policy['purpose']==INTERACTIVE_REPORTS_PURPOSE else PROCESSING_DISCLOSURE)
             or type(policy['total_microusd']) is not int or type(policy['period_microusd']) is not int
             or policy['total_microusd']!=ledger.policy.total_microusd or policy['total_microusd']>50_000_000
             or policy['period_microusd']!=ledger.policy.period_microusd or policy['period_microusd']>10_000_000

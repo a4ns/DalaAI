@@ -134,6 +134,9 @@ def create_app(database_probe: DatabaseProbe = check_postgres, *, settings=None,
     # Suffix export routes must precede the generic order-report UUID route.
     app.include_router(create_c_export_router(report_service))
     app.include_router(create_c_runtime_router(report_service))
+    from app.reports.ai_summary import SummaryService
+    from app.reports.ai_summary_routes import create_ai_summary_router
+    app.include_router(create_ai_summary_router(SummaryService(report_service)))
     if photo_service is not None:
         from app.photos.http import create_photo_router
         app.include_router(create_photo_router(photo_service))

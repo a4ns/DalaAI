@@ -16,11 +16,14 @@ p.add_argument('--instance-id',required=True)
 p.add_argument('--expires-at',default='2026-10-08T18:59:00Z',help='Default: Oct8 23:59 UTC+5, beyond morning enable')
 p.add_argument('--output',required=True)
 p.add_argument('--confirm-owner-authorized-demo-processing',action='store_true',required=True)
+p.add_argument('--include-grounded-reports',action='store_true',
+    help='Explicitly include owner-authorized, scoped report summaries; default remains closure/photos only')
 a=p.parse_args()
 sys.path.insert(0,str(Path(a.backend).resolve()))
-from app.ai.demo_policy import build_interactive_demo_policy,PROCESSING_DISCLOSURE
+from app.ai.demo_policy import build_interactive_demo_policy
 policy=build_interactive_demo_policy(project_id=a.project_id,instance_id=a.instance_id,
-    expires_at=datetime.fromisoformat(a.expires_at.replace('Z','+00:00')))
+    expires_at=datetime.fromisoformat(a.expires_at.replace('Z','+00:00')),
+    include_grounded_reports=a.include_grounded_reports)
 with Path(a.output).open('x',encoding='utf-8') as f:json.dump(policy,f,ensure_ascii=False,indent=2);f.write('\n')
-print(PROCESSING_DISCLOSURE)
+print(policy['processing_disclosure'])
 print('Created named-demo policy; no network or credential operation performed.')
