@@ -2,7 +2,7 @@
   "accepted": true,
   "base_sha": "5947af4c9999bbc95f6dd0542c132e528206bce3",
   "product_sha": "bbe897514e58a4b8f8b6d4f580e5273e34cb5c75",
-  "test_source_sha": "bbe897514e58a4b8f8b6d4f580e5273e34cb5c75",
+  "test_source_sha": "cebdda9b225f8544854dcc2efafdeb400e2f592d",
   "case_counts": {
     "before-photo-source": 21,
     "before-photo-android": 8
@@ -171,7 +171,7 @@
     "frontend/src/mobile/executor/ExecutorScreen.tsx": "e08acaaea358525921a632a570afe9b1e8b71f30110782eb2a077d049f7769e8",
     "frontend/src/mobile/executor/beforePhotos.ts": "ab2c9ad542611b9b3ad11177a23b9ef658652573932a5b33cf2b73c082eaff2c",
     "frontend/src/mobile/executor/types.ts": "cded3b49c8c99fba145502bbe8a88e4b01fd44ed75b09c501ef3778f92773661",
-    "frontend/tests/browser/executor-before-photos.spec.ts": "5abce2cc4511a09e083b771a3b9b0ad00fddb938723953b0505fa6e4c4b29316",
+    "frontend/tests/browser/executor-before-photos.spec.ts": "7f8d7c77f659865c3d051095c2b17c2bba3e982f3ad4973c4c763a7cf5fd6f48",
     "frontend/tests/node/executor-before-photos.spec.ts": "ac70b00445bf63c1fe91f5a774ffb56f871984975d4e160bea235b19ddfd4bca"
   },
   "product_dependencies": {
@@ -183,6 +183,6 @@
     "frontend/vite.config.ts": "e8703fb10e4e3504d759ea9a12996d7a14b5cfb209e69cc9fc02b606ba373b1b",
     "frontend/tests/support/synthetic.ts": "46ac671e2171e184a46805413b711d8b22931dee5a16ad877a76767f1fb97939"
   },
-  "author_archive_sha256": "62e3fdca1963fecce654c815283272dd85b2ebc5a92e47f16f76e6bc62f4666d",
-  "author_source_sha": "77740a1eb67f3297da17cac9fa3d9865012aad62"
+  "author_archive_sha256": "fb2c6e13c6252ddc4cddfa4581392fe64b8910cdd05619bf4f99c06e46026d59",
+  "author_source_sha": "955f872c966de163c964066455bf529f961ef256"
 }

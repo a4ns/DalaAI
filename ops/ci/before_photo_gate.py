@@ -81,7 +81,7 @@ def rows(data):
 def verify_report(data,c,sha):
     meta=data.get('config',{}).get('metadata',{});stats=data.get('stats',{})
     if (meta.get('scope')!=SCOPE or meta.get('testSource')!=c['test_source_sha'] or meta.get('productSha')!=c['product_sha'] or meta.get('harnessSha')!=sha
-        or meta.get('androidDescriptor')!=DESCRIPTOR or data.get('errors') or stats.get('expected')!=29
+        or meta.get('serverMode')!='PRODUCTION_BUILD_PREVIEW' or meta.get('androidDescriptor')!=DESCRIPTOR or data.get('errors') or stats.get('expected')!=29
         or any(stats.get(k)!=0 for k in ('unexpected','flaky','skipped'))):raise ValueError('BEFORE_PHOTO_COMPLETE_BOUND_REPORT_REQUIRED')
     pairs=[]
     for spec,test in rows(data):
@@ -96,23 +96,50 @@ def verify_report(data,c,sha):
 def diagnostic(data,c):
     expected={(r['project'],r['file'],r['title']) for r in c['cases']};output=[]
     for spec,test in rows(data):
-        if test.get('status')=='expected':continue
+        failed=[r for r in test.get('results',[]) if r.get('status') in ('failed','timedOut','interrupted')]
+        if not failed:continue
         key=(test.get('projectName'),spec.get('file'),spec.get('title'))
         if key not in expected:continue
-        errors=[e for r in test.get('results',[]) for e in r.get('errors',[]) if isinstance(e,dict)]
+        errors=[]
+        def collect(value,depth=0):
+            if depth>8 or not isinstance(value,dict):return
+            for key in ('error','location'):
+                item=value.get(key)
+                if isinstance(item,dict):errors.append(item)
+            for key in ('errors','steps'):
+                for item in value.get(key,[])[:100] if isinstance(value.get(key),list) else []:
+                    if isinstance(item,dict):errors.append(item);collect(item,depth+1)
+        for result in failed:collect(result)
         message=' '.join(str(e.get('message','')) for e in errors)
         category='STRICT_LOCATOR' if 'strict mode violation' in message else 'TIMEOUT' if 'Timed out' in message or 'TimeoutError' in message else 'ASSERTION_OR_OPERATION_FAILED'
-        lines={int(n) for e in errors for n in re.findall(r'executor-before-photos\.spec\.ts:(\d+):\d+',str(e.get('stack',''))) if 1<=int(n)<=1000}
+        lines={int(n) for e in errors for n in re.findall(r'executor-before-photos\.spec\.ts:(\d+):\d+',str(e.get('stack',''))+' '+str(e.get('message',''))) if 1<=int(n)<=1000}
+        for error in errors:
+            locations=[error,error.get('location',{})]
+            for location in locations:
+                if isinstance(location,dict) and Path(str(location.get('file',''))).name=='executor-before-photos.spec.ts' and type(location.get('line')) is int and 1<=location['line']<=1000:lines.add(location['line'])
         line=spec.get('line')
         if type(line) is int and 1<=line<=1000:lines.add(line)
         output.append({'project':key[0],'case':key[2],'category':category,'source_lines':sorted(lines)[:5]})
     return output[:3]
 
 
+def progress(data,c):
+    expected={(r['project'],r['file'],r['title']) for r in c['cases']};seen=set()
+    output={p:{'passed':0,'failed':0,'skipped':0,'not_run':0} for p in COUNTS}
+    for spec,test in rows(data):
+        key=(test.get('projectName'),spec.get('file'),spec.get('title'))
+        if key not in expected or key in seen:continue
+        seen.add(key);results=test.get('results',[]);status=results[-1].get('status') if results else None
+        category='passed' if status=='passed' else 'failed' if status in ('failed','timedOut','interrupted') else 'skipped' if status=='skipped' else 'not_run'
+        output[key[0]][category]+=1
+    for project,_,_ in expected-seen:output[project]['not_run']+=1
+    return output
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--source',type=Path,required=True);parser.add_argument('--check-inputs',action='store_true');args=parser.parse_args();source=args.source.resolve()
     summary={'schema_version':1,'status':'BLOCKED','stage':'exact_source','scope':SCOPE,'observed_at':datetime.now(timezone.utc).isoformat(),
-        'http_responses':'SYNTHETIC_INTERCEPTED','image_decode':'REQUIRED_BY_SCENARIOS','physical_device':'NOT_RUN','backend_authorization':'NOT_RUN',
+        'http_responses':'SYNTHETIC_INTERCEPTED','server_mode':'PRODUCTION_BUILD_PREVIEW','image_decode':'REQUIRED_BY_SCENARIOS','physical_device':'NOT_RUN','backend_authorization':'NOT_RUN',
         'stored_attachments':'NOT_RUN','provider_delivery':'NOT_RUN','C_gates':'NOT_INVOKED_OR_MODIFIED','deployment_performed':False,'full_cycle_green':False}
     code=1
     try:
@@ -120,6 +147,7 @@ def main():
         if args.check_inputs:print('PASS: exact before-photo product and scenario source');return 0
         sha=harness();summary['harness_sha']=sha;env=environment(source,c,sha);front=source/'frontend';summary['stage']='source_types_and_build'
         if run(['npm','run','check'],front,env).returncode:raise ValueError('BEFORE_PHOTO_APP_CHECK_FAILED')
+        if not (front/'dist/index.html').is_file() or (front/'dist/index.html').is_symlink():raise ValueError('BEFORE_PHOTO_PRODUCTION_BUILD_REQUIRED')
         if run(['node',str(front/'node_modules/typescript/bin/tsc'),'-p','tests/tsconfig.json'],front,env,120).returncode:raise ValueError('BEFORE_PHOTO_TEST_TYPES_FAILED')
         summary['source_checks']='PASS';summary['stage']='source_and_mounted_android_scenarios'
         with tempfile.TemporaryDirectory(prefix='dalaai-before-photo-private-') as output:
@@ -128,7 +156,7 @@ def main():
             if len(result.stdout)>8*1024*1024:raise ValueError('BEFORE_PHOTO_REPORT_TOO_LARGE')
             try:data=json.loads(result.stdout)
             except Exception:raise ValueError('BEFORE_PHOTO_REPORT_UNAVAILABLE') from None
-            summary['diagnostic']=diagnostic(data,c);summary['cases']=verify_report(data,c,sha)
+            summary['observed_cases']=progress(data,c);summary['diagnostic']=diagnostic(data,c);summary['cases']=verify_report(data,c,sha)
             if result.returncode:raise ValueError('BEFORE_PHOTO_RUNNER_NONZERO')
         verify_source(source,c)
         if harness()!=sha:raise ValueError('BEFORE_PHOTO_HARNESS_CHANGED')

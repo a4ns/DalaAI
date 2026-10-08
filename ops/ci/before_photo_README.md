@@ -1,9 +1,10 @@
 # Executor before-photo mounted browser gate
 
-Product and test source: `bbe897514e58a4b8f8b6d4f580e5273e34cb5c75`, based on
-`5947af4c9999bbc95f6dd0542c132e528206bce3`. This public tree matches the
-reviewed author source `77740a1eb67f3297da17cac9fa3d9865012aad62` and v2 archive
-`62e3fdca1963fecce654c815283272dd85b2ebc5a92e47f16f76e6bc62f4666d`.
+Product: `bbe897514e58a4b8f8b6d4f580e5273e34cb5c75`, based on
+`5947af4c9999bbc95f6dd0542c132e528206bce3`. Corrected test source:
+`cebdda9b225f8544854dcc2efafdeb400e2f592d`, with identical product bytes.
+The test source matches reviewed author `955f872c966de163c964066455bf529f961ef256`
+and v3 archive `fb2c6e13c6252ddc4cddfa4581392fe64b8910cdd05619bf4f99c06e46026d59`.
 
 This isolated gate runs the author's exact twenty-one source cases and eight mounted
 App cases with pinned Playwright1.63.0 Pixel 9 Android emulation. Its contract
@@ -19,6 +20,10 @@ source suite also tests bounded concurrency and explicit recovery after a newer
 authorized confirmation. This is component/App acceptance; backend authorization,
 stored attachments, real cameras and physical Android are separate evidence.
 
+The runner first builds the production app, then serves that build through
+loopback-only Vite preview. Exact request counts concern this production mount;
+development StrictMode effect replay is outside this gate.
+
 The configuration checks the installed Pixel 9 descriptor (360×732, DPR3,
 mobile/touch, Android14), uses one browser project, zero retries, and disables
 trace/video/screenshots. The runner requires all29 exact cases with no skips,
@@ -31,3 +36,13 @@ python ops/ci/before_photo_tests.py
 python ops/ci/before_photo_gate.py --source .ci-before-photo --check-inputs
 python ops/ci/before_photo_gate.py --source .ci-before-photo
 ```
+
+The first [run37753273867](https://github.com/a4ns/DalaAI/actions/runs/37753273867)
+on `b2cf92b6e215f372352688494ba9af9c3df0ed99` failed at the initial duplicate
+heading locator, before mounted photo acceptance. Artifact11538364082 has SHA256
+`39bf87bbe74fd26753b306a542d6f436df9b203c4ca43c629869526eb48b7649`.
+That attempt used development mode. Its later generic diagnostic entries did
+not establish failures in unreached cases after maxFailures stopped the suite.
+The corrected author spec selects the h1 and polls the unchanged decoded-width
+assertion. The runner now reports execution counts separately and only projects
+actual failed result locations. All21 source and8 browser cases are still required.

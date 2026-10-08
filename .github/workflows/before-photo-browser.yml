@@ -21,7 +21,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: bbe897514e58a4b8f8b6d4f580e5273e34cb5c75
+          ref: cebdda9b225f8544854dcc2efafdeb400e2f592d
           path: .ci-before-photo
           fetch-depth: 0
           persist-credentials: false
