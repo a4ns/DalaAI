@@ -154,7 +154,9 @@ export class ApiClient {
     options.signal?.addEventListener('abort', abort, { once: true });
     if (options.signal?.aborted) controller.abort();
     try {
-      const response = await this.#fetch(BASE + path, { method: options.method ?? 'GET', credentials: 'same-origin', mode: 'same-origin', cache: 'no-store', redirect: 'error', headers, body: options.body, signal: controller.signal });
+      // A document's no-referrer policy can make non-CORS POST Origin null.
+      // Share only the origin with our same-origin API, never page paths or queries.
+      const response = await this.#fetch(BASE + path, { method: options.method ?? 'GET', credentials: 'same-origin', mode: 'same-origin', referrerPolicy: 'origin', cache: 'no-store', redirect: 'error', headers, body: options.body, signal: controller.signal });
       this.#assertEpoch(epoch);
       if (response.status === 401) {
         this.clearIdentity();
