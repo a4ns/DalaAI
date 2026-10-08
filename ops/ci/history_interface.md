@@ -1,7 +1,7 @@
 # C112 history/analytics Android CI seam (source preparation)
 
-Source-ready binding: C112 `5e97b71c6701e2ae1bf83547dce563a02c693389` against frontend
-`6fa27276f14ef31757cb0da5ee9d7acc15789111`. Actual C112 execution is pending. Existing
+Source-ready binding: C112 `09e78cd2f5190e31f5d3e3dd32531bc9e3c7b2cc` against frontend
+`bbe897514e58a4b8f8b6d4f580e5273e34cb5c75`. Actual C112 execution is pending. Existing
 C110 remains an independent exact-one-journey gate; its prior green results do
 not establish this new history journey.
 
@@ -173,3 +173,12 @@ candidate's results. The 06877 C110/C112 passes and C113 SHIFT_XLSX body-capture
 failure remain preserved, along with the earlier d48 failures. Prior a880 viewport
 and 8081 interaction evidence is historical; new quiet-polling geometry and public
 reader experiments are separate evidence and do not replace these actual gates.
+
+The reviewed executor before-photo product
+`bbe897514e58a4b8f8b6d4f580e5273e34cb5c75` is bound to C source
+`09e78cd2f5190e31f5d3e3dd32531bc9e3c7b2cc`. Fresh independent privacy proofs
+and unchanged actual gates are required for this candidate. The 5947 C110/C112
+passes and C113 SHIFT_XLSX body-capture failure remain historical evidence.
+Before-photo mounted browser checks use synthetic intercepted HTTP and Android
+emulation; they do not establish stored-photo backend authorization, physical
+device behavior or a repair to the original C113 capture failure.

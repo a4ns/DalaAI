@@ -50,7 +50,7 @@ async function mount(page: Page, mode: 'happy' | '403' | '404' | 'slow' | 'retry
     if (url.pathname === '/api/v1/auth/logout') { await logoutGate.promise; return route.fulfill({ status: 204 }); }
     return route.fulfill({ status: 404, json: {} });
   });
-  await page.goto('/'); await expect(page.getByRole('heading', { name: 'Мои наряды', exact: true })).toBeVisible();
+  await page.goto('/'); await expect(page.getByRole('heading', { name: 'Мои наряды', exact: true, level: 1 })).toBeVisible();
   return { stats, gate, logoutGate, setRows: (next: Order[]) => { rows = next; }, rows: () => rows,
     loseScope: () => { current = { ...current, principal: { ...current.principal, section_ids: [] } }; } };
 }
@@ -61,7 +61,7 @@ async function urls(page: Page) { return page.evaluate(() => (window as unknown 
 test('synthetic mounted before-photo is selected-only, decodes bytes, and survives polling and repeated actions', async ({ page }) => {
   const h = await mount(page); expect(h.stats.reads).toEqual([]); await expect(card(page, 'SYNTHETIC-UNRELATED')).toHaveCount(0);
   await card(page, 'SYNTHETIC-BEFORE-A').click(); await expect(beforeImage(page)).toBeVisible();
-  expect(await beforeImage(page).evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(1);
+  await expect.poll(() => beforeImage(page).evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(1);
   await expect(page.getByText('Фото результата 1', { exact: true })).toHaveCount(0);
   const imageUrl = await beforeImage(page).getAttribute('src'); const start = page.getByRole('button', { name: 'Начать работу', exact: true });
   await start.evaluate(button => { (button as HTMLButtonElement).click(); (button as HTMLButtonElement).click(); });

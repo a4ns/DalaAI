@@ -12,8 +12,8 @@ and report export remain separate gates. No deployment is performed.
 ## C-110 accepted source and build provenance
 
 `scenarios.json` accepts exact C source
-`5e97b71c6701e2ae1bf83547dce563a02c693389` and final frontend
-`6fa27276f14ef31757cb0da5ee9d7acc15789111`. C includes the bounded resume/Back
+`09e78cd2f5190e31f5d3e3dd32531bc9e3c7b2cc` and final frontend
+`bbe897514e58a4b8f8b6d4f580e5273e34cb5c75`. C includes the bounded resume/Back
 render waits and version-2 frontend/source-bound receipt. Missing or altered
 source still blocks before private execution. Do not lower counts or silently
 skip a missing input.
@@ -221,3 +221,12 @@ candidate's results. The 06877 C110/C112 passes and C113 SHIFT_XLSX body-capture
 failure remain preserved, along with the earlier d48 failures. Prior a880 viewport
 and 8081 interaction evidence is historical; new quiet-polling geometry and public
 reader experiments are separate evidence and do not replace these actual gates.
+
+The reviewed executor before-photo product
+`bbe897514e58a4b8f8b6d4f580e5273e34cb5c75` is bound to C source
+`09e78cd2f5190e31f5d3e3dd32531bc9e3c7b2cc`. Fresh independent privacy proofs
+and unchanged actual gates are required for this candidate. The 5947 C110/C112
+passes and C113 SHIFT_XLSX body-capture failure remain historical evidence.
+Before-photo mounted browser checks use synthetic intercepted HTTP and Android
+emulation; they do not establish stored-photo backend authorization, physical
+device behavior or a repair to the original C113 capture failure.
