@@ -7,6 +7,7 @@ import type { Session } from '../shared/api/wire';
 import { Workspace } from './Workspace';
 import { DemoClockScreen } from '../features/demoClock/DemoClockScreen';
 import { PushPreferences } from './PushPreferences';
+import { InAppNotifications } from './InAppNotifications';
 
 const defaultClient = new ApiClient();
 const defaultOrders = new OrderStore(defaultClient);
@@ -72,6 +73,7 @@ export function App({ client = defaultClient, orders = defaultOrders, renderWork
       {checking && !session ? <section className="card" role="status"><h3>Проверяем сессию…</h3><p>Данные нарядов пока не загружены.</p></section> : !session ?
         <section className="card" aria-labelledby="login-title"><span className="status-label">Вход в рабочую смену</span><h3 id="login-title">Войдите в систему</h3><p>Используйте выданную тестовую учётную запись. Роль и доступ определяет сервер.</p><form className="form-stack" onSubmit={event => void login(event)}><label htmlFor="employee-code">Табельный код<input id="employee-code" autoComplete="username" value={employeeCode} maxLength={40} required onChange={event => setEmployeeCode(event.target.value)} disabled={busy}/></label><label htmlFor="pin">PIN<input id="pin" type="password" inputMode="numeric" autoComplete="current-password" value={pin} minLength={4} maxLength={64} required onChange={event => setPin(event.target.value)} disabled={busy}/></label><button type="submit" disabled={busy}>{busy ? 'Входим…' : 'Войти'}</button></form><p className="hint">Вход требует работающего API на том же адресе. Тестовые пароли здесь не публикуются.</p></section> :
         <div key={sessionKey}>
+          <InAppNotifications client={client} orders={orders}/>
           <div hidden={activeSection === 'Демо-время'}>{renderWorkspace ? renderWorkspace({ client, orders, session, sessionKey, section: activeSection }) : <Workspace isAuthReady={() => !authPending.current} authBusy={busy} client={client} orders={orders} session={session} sessionKey={sessionKey} section={activeSection}/>}</div>
           {session.principal.role === 'master' && session.principal.active && <div hidden={activeSection !== 'Демо-время'}><DemoClockScreen client={client} isAuthReady={() => !authPending.current} disabled={busy} onConfirmed={() => { void orders.refresh(); }}/></div>}
         {session.principal.active && <PushPreferences client={client} isAuthReady={() => !authPending.current} disabled={busy}/>}

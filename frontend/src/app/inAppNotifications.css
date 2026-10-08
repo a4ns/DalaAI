@@ -1,0 +1,49 @@
+.in-app-notifications {
+  position: fixed;
+  z-index: 50;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: max(1rem, env(safe-area-inset-left));
+  display: grid;
+  gap: .65rem;
+  width: auto;
+  max-width: 26rem;
+  margin-left: auto;
+  pointer-events: none;
+}
+.in-app-notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .8rem;
+  border: 1px solid #366986;
+  border-left: 4px solid #75c8f2;
+  border-radius: .85rem;
+  background: #102c3c;
+  color: #f5f9fc;
+  box-shadow: 0 5px 22px #0005;
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+  animation: in-app-notice-appear 140ms ease-out;
+}
+.in-app-notice > div { min-width: 0; }
+.in-app-notice strong { font-size: 1rem; }
+.in-app-notice p { margin: .3rem 0 0; font-size: 1rem; color: #e0edf5; }
+.in-app-notice-close {
+  flex: 0 0 44px;
+  min-width: 44px;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid #84a7bb;
+  border-radius: .5rem;
+  background: #173e54;
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.in-app-notice-close:hover { background: #245d7b; }
+.in-app-notice-close:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+@keyframes in-app-notice-appear { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .in-app-notice { animation: none; } }
