@@ -22,6 +22,10 @@ RUN python -m pip install --no-cache-dir -r requirements.lock \
     && groupadd --gid 10002 edge \
     && useradd --uid 10002 --gid edge --no-create-home edge
 COPY --from=edge /usr/bin/caddy /usr/bin/caddy
+# Official Caddy carries cap_net_bind_service for ports 80/443. This copy only
+# binds unprivileged PORT>=1024 behind Render TLS, so keep it capability-free.
+# Source: https://github.com/caddyserver/caddy-docker/blob/master/Dockerfile.tmpl
+RUN python -c "import os; p='/usr/bin/caddy'; a='security.capability'; os.removexattr(p,a) if a in os.listxattr(p) else None; assert a not in os.listxattr(p)"
 COPY --from=frontend /build/dist /srv
 COPY backend/app ./app
 COPY backend/db ./db

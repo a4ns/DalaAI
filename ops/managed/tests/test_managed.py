@@ -154,6 +154,22 @@ class ManagedTests(unittest.TestCase):
         self.assertIn('root * /srv', caddy)
         self.assertNotIn('/var/lib/naryadai', caddy)
 
+    def test_copied_managed_caddy_loses_unneeded_file_capability(self):
+        import shlex
+        dockerfile=(ROOT/'Dockerfile').read_text()
+        line=next(row for row in dockerfile.splitlines() if row.startswith('RUN python -c ') and 'security.capability' in row)
+        script=shlex.split(line)[3]
+        for initially_present in (True,False):
+            attrs=['security.capability'] if initially_present else []
+            with patch.object(os,'listxattr',side_effect=lambda path:list(attrs)) as listing, \
+                 patch.object(os,'removexattr',side_effect=lambda path,attribute:attrs.remove(attribute)) as removal:
+                exec(compile(script,'<managed-caddy-capability-check>','exec'),{})
+                self.assertNotIn('security.capability',attrs)
+                self.assertTrue(all(call.args==('/usr/bin/caddy',) for call in listing.call_args_list))
+                if initially_present:removal.assert_called_once_with('/usr/bin/caddy','security.capability')
+                else:removal.assert_not_called()
+        self.assertNotIn('SYS_PTRACE',dockerfile)
+
     def test_worker_preflight_failure_starts_no_listener(self):
         from types import SimpleNamespace
         import io

@@ -5,18 +5,18 @@
   "scope": "New ops/managed/** only; no ops/demo edits",
   "files_sha256": {
     "ops/managed/Caddyfile": "310d0094ec3b05b5a2cc857c16898b8f4cce538fde84f8cff900eddb8c6425df",
-    "ops/managed/Dockerfile": "24e38b703f6c9263ffc30312bf40bef0e495ac6d7f052305aaff3e956f5ba5ea",
+    "ops/managed/Dockerfile": "5af43ccd508bace4f4e683b99abc73a3b9c4dae0d5154b53269f08ed9d8f9745",
     "ops/managed/Dockerfile.dockerignore": "be969b7e8341d1e5eb8c0d8757ada83faac8aed146358556b87e757a1a1cc9b6",
     "ops/managed/OPERATOR_15_MIN.md": "6f712309c16688e9539d90f8e246c7653338fce9c14da235ab70945fc18a5797",
     "ops/managed/README.md": "5b4bc4a5056b7569d3b846240e4c08d678b56ff940aa28593825ec35428e213f",
     "ops/managed/render.yaml.example": "f35e2a053fb52ad51bcceda2e21f8ac6650bd329738f746d1c2c1455227f2bb3",
     "ops/managed/supervise.py": "4c5d7e8f166f67ed812ae7de32cadbedcaff65ce1f410a48b819a663860cf088",
-    "ops/managed/tests/test_managed.py": "f1b029cf0b5ad3d9c7c83ff6ec4ea0d6aec80c93a4c59d1e318b8b9ca571b47d"
+    "ops/managed/tests/test_managed.py": "22e5d3027da7bdd40736d04637b8d96a1dd2e55972ce1cd735cc5d44f3a85e95"
   },
   "checks": {
     "unittest": {
       "result": "PASS",
-      "count": 19,
+      "count": 21,
       "command": "PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s ops/managed/tests -v"
     },
     "python_ast": "PASS",
@@ -54,6 +54,7 @@
     "Copies checksum-pinned synthetic sources for explicit fresh historical fixture",
     "Pinned DejaVu fonts and export dependencies; historical generator included in image allowlist",
     "Optional shared business-clock instance forwarding; no owner or provisioning credentials in child environments",
-    "Explicit test-only HTTPS localhost allowance for isolated managed-image CI; normal hosted domain rule unchanged"
+    "Explicit test-only HTTPS localhost allowance for isolated managed-image CI; normal hosted domain rule unchanged",
+    "Removes and verifies absence of the copied Caddy low-port file capability; managed listener remains on an unprivileged port"
   ]
 }
