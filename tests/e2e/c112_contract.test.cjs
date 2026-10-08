@@ -27,7 +27,30 @@ function fixture() {
   return { report, evidence, expected };
 }
 test('actual public_manifest object is accepted without any private file', () => { const users=c.validateManifest(manifest); assert.equal(users.master.section_ids.length,4); assert.equal(users.executor.section_ids.length,1); assert.equal(manifest.history_orders,540); });
-test('UTC+5 UI dates represent canonical exact UTC interval, not local midnight', () => { for(const key of ['start','end']) assert.equal(Date.parse(c.LOCAL_PERIOD[key]+'+05:00'),Date.parse(c.PERIOD[key])); gate.validatePeriod({...c.PERIOD,display_timezone:'Asia/Almaty'}); assert.throws(()=>gate.validatePeriod({start:'2026-06-30T19:00:00Z',end:'2026-09-30T19:00:00Z',display_timezone:'Asia/Almaty'})); });
+test('canonical minute-only UTC+5 UI dates retain the exact UTC interval', () => {
+  assert.deepEqual(c.LOCAL_PERIOD, { start: '2026-07-01T05:00', end: '2026-10-01T05:00' });
+  assert.deepEqual(c.PERIOD, { start: '2026-07-01T00:00:00Z', end: '2026-10-01T00:00:00Z' });
+  for(const key of ['start','end']) assert.equal(Date.parse(c.LOCAL_PERIOD[key]+'+05:00'),Date.parse(c.PERIOD[key]));
+  gate.validatePeriod({...c.PERIOD,display_timezone:'Asia/Almaty'});
+  assert.throws(()=>gate.validatePeriod({start:'2026-06-30T19:00:00Z',end:'2026-09-30T19:00:00Z',display_timezone:'Asia/Almaty'}));
+});
+test('real journey checks both normalized date fields after filling and before loading analytics', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'c112_analytics.spec.cjs'), 'utf8');
+  assert.match(source, /const periodStart = scope\.getByLabel\('Начало периода', \{ exact: true \}\);/);
+  assert.match(source, /const periodEnd = scope\.getByLabel\('Конец периода \(не включён\)', \{ exact: true \}\);/);
+  assert.match(source, /await periodStart\.fill\(c\.LOCAL_PERIOD\.start\);\s*checkpoint\(evidence\.diagnostics, 'FILL_PERIOD_END'\);\s*await periodEnd\.fill\(c\.LOCAL_PERIOD\.end\);\s*await expect\(periodStart\)\.toHaveValue\(c\.LOCAL_PERIOD\.start\);\s*await expect\(periodEnd\)\.toHaveValue\(c\.LOCAL_PERIOD\.end\);\s*const result = await uiRead\(master\.page, '\/api\/v1\/analytics\/shift'/);
+});
+test('gate rejects noncanonical or shifted local UI period evidence', () => {
+  for (const uiPeriod of [
+    { start: '2026-07-01T05:00:00', end: '2026-10-01T05:00:00' },
+    { start: '2026-07-01T00:00', end: '2026-10-01T00:00' },
+    { start: c.LOCAL_PERIOD.start, end: '2026-10-01T05:01' },
+  ]) {
+    const f = fixture();
+    f.evidence.ui_period_utc_plus_5 = uiPeriod;
+    assert.throws(() => gate.validate(f.report, f.evidence, f.expected, now), /UTC_UI_PERIOD_BINDING_REQUIRED/);
+  }
+});
 test('wrong wrapper/minimal fixture, scopes, counts, source or live IDs fail closed', () => {
   for(const change of [m=>({fixture:m}),m=>({...m,fixture_version:'dalaai-live-vertical-demo-v1'}),m=>({...m,history_orders:539}),m=>({...m,history_sha256:'0'.repeat(64)}),m=>({...m,historical_actor_state:'active'}),m=>({...m,photos_seeded:444}),m=>({...m,pin:'dummy-never-publish'}),m=>{m.users[0].token='dummy-never-publish';return m;},m=>{m.users[0].section_ids=[];return m;},m=>{m.live_path.executor_id=id(999);return m;}]) assert.throws(()=>c.validateManifest(change(copy(manifest))));
 });

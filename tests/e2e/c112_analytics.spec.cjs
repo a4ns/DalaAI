@@ -162,10 +162,14 @@ test(c.TITLE, async ({ browser, browserName }, info) => {
       checkpoint(evidence.diagnostics, 'NAVIGATE_ANALYTICS');
       await master.page.getByRole('navigation', { name: 'Основная навигация' }).getByRole('button', { name: 'Аналитика и отчёты', exact: true }).click();
       const scope = master.page.getByRole('region', { name: 'Аналитика и отчёты', exact: true });
+      const periodStart = scope.getByLabel('Начало периода', { exact: true });
+      const periodEnd = scope.getByLabel('Конец периода (не включён)', { exact: true });
       checkpoint(evidence.diagnostics, 'FILL_PERIOD_START');
-      await scope.getByLabel('Начало периода', { exact: true }).fill(c.LOCAL_PERIOD.start);
+      await periodStart.fill(c.LOCAL_PERIOD.start);
       checkpoint(evidence.diagnostics, 'FILL_PERIOD_END');
-      await scope.getByLabel('Конец периода (не включён)', { exact: true }).fill(c.LOCAL_PERIOD.end);
+      await periodEnd.fill(c.LOCAL_PERIOD.end);
+      await expect(periodStart).toHaveValue(c.LOCAL_PERIOD.start);
+      await expect(periodEnd).toHaveValue(c.LOCAL_PERIOD.end);
       const result = await uiRead(master.page, '/api/v1/analytics/shift', () => scope.getByRole('button', { name: 'Показать факты', exact: true }).click());
       facts = result.body;
       checkpoint(evidence.diagnostics, 'CHECK_HISTORICAL_PROVENANCE');
