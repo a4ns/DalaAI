@@ -36,6 +36,8 @@ jobs:
           package-manager-cache: false
       - name: Verify distinct history harness and source bindings
         run: |
+          # Existing validation-only pin from backend/requirements-dev.lock.
+          python -m pip install PyYAML==6.0.3
           python -m unittest discover -s ops/ci/tests -v
           python -m unittest discover -s ops/ci/history_tests -v
           node --check ops/ci/history_transport_probe.cjs
