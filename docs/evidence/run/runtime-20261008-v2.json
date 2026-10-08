@@ -1,0 +1,1111 @@
+{
+  "schema_version": 1,
+  "kind": "attributed_runtime_milestones_addendum",
+  "snapshot_id": "runtime-20261008-v2",
+  "checked_at": "2026-10-08T02:01:34Z",
+  "checked_by": "C-106 public source, Actions metadata and attributed bounded A0/B0/C0 reports",
+  "documentation_base_sha": "abe299aed7e60abe7f5dec4d4c847fc4478b447f",
+  "previous_snapshot": "runtime-f101-milestones.json",
+  "selected_runtime_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+  "latest_main_claim": false,
+  "own_product_execution": "NOT_RUN",
+  "evidence_access": {
+    "public_workflow_and_source_metadata": true,
+    "issue_bounded_reports": true,
+    "raw_runtime_logs_read": false,
+    "private_artifacts_read_or_downloaded": false,
+    "screenshots_or_video_created": false,
+    "private_password_pin_dsn_session_files_read": false
+  },
+  "source_bindings": {
+    "c110": {
+      "backend_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "frontend_sha": "9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c",
+      "harness_sha": "d674d8a1cc261760c89b04b555123ca775f3c845",
+      "binding_source": "https://github.com/a4ns/DalaAI/blob/2471afde7b8442f3c66a3fe56d21df5b332b81d1/ops/ci/scenarios.json"
+    },
+    "c112_failed": {
+      "backend_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "frontend_sha": "9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c",
+      "harness_sha": "edd109d2111e798db0440c7d3050e7e4fca80e42",
+      "binding_report": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6049989268"
+    },
+    "final_runtime": {
+      "backend_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "frontend_sha": "faef5d3d8b4c640fae013dbfa78074382e512e8f",
+      "c110_sha": "afeef803d01d7e056b7ad87e0cd4b1a437092db3",
+      "c112_sha": "118b81580cc658150eeca62e1b994e44ff015c6d",
+      "handoff_url": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050397262",
+      "runtime_result": "PASS_C110_AND_C112",
+      "c110_binding_source": "https://github.com/a4ns/DalaAI/blob/77ea58ff89d0f52853e7b4069b138f2577fa11b4/ops/ci/scenarios.json",
+      "c112_binding_source": "https://github.com/a4ns/DalaAI/blob/77ea58ff89d0f52853e7b4069b138f2577fa11b4/ops/ci/history_contract.json"
+    },
+    "c113": {
+      "harness_sha": "80e59f8a802d4e6bf78e6f7e08355d394ea782db",
+      "frontend_sha": "faef5d3d8b4c640fae013dbfa78074382e512e8f",
+      "source_checks_reported": {
+        "node": 70,
+        "python": 12
+      },
+      "handoff": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050602139",
+      "runtime_result": "NOT_RUN"
+    },
+    "frontend_handoff": {
+      "frontend_sha": "faef5d3d8b4c640fae013dbfa78074382e512e8f",
+      "status": "final_c110_c112_runtime_passed_c113_separate_pending",
+      "source_cases_reported": 153,
+      "source_check_attribution": "B0, not rerun by C-106",
+      "handoff": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6049790608",
+      "queue_status": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050279185"
+    },
+    "c112_b9a_accepted": {
+      "harness_sha": "d34455d877f9d3853421cad4cf6d3f92056254f7",
+      "handoff_at": "2026-10-08T01:20:00Z",
+      "source_checks": {
+        "c112_node": 63,
+        "c112_python": 5,
+        "unchanged_c110_node": 19
+      },
+      "source_check_attribution": "C0 exact-remote source rerun and independent review",
+      "runtime_result": "PASS",
+      "handoff": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050198995",
+      "runtime_source_sha": "347119c47b9a0ec70cd30cbc8bce2a2774a439e0",
+      "runtime_run_id": 37712740639
+    }
+  },
+  "ci_runs": [
+    {
+      "id": 37710664408,
+      "name": "Historical and live demo fixture",
+      "head_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "head_branch": "main",
+      "path": ".github/workflows/history-demo-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37710664408",
+      "created_at": "2026-10-08T01:00:03Z",
+      "updated_at": "2026-10-08T01:01:15Z",
+      "run_attempt": 1,
+      "jobs": [
+        {
+          "id": 113095587122,
+          "name": "history-demo",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37710664408,
+          "steps": [
+            {
+              "name": "Ten real historical/live/report PostgreSQL cases, zero skips",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Three-login fixture-mode binding and completion barrier",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37710664409,
+      "name": "Backend scaffold",
+      "head_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "head_branch": "main",
+      "path": ".github/workflows/backend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37710664409",
+      "created_at": "2026-10-08T01:00:03Z",
+      "updated_at": "2026-10-08T01:01:30Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37710664244,
+      "name": "Mobile composed app (Android emulation)",
+      "head_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "head_branch": "main",
+      "path": ".github/workflows/mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37710664244",
+      "created_at": "2026-10-08T01:00:02Z",
+      "updated_at": "2026-10-08T01:02:30Z",
+      "run_attempt": 1,
+      "jobs": [
+        {
+          "id": 113095586563,
+          "name": "B synthetic rendering only (Pixel9 Android emulation)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37710664244,
+          "steps": [
+            {
+              "name": "Execute all 13 B browser cases with zero skips",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ]
+        },
+        {
+          "id": 113095586907,
+          "name": "mobile-core",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37710664244,
+          "steps": [
+            {
+              "name": "Verify harness safety invariants and accepted source inputs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Real PostgreSQL, mounted app, composed frontend and C-110 scenarios",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Publish count-only evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37710664232,
+      "name": "PostgreSQL persistence validation",
+      "head_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "head_branch": "main",
+      "path": ".github/workflows/persistence-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37710664232",
+      "created_at": "2026-10-08T01:00:02Z",
+      "updated_at": "2026-10-08T01:03:47Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37710664398,
+      "name": "Frontend source and build",
+      "head_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "head_branch": "main",
+      "path": ".github/workflows/frontend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37710664398",
+      "created_at": "2026-10-08T01:00:02Z",
+      "updated_at": "2026-10-08T01:00:27Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37710664226,
+      "name": "Isolated C107 historical PostgreSQL gate",
+      "head_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "head_branch": "main",
+      "path": ".github/workflows/history-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37710664226",
+      "created_at": "2026-10-08T01:00:02Z",
+      "updated_at": "2026-10-08T01:01:09Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37710664219,
+      "name": "Composed HTTPS photo cycle",
+      "head_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "head_branch": "main",
+      "path": ".github/workflows/demo-compose.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37710664219",
+      "created_at": "2026-10-08T01:00:02Z",
+      "updated_at": "2026-10-08T01:01:33Z",
+      "run_attempt": 1,
+      "jobs": [
+        {
+          "id": 113095586344,
+          "name": "Compose HTTPS minimal clock=false",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37710664219,
+          "steps": [
+            {
+              "name": "Verify trusted HTTPS and actual two-role photo cycle",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Repeat startup without migration, grants or account reset",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            }
+          ]
+        },
+        {
+          "id": 113095586617,
+          "name": "Compose HTTPS history clock=false",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37710664219,
+          "steps": [
+            {
+              "name": "Verify trusted HTTPS and actual two-role photo cycle",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Repeat startup without migration, grants or account reset",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            }
+          ]
+        },
+        {
+          "id": 113095586713,
+          "name": "Compose HTTPS minimal clock=true",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37710664219,
+          "steps": [
+            {
+              "name": "Verify trusted HTTPS and actual two-role photo cycle",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Repeat startup without migration, grants or account reset",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37710664206,
+      "name": "Historical analytics (Android emulation)",
+      "head_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "head_branch": "main",
+      "path": ".github/workflows/history-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37710664206",
+      "created_at": "2026-10-08T01:00:02Z",
+      "updated_at": "2026-10-08T01:02:18Z",
+      "run_attempt": 1,
+      "jobs": [
+        {
+          "id": 113095586236,
+          "name": "history-analytics",
+          "status": "completed",
+          "conclusion": "failure",
+          "run_id": 37710664206,
+          "steps": [
+            {
+              "name": "Verify distinct history harness and source bindings",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Fresh C112 proof, real history stack and exact read-only journey",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 9
+            },
+            {
+              "name": "Publish bounded history scope summary",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37712740635,
+      "name": "Frontend source and build",
+      "head_sha": "347119c47b9a0ec70cd30cbc8bce2a2774a439e0",
+      "head_branch": "main",
+      "path": ".github/workflows/frontend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37712740635",
+      "created_at": "2026-10-08T01:24:07Z",
+      "updated_at": "2026-10-08T01:24:32Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37712740623,
+      "name": "Historical and live demo fixture",
+      "head_sha": "347119c47b9a0ec70cd30cbc8bce2a2774a439e0",
+      "head_branch": "main",
+      "path": ".github/workflows/history-demo-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37712740623",
+      "created_at": "2026-10-08T01:24:07Z",
+      "updated_at": "2026-10-08T01:25:13Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37712740691,
+      "name": "Isolated C107 historical PostgreSQL gate",
+      "head_sha": "347119c47b9a0ec70cd30cbc8bce2a2774a439e0",
+      "head_branch": "main",
+      "path": ".github/workflows/history-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37712740691",
+      "created_at": "2026-10-08T01:24:07Z",
+      "updated_at": "2026-10-08T01:25:10Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37712740638,
+      "name": "Backend scaffold",
+      "head_sha": "347119c47b9a0ec70cd30cbc8bce2a2774a439e0",
+      "head_branch": "main",
+      "path": ".github/workflows/backend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37712740638",
+      "created_at": "2026-10-08T01:24:07Z",
+      "updated_at": "2026-10-08T01:25:31Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37712740640,
+      "name": "Composed HTTPS photo cycle",
+      "head_sha": "347119c47b9a0ec70cd30cbc8bce2a2774a439e0",
+      "head_branch": "main",
+      "path": ".github/workflows/demo-compose.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37712740640",
+      "created_at": "2026-10-08T01:24:07Z",
+      "updated_at": "2026-10-08T01:25:44Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37712740639,
+      "name": "Historical analytics (Android emulation)",
+      "head_sha": "347119c47b9a0ec70cd30cbc8bce2a2774a439e0",
+      "head_branch": "main",
+      "path": ".github/workflows/history-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37712740639",
+      "created_at": "2026-10-08T01:24:07Z",
+      "updated_at": "2026-10-08T01:26:06Z",
+      "run_attempt": 1,
+      "jobs": [
+        {
+          "id": 113102167252,
+          "name": "history-analytics",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37712740639,
+          "steps": [
+            {
+              "name": "Verify distinct history harness and source bindings",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Fresh C112 proof, real history stack and exact read-only journey",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Publish bounded history scope summary",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37712740692,
+      "name": "Mobile composed app (Android emulation)",
+      "head_sha": "347119c47b9a0ec70cd30cbc8bce2a2774a439e0",
+      "head_branch": "main",
+      "path": ".github/workflows/mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37712740692",
+      "created_at": "2026-10-08T01:24:07Z",
+      "updated_at": "2026-10-08T01:26:24Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37712740643,
+      "name": "PostgreSQL persistence validation",
+      "head_sha": "347119c47b9a0ec70cd30cbc8bce2a2774a439e0",
+      "head_branch": "main",
+      "path": ".github/workflows/persistence-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37712740643",
+      "created_at": "2026-10-08T01:24:07Z",
+      "updated_at": "2026-10-08T01:26:41Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37715240438,
+      "name": "Actual managed image validation",
+      "head_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "head_branch": "validation/managed-image-20261008",
+      "path": ".github/workflows/managed-image-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37715240438",
+      "created_at": "2026-10-08T01:54:32Z",
+      "updated_at": "2026-10-08T01:56:01Z",
+      "run_attempt": 1,
+      "jobs": [
+        {
+          "id": 113110094909,
+          "name": "managed-image",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37715240438,
+          "steps": [
+            {
+              "name": "Install pinned local verification dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Source and fail-closed harness contracts",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Build and verify exact managed image with disposable TLS and PostgreSQL",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37715211301,
+      "name": "Frontend source and build",
+      "head_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "head_branch": "main",
+      "path": ".github/workflows/frontend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37715211301",
+      "created_at": "2026-10-08T01:54:11Z",
+      "updated_at": "2026-10-08T01:54:42Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37715211415,
+      "name": "Isolated C107 historical PostgreSQL gate",
+      "head_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "head_branch": "main",
+      "path": ".github/workflows/history-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37715211415",
+      "created_at": "2026-10-08T01:54:11Z",
+      "updated_at": "2026-10-08T01:55:10Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37715211387,
+      "name": "Historical and live demo fixture",
+      "head_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "head_branch": "main",
+      "path": ".github/workflows/history-demo-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37715211387",
+      "created_at": "2026-10-08T01:54:11Z",
+      "updated_at": "2026-10-08T01:55:25Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37715211435,
+      "name": "Composed HTTPS photo cycle",
+      "head_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "head_branch": "main",
+      "path": ".github/workflows/demo-compose.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37715211435",
+      "created_at": "2026-10-08T01:54:11Z",
+      "updated_at": "2026-10-08T01:55:38Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37715211380,
+      "name": "Backend scaffold",
+      "head_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "head_branch": "main",
+      "path": ".github/workflows/backend.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37715211380",
+      "created_at": "2026-10-08T01:54:11Z",
+      "updated_at": "2026-10-08T01:55:40Z",
+      "run_attempt": 1
+    },
+    {
+      "id": 37715211417,
+      "name": "Historical analytics (Android emulation)",
+      "head_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "head_branch": "main",
+      "path": ".github/workflows/history-mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37715211417",
+      "created_at": "2026-10-08T01:54:11Z",
+      "updated_at": "2026-10-08T01:56:41Z",
+      "run_attempt": 1,
+      "jobs": [
+        {
+          "id": 113110005346,
+          "name": "history-analytics",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37715211417,
+          "steps": [
+            {
+              "name": "Verify distinct history harness and source bindings",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Install locked C dependencies and official Chromium",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Fresh C112 proof, real history stack and exact read-only journey",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Publish bounded history scope summary",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37715211318,
+      "name": "Mobile composed app (Android emulation)",
+      "head_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "head_branch": "main",
+      "path": ".github/workflows/mobile-e2e.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37715211318",
+      "created_at": "2026-10-08T01:54:11Z",
+      "updated_at": "2026-10-08T01:56:57Z",
+      "run_attempt": 1,
+      "jobs": [
+        {
+          "id": 113110151827,
+          "name": "B synthetic rendering only (Pixel9 Android emulation)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37715211318,
+          "steps": [
+            {
+              "name": "Assemble only five accepted B harness files",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Install exact B frontend and official matching Chromium",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Execute all 13 B browser cases with zero skips",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Publish B-only evidence summary",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            }
+          ]
+        },
+        {
+          "id": 113110152016,
+          "name": "mobile-core",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 37715211318,
+          "steps": [
+            {
+              "name": "Verify harness safety invariants and accepted source inputs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Install C-110 exact dependencies and official Chromium",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Real PostgreSQL, mounted app, composed frontend and C-110 scenarios",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Publish count-only evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37715211353,
+      "name": "PostgreSQL persistence validation",
+      "head_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "head_branch": "main",
+      "path": ".github/workflows/persistence-validation.yml",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37715211353",
+      "created_at": "2026-10-08T01:54:11Z",
+      "updated_at": "2026-10-08T01:57:59Z",
+      "run_attempt": 1
+    }
+  ],
+  "gates": [
+    {
+      "id": "c110-real-core-b9a",
+      "result": "PASS",
+      "layer": "browser_assembled",
+      "source_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "run_id": 37710664244,
+      "job_id": 113095586907,
+      "source": "Actions job/step metadata plus bound source manifest",
+      "observed": "Required real PostgreSQL, mounted app, composed frontend and C110 stage completed successfully.",
+      "limitation": "Android emulation; metadata does not supply per-command counts for this run. Workers are outside this core scenario; no physical phone or model/push delivery."
+    },
+    {
+      "id": "compose-history-rules-exports",
+      "result": "PASS",
+      "layer": "real_database",
+      "source_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "run_id": 37710664219,
+      "job_id": 113095586617,
+      "source": "Actions job/step metadata plus exact workflow and smoke source",
+      "observed": "Disposable trusted-HTTPS history profile completed two-role photo cycle, persisted rules_fallback, human close, four protected PDF/XLSX outputs and repeat startup.",
+      "limitation": "Server/HTTP smoke, not native browser save, live model, physical camera or deployment. history profile is clock=false."
+    },
+    {
+      "id": "compose-clock-server",
+      "result": "PASS",
+      "layer": "real_database",
+      "source_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "run_id": 37710664219,
+      "job_id": 113095586713,
+      "source": "Actions job/step metadata plus exact workflow and smoke source",
+      "observed": "Disposable minimal profile with clock=true passed shared pause/forward advance/CAS, master-only controls, two-role photo/rules/close/exports and repeat startup.",
+      "limitation": "Backend clock API gate; not newest frontend clock UI. Does not prove combined history+clock=true profile or managed-image restart."
+    },
+    {
+      "id": "history-live-report-fixture",
+      "result": "PASS",
+      "layer": "real_database",
+      "source_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "run_id": 37710664408,
+      "job_id": 113095587122,
+      "source": "Actions job/step metadata",
+      "observed": "Ten actual historical/live/report PostgreSQL cases, zero skips, plus three-login fixture-mode binding and completion barrier completed.",
+      "limitation": "Dedicated fixture tests, separate from full C112 journey."
+    },
+    {
+      "id": "c112-b9a-full-journey",
+      "result": "FAIL",
+      "layer": "browser_assembled",
+      "source_sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "run_id": 37710664206,
+      "job_id": 113095586236,
+      "source": "Actions metadata independently checked; stage details attributed to A0 bounded reports",
+      "bounded_report_urls": [
+        "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050011541",
+        "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050036426"
+      ],
+      "completed_stages_reported": 4,
+      "validated_observations_reported": 2,
+      "analytics_response": "HTTP_OK",
+      "failure_category": "LOCATOR_TIMEOUT",
+      "failure_stage": 5,
+      "failure_action": "selectOption",
+      "source_location": "tests/e2e/c112_analytics.spec.cjs:213",
+      "observed": "Date fill, historical analytics and protected shift report reached; selected-order stage failed. Cleanup reported passed.",
+      "limitation": "This failed run did not pass the order report, executor-denial tail or complete C112. Later successful runs are recorded separately and do not rewrite this failure."
+    },
+    {
+      "id": "c112-b9a-full-journey-after-semantic-selector",
+      "result": "PASS",
+      "layer": "browser_assembled",
+      "source_sha": "347119c47b9a0ec70cd30cbc8bce2a2774a439e0",
+      "frontend_sha": "9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c",
+      "harness_sha": "d34455d877f9d3853421cad4cf6d3f92056254f7",
+      "run_id": 37712740639,
+      "job_id": 113102167252,
+      "source": "Actions metadata independently checked; exact source and count details attributed to A0 bounded report",
+      "bounded_report_urls": [
+        "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050279185"
+      ],
+      "completed_stages_reported": 7,
+      "protected_observations_reported": 3,
+      "executor_denials_reported": 3,
+      "historical_order_count_reported": 540,
+      "submission_count_reported": 568,
+      "unavailable_photo_count_reported": 444,
+      "observed": "Full C112 real Android-emulated UI/API/PostgreSQL analytics, protected shift/order reports and executor denials passed; unchanged business rows and cleanup reported.",
+      "limitation": "Does not accept newer faef5d frontend, native downloads, UI clock mutations, physical phone, live model or push."
+    },
+    {
+      "id": "c110-final-faef-core",
+      "result": "PASS",
+      "layer": "browser_assembled",
+      "source_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "frontend_sha": "faef5d3d8b4c640fae013dbfa78074382e512e8f",
+      "harness_sha": "afeef803d01d7e056b7ad87e0cd4b1a437092db3",
+      "run_id": 37715211318,
+      "job_id": 113110152016,
+      "source": "Actions metadata and exact manifest independently checked; counts/safety/cleanup attributed to A0 bounded report",
+      "observed": "Fresh bound real-core UI/API/PostgreSQL job and acceptance step completed successfully.",
+      "limitation": "Android emulation; C113 download/clock UI, physical phone and live-provider delivery remain separate.",
+      "bounded_report_urls": [
+        "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050616164"
+      ],
+      "completed_stages_reported": 6,
+      "committed_commands_reported": 11,
+      "persisted_events_reported": 13,
+      "skips_reported": 0,
+      "fresh_proof_reported": true,
+      "trusted_tls_reported": true,
+      "cleanup_reported": "PASS"
+    },
+    {
+      "id": "c112-final-faef-analytics",
+      "result": "PASS",
+      "layer": "browser_assembled",
+      "source_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "frontend_sha": "faef5d3d8b4c640fae013dbfa78074382e512e8f",
+      "harness_sha": "118b81580cc658150eeca62e1b994e44ff015c6d",
+      "run_id": 37715211417,
+      "job_id": 113110005346,
+      "source": "Actions metadata and exact manifest independently checked; counts/safety/cleanup attributed to A0 bounded report",
+      "observed": "Fresh exact history-analytics UI/API/PostgreSQL job and read-only journey step completed successfully.",
+      "limitation": "Actual browser download/save and UI clock mutations belong to separate C113; physical phones and live providers remain untested.",
+      "bounded_report_urls": [
+        "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050616164"
+      ],
+      "completed_stages_reported": 7,
+      "protected_observations_reported": 3,
+      "executor_denials_reported": 3,
+      "historical_order_count_reported": 540,
+      "submission_count_reported": 568,
+      "unavailable_photo_count_reported": 444,
+      "skips_reported": 0,
+      "fresh_proof_reported": true,
+      "trusted_tls_reported": true,
+      "unchanged_business_data_reported": true,
+      "cleanup_reported": "PASS"
+    },
+    {
+      "id": "managed-final-runtime",
+      "result": "PASS",
+      "layer": "real_database",
+      "source_sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "frontend_sha": "faef5d3d8b4c640fae013dbfa78074382e512e8f",
+      "run_id": 37715240438,
+      "job_id": 113110094909,
+      "source": "Actions metadata independently checked; complete managed/restart result additionally attributed to A0 bounded report",
+      "observed": "Exact managed-image job and real-image disposable TLS/PostgreSQL acceptance step completed successfully on same final runtime SHA.",
+      "limitation": "Validation branch at same SHA; not hosted deployment, physical device or live provider.",
+      "bounded_report_urls": [
+        "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050616164"
+      ]
+    }
+  ],
+  "historical_baseline": {
+    "source_sha": "4d38c71164a56b0eeefa9eb0430eb9100bcd7a3d",
+    "frontend_sha": "3ef269bba80dbd6eafaff0d5e557da21f2d96244",
+    "c110_sha": "67496c1c38051b9c45d960caa3242ff0a37edaa4",
+    "reported_core_counts": {
+      "stages": 6,
+      "committed_commands": 11,
+      "persisted_events": 13,
+      "skips": 0
+    },
+    "count_attribution": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6048937824",
+    "limitation": "Historical optional-product baseline only. Counts are A0-reported and are not silently transferred to later runs.",
+    "workflow_results": [
+      {
+        "run_id": 37701995235,
+        "name": "PostgreSQL persistence validation",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 37701995270,
+        "name": "Frontend source and build",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 37701995226,
+        "name": "Isolated C107 historical PostgreSQL gate",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 37701995307,
+        "name": "Composed HTTPS photo cycle",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 37701995266,
+        "name": "Historical and live demo fixture",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 37701995212,
+        "name": "Backend scaffold",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 37701995224,
+        "name": "Mobile composed app (Android emulation)",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "sources": [
+    {
+      "sha": "2471afde7b8442f3c66a3fe56d21df5b332b81d1",
+      "paths": [
+        ".github/workflows/mobile-e2e.yml",
+        ".github/workflows/history-mobile-e2e.yml",
+        ".github/workflows/demo-compose.yml",
+        "ops/ci/scenarios.json",
+        "ops/demo/smoke_https.py",
+        "docs/reports/exports.md",
+        ".github/workflows/history-demo-validation.yml"
+      ]
+    },
+    {
+      "sha": "77ea58ff89d0f52853e7b4069b138f2577fa11b4",
+      "paths": [
+        "ops/ci/scenarios.json",
+        "ops/ci/history_contract.json"
+      ]
+    }
+  ],
+  "limitations": [
+    "Selected 77ea58ff final runtime has eight successful main workflows plus managed-image validation success at the same SHA. Prior 2471 C112 failure and 347119 B9a success remain separate historical results.",
+    "Final faef5d C110 and C112 have their own fresh runtime passes. They do not prove C113 download/clock controls, physical devices, live providers or deployment.",
+    "C113 80e59f8a source is published and source-checked; its actual download/clock runtime remains pending.",
+    "540 historical orders, 568 result attempts and 444 unavailable after-photo references are synthetic metadata, not verified repair or image evidence.",
+    "rules_fallback proves deterministic workflow behavior, not live model semantic or image quality.",
+    "Physical Android, native camera, measured photo-upload SLA, real phone push, live model quality, timed rehearsal, screenshots/video, public deployment and submission are unverified.",
+    "C-106 did not launch any runtime, read secrets, modify access, call providers, deploy, publish or submit."
+  ],
+  "managed_image": {
+    "id": 37712260125,
+    "name": "Actual managed image validation",
+    "head_sha": "2d1a40796881eace63378c9ef83886b0a0bda95d",
+    "head_branch": "validation/managed-image-20261008",
+    "path": ".github/workflows/managed-image-validation.yml",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37712260125",
+    "created_at": "2026-10-08T01:18:25Z",
+    "updated_at": "2026-10-08T01:20:06Z",
+    "run_attempt": 1,
+    "jobs": [
+      {
+        "id": 113100631476,
+        "name": "managed-image",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 37712260125,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Install pinned local verification dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Source and fail-closed harness contracts",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Build and verify exact managed image with disposable TLS and PostgreSQL",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          }
+        ]
+      }
+    ],
+    "bounded_report": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050216105",
+    "report_at": "2026-10-08T01:21:35Z",
+    "result": "PASS",
+    "observed_attributed": "A0 reports actual packaged image completed trusted HTTPS/auth, combined history/clock/photo/rules/human close/four exports; restart preserved records, stored photo bytes and an offline test-ledger reservation; cleanup passed.",
+    "limitation": "Disposable CI on independent validation branch; no hosted deployment, live provider, physical phone/camera or final-B runtime claim."
+  },
+  "final_b_synthetic": {
+    "id": 37712552373,
+    "name": "Final B source and synthetic Android rendering",
+    "head_sha": "e2a6e67c1f314bb1b1a5224d73faf2ea85cc9289",
+    "head_branch": "validation/final-ui-20261008",
+    "path": ".github/workflows/final-ui-synthetic.yml",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/a4ns/DalaAI/actions/runs/37712552373",
+    "created_at": "2026-10-08T01:21:54Z",
+    "updated_at": "2026-10-08T01:22:56Z",
+    "run_attempt": 1,
+    "jobs": [
+      {
+        "id": 113101574022,
+        "name": "final-b-fixtures",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 37712552373,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Verify synthetic-only gate and exact final B source",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Install locked frontend and matching official Chromium",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Exact B checks, 153 source cases and 13 synthetic Android cases",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Publish limited evidence scope",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21
+          }
+        ]
+      }
+    ],
+    "frontend_sha": "faef5d3d8b4c640fae013dbfa78074382e512e8f",
+    "source_cases": 153,
+    "synthetic_pixel9_cases": 13,
+    "source_attribution": "https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050279185",
+    "limitation": "Actual CI job PASS for source and synthetic fixtures only; actual mounted runtime, native download save and UI clock mutations remain separate."
+  }
+}

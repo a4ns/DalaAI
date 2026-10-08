@@ -5,6 +5,15 @@
 [Runbook](../../demo/README.md) и сценарии относятся к exact source SHA,
 записанному в [c-106.json](c-106.json).
 
+Поздние runtime-этапы отделены от исходного ledger:
+[первый exact-SHA срез](runtime-f101-milestones.json) сохранён без изменений;
+[срез 8 октября v2](runtime-20261008-v2.json) содержит публичные CI-метаданные
+и явно атрибутированные bounded-отчёты. Final `77ea58ff/faef5d` имеет свежие
+C110/C112 PASS; прежние `347119c4/B9a` PASS и `2471afde` FAIL сохранены.
+C113 downloads/clock остаётся отдельным gate. Это не локальный повтор
+runtime со стороны C-106.
+Сценарий показа: [runtime handoff](../../demo/RUNTIME_HANDOFF_RU.md).
+
 ## Статусы и уровни
 
 - `PASS`: реально выполнена указанная проверка; есть время, checkout SHA,

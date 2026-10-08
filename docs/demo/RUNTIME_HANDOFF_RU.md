@@ -1,17 +1,131 @@
 # НарядAI демонстрация проверенных runtime этапов
 
-Срез **2026-10-07 23:07 UTC** для владельца демонстрации. Есть проверенный
-ручной UI/API/PostgreSQL цикл в Android-эмуляции и более новый runtime с
-историей и защищёнными отчётами. Это **два отдельных SHA**, не общий PASS
-финального кандидата. C-106 сверил исходники, публичные CI-метаданные и
-разрешённый count-only артефакт; сам приложение, БД и браузер не запускал.
+Срез **2026-10-08 02:01 UTC (07:01 UTC+5)** для владельца демонстрации.
+Проверены ручной UI/API/PostgreSQL цикл в Android-эмуляции, серверные
+history/rules/export/clock gates и отдельный packaged-image/restart gate.
+Final B `faef5d` на runtime `77ea58ff` теперь имеет собственные **C110/C112
+PASS**, восемь зелёных main workflow и отдельный managed PASS того же SHA.
+Новые download/demo-clock UI actions ещё ждут отдельного C113. Прежний
+`2471afde` с locator timeout сохранён как исторический FAIL. Это
+**не подтверждение всех device/provider/release gates**.
+
+C-106 сверил публичные исходники и CI-метаданные; подробности отдельных
+этапов ниже явно приписаны bounded-отчётам A0. В этом обновлении raw runtime
+logs, приватные artifacts и приватные файлы паролей/PIN/DSN/сеансов не открывались.
+Приложение, БД и браузер C-106 не запускал; фото/видео не создавал.
 
 Этот документ дополняет исторические [f3 runbook](README.md) и
 [dfe9 source-срез](CURRENT_RUNTIME_RU.md). [Offline runner](OFFLINE_RUN_RU.md)
 остаётся отдельным воспроизводимым synthetic evidence; его результаты
 не объявляются runtime, моделью или физическим Android.
 
-## Что можно утверждать
+## Новые проверенные этапы: не переносить PASS между сборками
+
+**Final B: свежие core и analytics PASS.** Runtime
+`77ea58ff89d0f52853e7b4069b138f2577fa11b4`, frontend
+`faef5d3d8b4c640fae013dbfa78074382e512e8f`:
+
+- [C110 run 37715211318](https://github.com/a4ns/DalaAI/actions/runs/37715211318/job/113110152016),
+  harness `afeef803d01d7e056b7ad87e0cd4b1a437092db3`:
+  real-core UI/API/PostgreSQL job и его acceptance step завершились успешно.
+- [C112 run 37715211417](https://github.com/a4ns/DalaAI/actions/runs/37715211417/job/113110005346),
+  harness `118b81580cc658150eeca62e1b994e44ff015c6d`:
+  fresh proof/history read-only journey прошёл на final frontend.
+- [Managed image run 37715240438](https://github.com/a4ns/DalaAI/actions/runs/37715240438/job/113110094909)
+  прошёл на том же exact SHA через отдельную validation-ветку; hosted
+  deployment из этого не следует.
+
+Точные frontend/harness pins проверены в
+[C110 manifest](https://github.com/a4ns/DalaAI/blob/77ea58ff89d0f52853e7b4069b138f2577fa11b4/ops/ci/scenarios.json)
+и [C112 manifest](https://github.com/a4ns/DalaAI/blob/77ea58ff89d0f52853e7b4069b138f2577fa11b4/ops/ci/history_contract.json).
+Все восемь main workflow этого SHA и отдельный managed run — terminal
+`success`. По [bounded-отчёту A0 именно для `77ea58ff`](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050616164):
+C110 — 6 этапов / 11 команд / 13 событий; C112 — 7 этапов / 3 protected
+observations / 3 executor denials, 540/568/444 и неизменные business rows.
+Оба с fresh proof, trusted TLS, zero skips и cleanup. Это атрибуция нового
+run, а не перенос чисел из прежнего SHA; runtime artifacts не открывались.
+Download/save и реальные действия UI demo-clock остаются отдельным C113.
+
+### Предыдущая полная аналитика B9a
+
+**Полная аналитика UI/API/БД PASS:**
+`347119c47b9a0ec70cd30cbc8bce2a2774a439e0`, frontend
+`9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`, C112
+`d34455d877f9d3853421cad4cf6d3f92056254f7`.
+[Fresh C112 run 37712740639](https://github.com/a4ns/DalaAI/actions/runs/37712740639/job/113102167252)
+и все восемь workflow exact SHA завершились успешно. По
+[bounded-отчёту A0](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050279185):
+7 этапов, 3 protected analytics/report observations, 3 запрета исполнителю,
+540 нарядов / 568 попыток / 444 недоступные фото, неизменные business rows
+и cleanup. Это Android-эмуляция с реальными UI/API/PostgreSQL, включая
+защищённые отчёты смены и выбранного наряда. Artifact не открывался;
+числа приписаны A0, terminal status проверен отдельно.
+
+Предыдущий exact runtime, оставленный для истории и детализации server gates:
+`2471afde7b8442f3c66a3fe56d21df5b332b81d1`, frontend
+`9a1d6109ab06ea8cbc379d46e2b6ebfcf23dd28c`.
+
+- **Ручной core PASS:** [run 37710664244, mobile-core](https://github.com/a4ns/DalaAI/actions/runs/37710664244/job/113095586907).
+  Реальные UI/API/PostgreSQL в Android-эмуляции; source binding — C110
+  `d674d8a1cc261760c89b04b555123ca775f3c845`.
+  [Manifest точного runtime](https://github.com/a4ns/DalaAI/blob/2471afde7b8442f3c66a3fe56d21df5b332b81d1/ops/ci/scenarios.json).
+  Старые числа команд/событий не приписываются этому run без его summary.
+- **History Compose PASS:** [history, clock=false](https://github.com/a4ns/DalaAI/actions/runs/37710664219/job/113095586617).
+  Trusted HTTPS, настоящий photo upload → persisted `rules_fallback` →
+  решение мастера → четыре защищённых PDF/XLSX ответа, повторный startup.
+  [Minimal counterpart](https://github.com/a4ns/DalaAI/actions/runs/37710664219/job/113095586344)
+  прошёл отдельно. Это серверный HTTP smoke, не сохранение файла браузером.
+- **Clock API PASS:** [minimal, clock=true](https://github.com/a4ns/DalaAI/actions/runs/37710664219/job/113095586713).
+  Shared pause/forward advance, CAS и доступ мастера проверены серверным
+  сценарием; это не приёмка новых UI-кнопок времени. Matrix данного run
+  не включает `history + clock=true`.
+- **History/live/report fixture PASS:** [run 37710664408](https://github.com/a4ns/DalaAI/actions/runs/37710664408/job/113095587122).
+  10 actual PostgreSQL cases, zero skips; отдельно пройден fixture-mode
+  binding/completion barrier. Это не полный C112.
+- **C112 частично, полный gate FAIL:** [run 37710664206](https://github.com/a4ns/DalaAI/actions/runs/37710664206/job/113095586236),
+  C112 `edd109d2111e798db0440c7d3050e7e4fca80e42`.
+  По [bounded-отчёту A0](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050036426),
+  пройдены четыре этапа и две проверенные API observations `HTTP_OK`,
+  включая date fill, историческую аналитику и защищённый отчёт смены.
+  Этап 5, `selectOption` в `c112_analytics.spec.cjs:213`, завершился
+  `LOCATOR_TIMEOUT`; cleanup прошёл. Отчёт выбранного наряда и оставшийся
+  конец сценария этим запуском не подтверждены.
+
+У `2471afde` семь workflow имеют `completed/success`, один C112 —
+`completed/failure`. Зелёный core/Compose не скрывает этот failure.
+
+**Отдельная managed-image/restart приёмка PASS:**
+`2d1a40796881eace63378c9ef83886b0a0bda95d`, ветка
+`validation/managed-image-20261008`,
+[run 37712260125](https://github.com/a4ns/DalaAI/actions/runs/37712260125/job/113100631476).
+Статус exact job проверен. По [bounded-отчёту A0](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050216105),
+реальный образ прошёл trusted HTTPS/auth, combined history/clock/photo/rules/
+human close/four exports; restart сохранил записи, файл фото и offline
+test-ledger reservation, cleanup прошёл. «Файл фото» здесь не означает
+нативную камеру или доказательство реального ремонта. Это disposable CI,
+не hosted deployment и не проверка физического телефона/live provider.
+
+### Что ещё ожидает runtime-подтверждения
+
+- Final B `faef5d3d8b4c640fae013dbfa78074382e512e8f` —
+  [source handoff](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6049790608):
+  download controls и «Демо-время», 153 source cases/lint/types/build по B0.
+  [Отдельный CI source/synthetic PASS](https://github.com/a4ns/DalaAI/actions/runs/37712552373/job/113101574022)
+  на validation SHA `e2a6e67c1f314bb1b1a5224d73faf2ea85cc9289`:
+  153 source + 13 Pixel9 synthetic cases. Это не реальный API/БД gate.
+  Его C110/C112 runtime теперь подтверждён отдельно выше. Native save и
+  реальные UI clock actions source/synthetic suite не проверяет.
+- Отдельный
+  [C113 downloads/demo-clock](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050284514)
+  должен проверить существующие download/time controls. Его
+  [source handoff](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6050602139)
+  `80e59f8a802d4e6bf78e6f7e08355d394ea782db` имеет сообщённые C0 70 Node +
+  12 Python source checks. Actual runtime пока NOT_RUN; handoff не даёт PASS.
+
+Новые [метаданные, source bindings и границы](../evidence/run/runtime-20261008-v2.json)
+сохранены отдельно от исторического JSON. Ни один старый failure не переписан.
+
+## Исторические этапы, сохранённые без переатрибуции
 
 1. **Ручной мобильный цикл:** backend
    `ab632c0cf411b7670c1a03fe7aa97419950019a2`, frontend
@@ -33,12 +147,24 @@
    C111 `2945e3d3b6ba187a510cfb715e22d9feb70c4408` в этом runtime сверены
    по Git blob. Это не доказательство готового frontend analytics экрана.
 
-Все три run проверены как `push/main`, `completed/success` на указанных SHA.
+Эти три исторических run проверены как `push/main`, `completed/success`
+на указанных SHA.
 Сохранены [проверенные метаданные и границы](../evidence/run/runtime-f101-milestones.json)
 и [неизменённый public mobile summary](../evidence/run/mobile-ab632c0-summary.json).
 Summary прямо фиксирует `full_cycle_green=false`. Его upstream ZIP SHA-256:
 `c86c34a52994bc405a6ccb9f8b0fbc0ef154169aafd80df5990d9d21cd6addf0`;
 GitHub artifact expires `2026-10-14T22:43:55Z`.
+
+Следующий исторический baseline —
+`4d38c71164a56b0eeefa9eb0430eb9100bcd7a3d`, B
+`3ef269bba80dbd6eafaff0d5e557da21f2d96244`, C110
+`67496c1c38051b9c45d960caa3242ff0a37edaa4`:
+[real core PASS](https://github.com/a4ns/DalaAI/actions/runs/37701995224/job/113067379559)
+и [history Compose PASS](https://github.com/a4ns/DalaAI/actions/runs/37701995307/job/113067380277).
+Все семь workflows на этом SHA завершились успешно. Числа 6 этапов /
+11 команд / 13 событий / 0 skips —
+[атрибутированный отчёт A0](https://github.com/a4ns/DalaAI/issues/2#issuecomment-6048937824),
+не новый запуск C-106 и не результат более позднего frontend.
 
 ## Короткий показ до трёх минут
 
@@ -57,12 +183,16 @@ GitHub artifact expires `2026-10-14T22:43:55Z`.
    материал и разрешённое synthetic PNG через настоящий upload. Мастер
    закрывает вручную; отсутствующая human score остаётся «не оценено».
    Отсутствующий AI assessment означает отсутствие оценки, а не её успех.
-4. **1:50–2:25.** Показать историю действий. Отдельно открыть защищённый
-   runtime-отчёт только если этот конкретный demo instance уже подготовлен
-   и проверен. Иначе показать приведённое CI evidence с явным названием SHA,
-   не обещая доступный UI-экран или отчёт на прежнем manual-core SHA.
-5. **2:25–3:00.** Назвать ограничения: эмуляция, synthetic PNG, синтетическая
-   история; модель, физический телефон, доставка и экспорт требуют своих gates.
+4. **1:50–2:25.** Показать историю действий и проверенную аналитику/отчёт
+   смены на подготовленном exact instance. Для синтетической истории назвать
+   540 нарядов / 568 попыток / 444 недоступные after-photo ссылки, явно
+   отличая metadata от фото. Если instance не подготовлен, показать exact CI
+   evidence. Order-report UI имеет собственный gate на `77ea58ff/faef5d`;
+   другой собранный кандидат требует своей проверки.
+5. **2:25–3:00.** Назвать ограничения: эмуляция, synthetic PNG и история;
+   rules fallback не оценивает смысл ремонта моделью. Server PDF/XLSX
+   проверены отдельно, native save ещё нет. Физические телефоны, live model
+   и доставка требуют своих gates.
 
 Для расширенного показа сохранить весь подтверждённый порядок:
 создать → очередь → принять → начать → пауза с причиной → продолжить →
@@ -70,6 +200,14 @@ GitHub artifact expires `2026-10-14T22:43:55Z`.
 история. Точные действия и границы:
 [C110 сценарий на проверенном source SHA](https://github.com/a4ns/DalaAI/blob/23a135348a0e8ad9a140a36ca60e8440704b7893/tests/e2e/c110_README.md).
 Synthetic PNG не является снимком камеры или доказательством ремонта.
+
+Расширенный порядок до семи минут, также пока **не timed rehearsal**:
+0:00–0:30 контекст и synthetic label; 0:30–2:00 создание/очередь/принятие;
+2:00–3:15 работа/пауза/продолжение; 3:15–5:15 неполный результат/доработка/
+upload/ручное закрытие; 5:15–6:30 история/аналитика/отчёт смены;
+6:30–7:00 границы и следующий пилотный шаг. Экспорт, UI demo-clock и
+отчёт выбранного наряда показывать только в пределах приёмки конкретного
+собранного кандидата; старое CI evidence показывать как старое.
 
 ## Как показывать историю и отчёт
 
@@ -97,6 +235,17 @@ AI score человеческой оценкой, историческую по�
 свежий наряд создаётся с текущим временем штатным API/UI.
 Источник: [проверенный history/live пакет](https://github.com/a4ns/DalaAI/blob/f101e4320b59b0a7dc81bdcb8b28c73849d4a747/ops/provision/HISTORY_DEMO.md).
 
+### Более новый серверный PDF/XLSX
+
+На `2471afde` отдельно проверены защищённые GET
+`/api/v1/reports/shift.pdf`, `/api/v1/reports/shift.xlsx`,
+`/api/v1/reports/orders/{order_id}.pdf` и `.xlsx` с теми же timezone-aware
+`start`/`end` и текущей cookie-сессией. Это fixed suffix, не `format=pdf`.
+Источник: [exact export contract](https://github.com/a4ns/DalaAI/blob/2471afde7b8442f3c66a3fe56d21df5b332b81d1/docs/reports/exports.md)
+и History Compose gate выше. Успешный серверный binary response не
+подтверждает нажатие Save, сохранение/открытие файла на телефоне или
+приёмку новых download controls `faef5d`.
+
 ## Существующие команды проверки для A5
 
 Ни одна команда ниже не исполнялась C-106. Это ссылки на существующие gates,
@@ -116,11 +265,13 @@ AI score человеческой оценкой, историческую по�
   этого кандидата; прежний PASS не перенесён на новую сборку
 - [ ] Подготовленный origin, доверенный HTTPS и два сеанса проверены оператором;
   пароли/PIN передаются отдельно, не попадают в запись, Git или отчёт
-- [ ] Новый optional B3/C110 real-core прогон имеет собственный результат;
-  более новый source сам по себе не закрывает этот пункт
-- [ ] Frontend analytics и fresh-history one-command Compose проверены отдельно;
-  на этом срезе они pending, helper и PG gate их не заменяют
-- [ ] PDF/XLSX, timed rehearsal и видео имеют реальные артефакты либо явно NOT_RUN
+- [ ] Не смешаны historical core, `2471afde/B9a` core, серверные Compose gates
+  и отдельный managed image; финальный B имеет собственную приёмку
+- [ ] Оператор использует именно проверенный `77ea58ff/faef5d` либо
+  следующий кандидат с собственными C110/C112; старые PASS не перенесены
+- [ ] Native PDF/XLSX save/open и реальные UI clock controls проверены отдельно;
+  серверные экспорты/clock и source tests не заменяют эти действия
+- [ ] Timed rehearsal и видео имеют реальные артефакты либо явно NOT_RUN
 - [ ] Физический Android, камера, upload SLA, phone push и реальная модель
   предъявлены только со своими evidence; ручной core не даёт им PASS
 
