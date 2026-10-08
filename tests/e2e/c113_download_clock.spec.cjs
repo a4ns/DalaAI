@@ -103,14 +103,17 @@ test(c.TITLE,async({browser,browserName},info)=>{
   const markDownload=(label,target)=>files.downloadCheckpoint(e.download_diagnostic,label,target);
   const download=async(kind,format)=>privateOperationBoundary(async()=>{
     markDownload('PREPARE_EXPECTATION',`${kind}_${format}`.toUpperCase());
-    e.download_diagnostic.response='NOT_OBSERVED';e.download_diagnostic.encoding='NOT_OBSERVED';e.download_diagnostic.content_length='NOT_OBSERVED';e.download_diagnostic.inspector='NOT_RUN';
+    const target=e.download_diagnostic.target;Object.assign(e.download_diagnostic,files.createDownloadDiagnostic());markDownload('PREPARE_EXPECTATION',target);
     const expected=files.expected(kind,selected),pathname=files.pathname(expected,format),filename=files.filename(expected,format);
     const scope=master.page.getByRole('region',{name:'Скачать выбранный отчёт',exact:true});
     let observed=0;const watch=()=>observed++;master.page.on('download',watch);
+    const requestObserver=files.requestCompletionObserver(master.page);
+    try{
     markDownload('WAIT_PREPARE_RESPONSE');
     const [response]=await Promise.all([master.page.waitForResponse(r=>{
       const u=new URL(r.url());return u.origin===fixture.origin&&u.pathname===pathname&&r.request().method()==='GET'&&Date.parse(u.searchParams.get('start'))===Date.parse(c.PERIOD.start)&&Date.parse(u.searchParams.get('end'))===Date.parse(c.PERIOD.end);
     }),scope.getByRole('button',{name:`Подготовить ${format.toUpperCase()}`,exact:true}).click()]);
+    requestObserver.bind(response.request());
     files.downloadResponse(e.download_diagnostic,response.status());markDownload('CHECK_PROTECTED_HEADERS');
     const h=response.headers();files.downloadTransport(e.download_diagnostic,h);protectedHeaders(response,pathname);
     markDownload('CHECK_EXPORT_MIME');c.check(h['content-type']===files.MEDIA[format],'EXACT_EXPORT_HEADERS_REQUIRED');
@@ -118,7 +121,22 @@ test(c.TITLE,async({browser,browserName},info)=>{
     markDownload('CHECK_EXPORT_CSP');c.check(h['content-security-policy']==="default-src 'none'; sandbox",'EXACT_EXPORT_HEADERS_REQUIRED');
     markDownload('CHECK_CONTENT_LENGTH');
     c.check(/^[0-9]+$/.test(h['content-length']||'')&&Number(h['content-length'])>0&&Number(h['content-length'])<=c.MAX_DOWNLOAD_BYTES,'BOUNDED_CONTENT_LENGTH_REQUIRED');
-    markDownload('READ_RESPONSE_BYTES');const responseBytes=await response.body();markDownload('CHECK_RESPONSE_SIZE');c.check(responseBytes.length===Number(h['content-length'])&&responseBytes.length<=c.MAX_DOWNLOAD_BYTES,'BOUNDED_RESPONSE_BYTES_REQUIRED');
+    markDownload('READ_RESPONSE_BYTES');
+    e.download_diagnostic.frontend_before_body=await files.sampleDownloadUi(scope,format);
+    e.download_diagnostic.request_before_body=requestObserver.snapshot();
+    let responseBytes;
+    try{responseBytes=await files.boundedResponseBody(response);}
+    catch(error){
+      e.download_diagnostic.body_failure=files.bodyFailure(error);
+      e.download_diagnostic.frontend_after_body=await files.sampleDownloadUi(scope,format);
+      e.download_diagnostic.request_after_body=requestObserver.snapshot();
+      // Preserve the original failed body operation. No GET retry, replacement
+      // response, saved-blob substitution or inferred successful transfer.
+      throw error;
+    }
+    e.download_diagnostic.frontend_after_body=await files.sampleDownloadUi(scope,format);
+    e.download_diagnostic.request_after_body=requestObserver.snapshot();
+    markDownload('CHECK_RESPONSE_SIZE');c.check(responseBytes.length===Number(h['content-length'])&&responseBytes.length<=c.MAX_DOWNLOAD_BYTES,'BOUNDED_RESPONSE_BYTES_REQUIRED');
     markDownload('WAIT_SAVE_CONTROL');await expect(scope.getByRole('button',{name:`Сохранить ${format.toUpperCase()}`,exact:true})).toBeVisible();
     markDownload('CHECK_NO_EARLY_SAVE');c.check(observed===0,'NO_SAVE_BEFORE_SECOND_GESTURE_REQUIRED');
     const gets=network.export_gets;
@@ -142,6 +160,7 @@ test(c.TITLE,async({browser,browserName},info)=>{
       prepare_via_ui:true,save_via_ui:true,download_completed:true,no_save_before_gesture:true,same_response_bytes:true,no_network_on_save:true,
       response_sha256:bytesHash(responseBytes),saved_sha256:bytesHash(bytes),bytes:bytes.length,inspection};
     markDownload('RECORD_DOWNLOAD');files.validateDownload(row,expected,format);e.downloads.push(row);markDownload('DONE');
+    }finally{requestObserver.dispose();master.page.off('download',watch);}
   });
   try{
     await stage(c.REQUIRED_STEPS[0],async()=>{before=await observe();e.database_before=before;});

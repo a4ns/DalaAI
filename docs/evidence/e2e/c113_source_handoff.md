@@ -27,3 +27,13 @@ this does not locate the failure or prove that no bytes arrived. Added fixed
 bounded download/transport/inspector-stage diagnosis without relaxing the gate,
 file validation, network counts or privacy requirements. Runtime rerun and a
 new exact-source secrecy receipt remain A-owned; no local runtime executed.
+
+## A0-0091 original-body seam
+
+A reported a full PASS followed by a failed deliberate exact-head repeat on
+`e548c9482277f0b19e82f9959be6d25df92b5e97`, run `37718867179`, attempt 2,
+job `113123763239`. The repeat reached shift PDF body retrieval after valid
+headers, then failed before Save/inspection. Added exact-request terminal-state,
+fixed scoped UI-state and bounded exception-category diagnostics only. The
+mixed outcomes are preserved; neither transport interruption nor instrumentation
+failure is yet proved. No local browser/private artifact access or blind rerun.

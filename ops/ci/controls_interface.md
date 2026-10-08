@@ -1,8 +1,8 @@
 # C113 isolated clock controls and download acceptance seam
 
-Source-ready binding: C113e92f80bac8011fef917dfa0685470475e67ea151 against
+Source-ready binding: C1130d2ac5e95dcd99b11b144b7871152ed9c0033697 against
 frontendfaef5d3d8b4c640fae013dbfa78074382e512e8f. Actual C113 execution is
-pending. The final C110/C112 acceptance on77ea58 remains separate evidence.
+pending for this diagnostic source. Final C110/C112 acceptance remains separate evidence.
 
 A5 reserved `.github/workflows/controls-mobile-e2e.yml` and new `ops/ci/controls_*`
 paths. C owns `tests/e2e/c113_*`. The final B source bindings and actual C110/C112
@@ -86,3 +86,17 @@ The separate executor observer receives no owner input; the file inspector
 receives no observer/PIN environment. Cleanup failure fails the workflow.
 
 The first43cd9ca runtime result remains FAIL after four stages/six clock observations. The accepted diagnostic source adds fixed report/download/transport/inspector phases without changing predicates. CI projects only those fixed categories plus eight fixed saved/expected-file presence booleans before cleanup; no paths, headers, sizes, contents or raw errors are published. A fresh proof/run on this source is required.
+
+On e548c948, C113 attempt 1 passed all eight stages and four file inspections;
+the deliberate same-head attempt 2 failed at SHIFT_PDF / READ_RESPONSE_BYTES.
+Both observations remain preserved. Repeatability and the underlying cause are
+unresolved; diagnostic changes do not constitute an application fix.
+
+The new C-owned source observes only the exact request identity, before and after
+one response-body call bounded to 20 seconds. It reports fixed request terminal
+states and a failure-present boolean, bounded scoped UI states and a fixed body
+exception category. CI double-allowlists those fields and drops raw extras.
+Listeners are removed in finally. Visible readiness, request completion or a
+timeout cannot pass the gate: exact response/saved byte equality and all file
+inspections remain mandatory. The workflow and product remain unchanged, and
+the new integrated source must create its own fresh failure-output proof.

@@ -34,7 +34,7 @@ const INSPECTOR_STAGES=Object.freeze(['NOT_RUN','START','READ_EXPECTED_FILE','PA
   'FILE_BOUND','PDF_XREF','PDF_OBJECTS','PDF_CATALOG_PAGES','PDF_PAGE_SHAPE','PDF_FONT_RESOURCES','PDF_STREAM','PDF_FONT_MAP',
   'PDF_OPERATORS','PDF_VISIBLE_STYLE','PDF_TEXT_DECODE','PDF_CONTENT','XLSX_ARCHIVE','XLSX_ENTRY','XLSX_XML','XLSX_RELATIONSHIPS',
   'XLSX_CELLS','XLSX_CONTENT','RESULT','PASS','PROCESS_FAILED','UNCLASSIFIED']);
-function createDownloadDiagnostic(){return {target:'NOT_STARTED',substep:'NOT_STARTED',response:'NOT_OBSERVED',encoding:'NOT_OBSERVED',content_length:'NOT_OBSERVED',inspector:'NOT_RUN'};}
+function createDownloadDiagnostic(){return {target:'NOT_STARTED',substep:'NOT_STARTED',response:'NOT_OBSERVED',encoding:'NOT_OBSERVED',content_length:'NOT_OBSERVED',inspector:'NOT_RUN',request_before_body:{completion:'NOT_OBSERVED',failure_present:false},request_after_body:{completion:'NOT_OBSERVED',failure_present:false},frontend_before_body:'NOT_OBSERVED',frontend_after_body:'NOT_OBSERVED',body_failure:'NOT_OBSERVED'};}
 function downloadCheckpoint(state,label,target){
   state.substep=DIAGNOSTIC_STEPS.includes(label)?label:'UNCLASSIFIED';
   if(target!==undefined)state.target=DIAGNOSTIC_TARGETS.includes(target)?target:'UNCLASSIFIED';
@@ -49,6 +49,59 @@ function downloadTransport(state,headers){
   state.encoding=encoding===undefined?'IDENTITY':typeof encoding==='string'&&Object.hasOwn(known,encoding.trim().toLowerCase())?known[encoding.trim().toLowerCase()]:'OTHER';
   state.content_length=length===undefined?'ABSENT':typeof length!=='string'||!(/^[0-9]+$/.test(length))?'INVALID':Number(length)===0?'ZERO':Number(length)>c.MAX_DOWNLOAD_BYTES?'TOO_LARGE':'POSITIVE_WITHIN_LIMIT';
 }
+function requestCompletionObserver(page){
+  const seen=new WeakMap();let selected=null;
+  const failurePresent=request=>{try{return Boolean(request.failure());}catch{return false;}};
+  const record=(request,completion)=>{
+    if(!request||!['object','function'].includes(typeof request))return;
+    const prior=seen.get(request);
+    seen.set(request,{completion:prior?.completion==='FAILED'?'FAILED':completion,failure_present:failurePresent(request)||prior?.failure_present===true});
+  };
+  const finished=request=>record(request,'FINISHED'),failed=request=>record(request,'FAILED');
+  // Register before Prepare; events arriving before response matching stay bound
+  // to their exact request identity, never a guessed URL or latest request.
+  page.on('requestfinished',finished);page.on('requestfailed',failed);
+  return {
+    bind(request){selected=request;},
+    snapshot(){const row=selected&&seen.get(selected);return {completion:row?.completion||'NOT_OBSERVED',failure_present:row?.failure_present===true||Boolean(selected&&failurePresent(selected))};},
+    dispose(){page.off('requestfinished',finished);page.off('requestfailed',failed);selected=null;},
+  };
+}
+function bodyFailure(error){
+  try{
+    const name=error?.name,message=error?.message;
+    if(typeof message!=='string'||message.length>8192)return 'OTHER';
+    if(name==='TimeoutError'||message==='C113_RESPONSE_BODY_TIMEOUT')return 'TIMEOUT';
+    if(/Target page, context or browser has been closed|Target closed|Session closed|Browser has been closed/i.test(message))return 'TARGET_CLOSED';
+    if(/No resource with given identifier found|No data found for resource with given identifier|Response body is unavailable for redirect responses/i.test(message))return 'BODY_UNAVAILABLE';
+    if(/Protocol error[\s\S]*Network\.getResponseBody/i.test(message))return 'BODY_PROTOCOL_FAILURE';
+    return 'OTHER';
+  }catch{return 'OTHER';}
+}
+async function boundedResponseBody(response,timeoutMs=20000){
+  let timer;
+  try{return await Promise.race([response.body(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('C113_RESPONSE_BODY_TIMEOUT')),timeoutMs);})]);}
+  finally{clearTimeout(timer);}
+}
+function frontendState(flags){
+  if(!Array.isArray(flags)||flags.length!==4||flags.some(value=>typeof value!=='boolean'))return 'NOT_OBSERVED';
+  const selected=flags.flatMap((value,index)=>value?[['READY','ERROR','LOADING','EXPIRED'][index]]:[]);
+  return selected.length===1?selected[0]:'NOT_OBSERVED';
+}
+async function sampleDownloadUi(scope,format){
+  let timer;
+  try{
+    if(!['pdf','xlsx'].includes(format))return 'NOT_OBSERVED';
+    const flags=await Promise.race([Promise.all([
+      scope.getByRole('button',{name:`Сохранить ${format.toUpperCase()}`,exact:true}).isVisible(),
+      scope.getByRole('alert').isVisible(),
+      scope.getByText(`Получаем ${format.toUpperCase()}… Сохранение ещё не начато.`,{exact:true}).isVisible(),
+      scope.getByText('Время сохранения истекло. Получите файл заново.',{exact:true}).isVisible(),
+    ]),new Promise(resolve=>{timer=setTimeout(()=>resolve(null),1000);})]);
+    return frontendState(flags);
+  }catch{return 'NOT_OBSERVED';}
+  finally{clearTimeout(timer);}
+}
 function inspectorFailure(error){
   try{
     const bytes=error?.stdout;
@@ -58,4 +111,4 @@ function inspectorFailure(error){
     return row.stage;
   }catch{return 'PROCESS_FAILED';}
 }
-module.exports={MEDIA,expected,filename,pathname,validateInspection,validateDownload,DIAGNOSTIC_TARGETS,DIAGNOSTIC_STEPS,INSPECTOR_STAGES,createDownloadDiagnostic,downloadCheckpoint,downloadResponse,downloadTransport,inspectorFailure};
+module.exports={MEDIA,expected,filename,pathname,validateInspection,validateDownload,DIAGNOSTIC_TARGETS,DIAGNOSTIC_STEPS,INSPECTOR_STAGES,createDownloadDiagnostic,downloadCheckpoint,downloadResponse,downloadTransport,requestCompletionObserver,bodyFailure,boundedResponseBody,frontendState,sampleDownloadUi,inspectorFailure};

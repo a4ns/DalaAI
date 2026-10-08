@@ -10,7 +10,7 @@ from controls_profile import ControlsBlocked,HISTORY_VERSION,HISTORY_DIGEST
 from controls_driver import secrecy_preflight,execute_controls
 from controls_runner import clock_instance
 from controls_observer_python import command_for
-from controls_diagnostics import failure_projection, file_presence, download_projection,STEPS
+from controls_diagnostics import failure_projection, file_presence, download_projection,request_projection,STEPS
 
 MASTER='8d27067c-4e86-50a2-87c4-f1012f53a2bb'; EXECUTOR='37baa480-be02-54bc-837c-6c0b2a00ec12'
 INSTANCE='a22d4edf-340d-4a81-a84a-670cc95910e6'
@@ -100,15 +100,51 @@ class ControlsDriver(unittest.TestCase):
             self.assertFalse(file_presence(p)['order_xlsx_saved'])
     def test_c_download_phase_retains_only_fixed_categories(self):
         row={'target':'SHIFT_PDF','substep':'RUN_INSPECTOR','response':'HTTP_OK','encoding':'IDENTITY',
-             'content_length':'POSITIVE_WITHIN_LIMIT','inspector':'PDF_CONTENT'}
+             'content_length':'POSITIVE_WITHIN_LIMIT','inspector':'PDF_CONTENT',
+             'frontend_before_body':'LOADING','frontend_after_body':'READY','body_failure':'NOT_OBSERVED',
+             'request_before_body':{'completion':'NOT_OBSERVED','failure_present':False},
+             'request_after_body':{'completion':'FINISHED','failure_present':False}}
         self.assertEqual(download_projection(row),row)
     def test_c_download_phase_drops_raw_or_malformed_values(self):
         row={'target':'CANARY','substep':{'secret':'CANARY'},'response':200,'encoding':'secret-CANARY',
              'content_length':12345,'inspector':'CANARY','raw_header':'CANARY'}
         result=download_projection(row)
-        self.assertEqual(set(result),{'target','substep','response','encoding','content_length','inspector'})
+        self.assertEqual(set(result),{'target','substep','response','encoding','content_length','inspector',
+            'frontend_before_body','frontend_after_body','body_failure','request_before_body','request_after_body'})
         self.assertNotIn('CANARY',json.dumps(result));self.assertNotIn('12345',json.dumps(result))
         self.assertEqual(result['content_length'],'INVALID')
+    def test_request_projection_rejects_raw_failure_and_non_boolean_values(self):
+        result=request_projection({'completion':'FAILED','failure_present':True,'errorText':'CANARY','url':'CANARY'})
+        self.assertEqual(result,{'completion':'FAILED','failure_present':True})
+        self.assertNotIn('CANARY',json.dumps(result))
+        for value in (None,'CANARY',[],{'completion':['CANARY'],'failure_present':1},
+                      {'completion':'CANARY','failure_present':'CANARY'}):
+            self.assertEqual(request_projection(value),{'completion':'NOT_OBSERVED','failure_present':False})
+    def test_body_and_ui_projection_rejects_raw_exception_and_dom_values(self):
+        result=download_projection({'body_failure':'CANARY','frontend_before_body':{'text':'CANARY'},
+            'frontend_after_body':'CANARY','request_after_body':{'completion':'CANARY','failure_present':'CANARY'},
+            'message':'CANARY','stack':'CANARY','dom':'CANARY'})
+        self.assertEqual(result['body_failure'],'OTHER')
+        self.assertEqual(result['frontend_before_body'],'NOT_OBSERVED')
+        self.assertEqual(result['frontend_after_body'],'NOT_OBSERVED')
+        self.assertNotIn('CANARY',json.dumps(result))
+    def test_all_fixed_body_failure_classes_are_preserved_without_promotion(self):
+        for category in ('NOT_OBSERVED','TIMEOUT','BODY_PROTOCOL_FAILURE','BODY_UNAVAILABLE','TARGET_CLOSED','OTHER'):
+            result=download_projection({'body_failure':category,'frontend_after_body':'READY',
+                'request_after_body':{'completion':'FINISHED','failure_present':False}})
+            self.assertEqual(result['body_failure'],category)
+            self.assertNotIn('status',result);self.assertNotIn('result',result)
+    def test_failure_evidence_keeps_body_categories_and_never_raw_fields(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'e.json';p.write_text(json.dumps({'download_diagnostic':{
+                'body_failure':'BODY_PROTOCOL_FAILURE','frontend_after_body':'READY',
+                'request_after_body':{'completion':'FINISHED','failure_present':False,'errorText':'CANARY'},
+                'message':'CANARY'}}))
+            result=failure_projection(Path(d)/'none',p)
+            self.assertEqual(result['scope'],'diagnostic_only_no_controls_pass')
+            self.assertEqual(result['download_phase']['body_failure'],'BODY_PROTOCOL_FAILURE')
+            self.assertEqual(result['download_phase']['frontend_after_body'],'READY')
+            self.assertNotIn('CANARY',json.dumps(result))
     def test_fixed_error_locations_only(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'r.json';p.write_text(json.dumps({'errors':[{'message':'CANARY','location':{'file':'c113_download_clock.spec.cjs','line':141}}]}))
