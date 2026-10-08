@@ -56,12 +56,18 @@ test(k.DUMMY_TITLE, async ({ page }, info) => {
   for (const stage of ['bridge', 'save', 'inspector', 'current_auth', 'reader_rejection']) {
     try { await privateOperationBoundary(async () => { throw new Error(stage + sentinels.join(' ')); }); } catch { privateFailures++; }
   }
+  // Exercise the actual response-type/header and denial-body validation paths.
+  for (const operation of [
+    () => o.protectedResponseHeaders({ url: () => k.EXACT_URL, status: () => 403,
+      headers: () => { throw new Error(sentinels[1]); } }, 'https://localhost:18443', '/api/v1/reports/shift.pdf', 403, false, 'api'),
+    () => o.requireExecutorDenial({ get code() { throw new Error(sentinels[2]); } }),
+  ]) { try { await privateOperationBoundary(operation); } catch { privateFailures++; } }
   let cdp;
   try { await privateOperationBoundary(() => files.boundedResponseBody({ body: () => Promise.reject(new Error('Protocol error (Network.getResponseBody): ' + sentinels[5])) })); }
   catch { privateFailures++; cdp = { status: 'FAILED', failure: 'BODY_PROTOCOL_FAILURE' }; }
   const safe = { client, failed_client: failedClient, cdp, inspector: files.inspectorFailure({ stdout: JSON.stringify({ status: 'BLOCKED', code: 'C113_DOWNLOAD_INSPECTION_FAILED', stage: sentinels[3] }) }),
     interpretation: o.interpretation(cdp, client, { status: 'NOT_RUN' }, { invalid: true }, 'NOT_ESTABLISHED') };
-  expect(privateFailures).toBe(7);
+  expect(privateFailures).toBe(9);
   await info.attach('body_probe_dummy_safe_projection', { body: Buffer.from(JSON.stringify(safe)), contentType: 'application/json' });
   throw new Error('BODY_PROBE_DUMMY_FAILURE_EXPECTED');
 });

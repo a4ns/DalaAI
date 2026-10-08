@@ -1,5 +1,21 @@
 'use strict';
 const k = require('./contract.cjs'), c = require('../c113_contract.cjs');
+function protectedResponseHeaders(response, origin, pathname, status = 200, isClock = false, responseKind = 'page') {
+  k.check(responseKind === 'page' || responseKind === 'api', 'RESPONSE_KIND');
+  const url = new URL(response.url()), h = response.headers();
+  k.check(url.origin === origin && url.pathname === pathname && response.status() === status, 'EXACT_RESPONSE');
+  // APIRequestContext returns APIResponse, which has no service-worker method.
+  // Callers must opt into that type; page Responses must positively prove false.
+  k.check(responseKind === 'page'
+    ? typeof response.fromServiceWorker === 'function' && response.fromServiceWorker() === false
+    : response.fromServiceWorker === undefined, 'RESPONSE_TRANSPORT_TYPE');
+  k.check(/(?:^|,)\s*private(?:,|$)/i.test(h['cache-control'] || '') && /no-store/i.test(h['cache-control'] || '') && /cookie/i.test(h.vary || ''), 'PROTECTED_HEADERS');
+  if (!isClock) k.check(h['x-content-type-options'] === 'nosniff', 'NOSNIFF');
+  return h;
+}
+function requireExecutorDenial(body) {
+  k.check(body && body.code === 'FORBIDDEN' && !['provenance','orders','order'].some(key => key in body), 'EXECUTOR_DENIAL');
+}
 const REASONS = ['NOT_ARMED','AWAITING_EXACT_REQUEST','AWAITING_ORIGINAL_RESPONSE','AWAITING_CLIENT_READER','DIGEST_PENDING','EOF_EXACT_LENGTH',
   'OBSERVER_FAILED','RESTORE_FAILED','TRUNCATED','DIGEST_FAILED','DIGEST_TIMEOUT','READ_THROW','UNSUPPORTED_READ','CONCURRENT_READ','INVALID_READ_RESULT','INVALID_CHUNK','OVERFLOW','READ_REJECTED','CANCEL_THROW','CLIENT_CANCELLED','RESPONSE_BINDING_FAILED','HEADERS_OR_LENGTH_FAILED','READER_THROW','UNSUPPORTED_READER','UNARMED_REQUEST','DUPLICATE_REQUEST','REQUEST_BINDING_FAILED','FETCH_THROW','FETCH_REJECTED','CAPABILITY_REJECTED','ARM_REPLAY','READ_TIMEOUT'];
 const KEYS = ['scope','source_sha','run_id','state','reason','comparability','fetches','readers','reads','declared_bytes','observed_bytes','eof','sha256','retained_capture_bytes','disposed'];
@@ -41,7 +57,7 @@ function interpretation(cdp, client, saved, binding, authority) {
   if (cdp.status === 'OK' && cdp.sha256 === saved.sha256 && cdp.bytes === saved.bytes && saved.cdp_exact_equality === 'EQUAL') return 'THREE_OBSERVATIONS_AGREE_INSTRUMENTED';
   return 'CDP_SAVED_MISMATCH';
 }
-module.exports = { REASONS, KEYS, validateClient, originalBinding, interpretation };
+module.exports = { REASONS, KEYS, protectedResponseHeaders, requireExecutorDenial, validateClient, originalBinding, interpretation };
 const INTERPRETATIONS = ['NOT_ESTABLISHED','INVALID_BINDING','CLIENT_OBSERVATION_NOT_COMPARABLE','AUTHORITY_NOT_ESTABLISHED','SAVED_FILE_NOT_VERIFIED','CLIENT_SAVED_MISMATCH','CDP_UNAVAILABLE_CLIENT_AND_SAVE_VERIFIED_INSTRUMENTED','THREE_OBSERVATIONS_AGREE_INSTRUMENTED','CDP_SAVED_MISMATCH'];
 function exactKeys(value, keys) { k.check(value && c.stable(Object.keys(value).sort()) === c.stable([...keys].sort()), 'EXACT_SAFE_FIELDS'); }
 function validateEvidence(e, proof) {

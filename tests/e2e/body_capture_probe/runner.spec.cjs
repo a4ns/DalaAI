@@ -24,12 +24,8 @@ test(k.TITLE, async ({ browser }, info) => {
   const contexts = [], network = { login_posts: 0, clock_posts: 0, blocked: 0 }; let master, executor, binding, requestObserver, expectedCommand = null;
   let before, selected, originalBytes, savedPath, expectedPath, disposed = false, clockScope;
   const phase = name => { e.phase = name; };
-  function headers(response, pathname, status = 200, isClock = false) {
-    const url = new URL(response.url()), h = response.headers();
-    k.check(url.origin === fixture.origin && url.pathname === pathname && response.status() === status && !response.fromServiceWorker(), 'EXACT_RESPONSE');
-    k.check(/(?:^|,)\s*private(?:,|$)/i.test(h['cache-control'] || '') && /no-store/i.test(h['cache-control'] || '') && /cookie/i.test(h.vary || ''), 'PROTECTED_HEADERS');
-    if (!isClock) k.check(h['x-content-type-options'] === 'nosniff', 'NOSNIFF'); return h;
-  }
+  const headers = (response, pathname, status = 200, isClock = false, responseKind = 'page') =>
+    o.protectedResponseHeaders(response, fixture.origin, pathname, status, isClock, responseKind);
   const observe = async () => {
     const { stdout } = await runFile(process.env.DALA_BCP_PYTHON || 'python', [path.join(__dirname, '../c113_observe.py'), fixture.master.id, fixture.executor.id],
       { env: k.observerEnv(), timeout: 30000, maxBuffer: 1024 * 1024 });
@@ -149,8 +145,8 @@ test(k.TITLE, async ({ browser }, info) => {
     master.page.off('download',watcher); phase('CURRENT_AUTHORIZATION');
     await currentPrincipal(master,'master'); await currentPrincipal(executor,'executor');
     for (const name of ['Демо-время','Аналитика и отчёты']) await expect(executor.page.getByRole('button',{name,exact:true})).toHaveCount(0);
-    const denied = await executor.context.request.get(k.EXACT_URL,{maxRedirects:0}); headers(denied,'/api/v1/reports/shift.pdf',403);
-    const denial = await denied.json(); k.check(denial.code === 'FORBIDDEN' && !['provenance','orders','order'].some(key=>key in denial),'EXECUTOR_DENIAL'); e.authority = 'VERIFIED';
+    const denied = await executor.context.request.get(k.EXACT_URL,{maxRedirects:0}); headers(denied,'/api/v1/reports/shift.pdf',403,false,'api');
+    const denial = await denied.json(); o.requireExecutorDenial(denial); e.authority = 'VERIFIED';
     phase('FINAL_CORROBORATION'); const after = await observe(); k.check(before.business_sha256 === after.business_sha256 && c.stable(before.counts) === c.stable(after.counts),'DATABASE_UNCHANGED'); e.database_unchanged = true;
     binding.requireBound(); binding.finish(); e.binding = binding.snapshot();
     k.check(network.login_posts === 2 && network.clock_posts === 3 && network.blocked === 0,'EXACT_NETWORK');

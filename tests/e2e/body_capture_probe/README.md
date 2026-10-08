@@ -112,3 +112,15 @@ Execution states are DIAGNOSTIC_COMPLETE, INCONCLUSIVE or BLOCKED. A green
 Playwright/CI diagnostic process is not a C113 PASS. Every output carries
 c113_acceptance=NOT_ESTABLISHED and points back to red run 37726366034. No result
 proves an uninstrumented Chromium cause or reliable production behavior.
+
+## Response-type regression
+
+The first isolated instrumented run (`37733049935`, job `113166320498`) reached
+matching CDP/client/saved PDF bytes and content inspection, then remained BLOCKED
+before final authority/database corroboration. Source inspection reproduced a
+helper TypeError: APIRequestContext returns APIResponse without fromServiceWorker.
+The corrected helper explicitly accepts that type only at the executor denial
+call; page Response still requires the method and an exact false result. Exact
+origin/path/403/cache/Vary/nosniff and FORBIDDEN/no-report-fields checks remain.
+A new source-bound dummy proof is required; this source repair does not promote
+the incomplete earlier run or establish C113 acceptance.
